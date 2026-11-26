@@ -118,6 +118,14 @@ The look:
 - **Type:** IBM Plex Sans.
 - **Status:** shown as a tinted label, never by colour alone.
 
+**Since 26 November 2026 the group look is in the branch teal, not the corporate blue** (*"Still seeing the blue!!!!"*,
+then, offered four colours, *"I will go with your recommendations"*: branch teal, the homepage's own colours). The layout
+above stands; only the blue moved: `#13408F` to `#0A4A52`, `#1D5BC4` to `#00728D`, the greys off the cool blue. The mark is
+**`groupclientmanagement/gcm-mark-teal.png`** (made by `tools/brand/gcm-mark-teal.js`, the same shield and check on a teal
+tile); **`gcm-mark.png` stays, blue, for the letters already sent**. Every group e-mail in GroupClients.gs and
+GroupBilling.gs loads the teal one, so merge before pasting either file, or the masthead arrives empty. The films keep the
+blue until they are re-cut. Do not bring the blue back.
+
 The rest of the site keeps the gold shield. Do not carry this look further
 without being asked.
 
@@ -4504,6 +4512,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     months against the three before, tap to open, and every opportunity with its group and owner).
   - The charts are one series in the action blue, with the value on every column and the same numbers in a table.
   - `year/year-test.js` (32 checks) and `year/page-shot.js` (12, Playwright) in the session scratchpad cover it.
+- **The group's page is a portal, grouped, for anyone to use** (26 November 2026: *"scale even further for a more
+  professional and crisp look ... the usability should be as easy as a 7-year-old can use it ... have a drop down ...
+  Grouping is very important to separate and not jumbled up"*). `client.html` keeps every function it had; what changed is
+  where each thing lives.
+  - **One menu**, grouped: *Your account* (Home, Your items, Billing, Your people), *Do something* (Join & leave,
+    Renewals), *Help* (Help & contact). A side menu on a laptop, a strip of icons with names on a tablet, a tab bar on a
+    phone with Join & leave, Renewals and Help under **More**. `go(where, then)` is the one way anywhere goes.
+  - **Home** opens first: the four figures (each opens its page), **Needs your attention** (items to answer, renewals to
+    approve, an amount still open, applications pending, dates coming up, each with one button), **What would you like to
+    do?** (a drop-down and Go, and the same as six tiles), who looks after them, and the year's service (the table folded).
+  - **Join & leave** is its own page now: the change, enrolment, EASI and payroll forms used to live inside Billing, so a
+    group with no bill could not reach them. A link with `?form=` opens it.
+  - **Your people** is in three parts chosen at the top: pending applications, coming up, everyone on the plans.
+  - **Help & contact** leads with HELP 868 on WhatsApp; no telephone number.
+  - Where each link opens: no address and `from=welcome` on Home, `from=letter` and `from=reminder` on Your items,
+    `tab=billing` on Billing, `form=` on Join & leave.
+  - `tests/e2e-group-portal.js` covers it (108 checks: phone, both tablets, laptop, every e-mail link).
+  - The walkthrough film (`/groupmgt/yourpage/`) shows the old tabs until it is re-cut.
 - **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
   staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
   and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors

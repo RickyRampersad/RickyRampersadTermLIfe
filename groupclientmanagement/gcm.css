@@ -9,14 +9,14 @@
 
 
 
-/* The corporate look (8 October 2026): white surfaces on a cool grey, one corporate blue for actions, status carried by
+/* The corporate look (8 October 2026), in the branch teal since 26 November 2026: white surfaces on a light grey, one teal for actions, status carried by
    a tinted label and never by colour alone. The old names (navy, gold, bar, teal) stay as aliases because the scripts
    below still use some of them. */
 :root{
-  --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#E8EDF4; --line:#CBD4E0; --line2:#B5C1D0;
-  --ink:#142033; --ink2:#2B374C; --muted:#4B586C; --faint:#97A1B2;
-  --primary:#1D5BC4; --primaryHover:#174CA6; --primarySoft:#EBF2FD; --primaryLine:#B8CEF4;
-  --bar:#2A78D6; --track:#DCE8F8;
+  --canvas:#E3EAEA; --paper:#F6F8F8; --sunken:#EDF2F2; --line:#CFD8D9; --line2:#B4BEC1;
+  --ink:#11393F; --ink2:#2C3A3F; --muted:#4E5A5F; --faint:#949EA1;
+  --primary:#00728D; --primaryHover:#005D73; --primarySoft:#E2F1F3; --primaryLine:#B5DBE4;
+  --bar:#00728D; --track:#D3EBF0;
   --good:#067647; --goodBg:#E8F5EC; --warn:#A64B05; --warnBg:#FDF1E1; --warnMark:#E0891B; --bad:#D03B3B; --badBg:#FCEBE9; --badText:#B42318;
   --navy:var(--ink); --navy2:var(--ink2); --gold:var(--primary); --gold2:var(--primary); --teal:var(--bar); --bg:var(--canvas);
   --shadow:0 1px 2px rgba(16,24,40,.05); --shadowLg:0 24px 48px -16px rgba(16,24,40,.22);
@@ -28,7 +28,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 a{color:var(--primary)}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-header.mast{background:linear-gradient(120deg,#13408F,#1D5BC4 55%,#2A6FD8);color:#fff;padding:14px 0}
+header.mast{background:linear-gradient(120deg,#0A4A52,#00728D 55%,#00728D);color:#fff;padding:14px 0}
 .mrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .mark{width:38px;height:38px;border-radius:9px;overflow:hidden;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
 .mark img{width:100%;height:100%;display:block}
@@ -183,7 +183,7 @@ iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radiu
 /* the send window: the e-mail exactly as it goes, who it goes to, the tick, the button; then what happened */
 dialog.dlg{border:0;border-radius:14px;padding:0;width:min(760px,96vw);max-height:92vh;box-shadow:var(--shadowLg);background:var(--paper);color:var(--ink)}
 dialog.dlg::backdrop{background:rgba(20,32,51,.55)}
-.dlg .dh{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(120deg,#13408F,#1D5BC4);color:#fff}
+.dlg .dh{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(120deg,#0A4A52,#00728D);color:#fff}
 .dlg .dh h3{margin:0;font-size:17px;font-weight:600;flex:1}
 .dlg .dh button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer}
 .dlg .db{padding:14px 18px 18px;overflow:auto;max-height:calc(92vh - 60px)}
@@ -200,9 +200,9 @@ dialog.dlg::backdrop{background:rgba(20,32,51,.55)}
 /* the design pass (14 October 2026: "a much more professional look, filters and scaling and colors for visibility"):
    white panels, stronger status labels that always carry a word and a mark, the greeting and the week in the masthead,
    one toolbar of filters, and the accounts as one table */
-:root{--paper:#FFFFFF;--canvas:#DCE3EC;--sunken:#EEF2F7;--line:#D3DBE6;--line2:#B9C4D3;
+:root{--paper:#FFFFFF;--canvas:#E3EAEA;--sunken:#EDF2F2;--line:#D6DFE0;--line2:#B4BEC1;
   --good:#05603A;--goodBg:#DCF3E5;--goodLine:#9FD9B5;--warn:#93370D;--warnBg:#FDEBD3;--warnLine:#F3C58C;--warnMark:#DC6803;
-  --bad:#D92D20;--badBg:#FCE3E0;--badLine:#F4B5AE;--badText:#B42318;--info:#1D5BC4;--infoBg:#E3EDFC;--infoLine:#B8CEF4}
+  --bad:#D92D20;--badBg:#FCE3E0;--badLine:#F4B5AE;--badText:#B42318;--info:#00728D;--infoBg:#E3EDFC;--infoLine:#B5DBE4}
 .wrap{max-width:1320px}
 @media (min-width:1500px){body{font-size:15.5px}}
 .chip{font-size:12.5px;padding:3px 10px;border:1px solid var(--line)}
@@ -262,10 +262,10 @@ h2{font-size:21px}
 .pend h3{margin:0}
 .pend .cnt{background:var(--primary);color:#fff;border-radius:99px;font-size:12px;font-weight:600;padding:1px 9px}
 .lns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
-.ln{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--sunken,#EEF2F7);border-radius:99px;padding:4px 11px;font-size:13px;cursor:pointer}
+.ln{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--sunken,#EDF2F2);border-radius:99px;padding:4px 11px;font-size:13px;cursor:pointer}
 .ln[aria-pressed="true"]{background:var(--infoBg);border-color:var(--info);color:var(--info);font-weight:600}
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
-.dot.life{background:#1D5BC4}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5B6B82}
+.dot.life{background:#00728D}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5B6B82}
 .papp{border:1px solid var(--line);border-left:5px solid var(--info);border-radius:10px;padding:12px 14px;margin:0 0 10px;background:#fff}
 .papp.warn{border-left-color:var(--warnMark)}.papp.bad{border-left-color:var(--bad)}
 .papp .top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
@@ -288,12 +288,12 @@ h2{font-size:21px}
 .cgrp{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;min-width:0}
 .cgrp h4{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:14.5px}
 .cgrp h4 .ic{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
-.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
+.cgrp.c65 .ic{background:#00728D}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
 .cgrp h4 b{margin-left:auto;color:var(--muted)}
 .cgrp ul{list-style:none;margin:0;padding:0}.cgrp li{padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;overflow-wrap:anywhere}
 .cgrp li .dt{display:block;color:var(--muted);font-size:12.5px}
 .cgrp .own{font-size:11.5px;font-weight:600;border-radius:4px;padding:0 6px;margin-left:4px}
-.cgrp .own.co{background:#EFE8FD;color:#5B2DA8}.cgrp .own.pe{background:#E8EEF7;color:#2B374C}
+.cgrp .own.co{background:#EFE8FD;color:#5B2DA8}.cgrp .own.pe{background:#E8EEF7;color:#2C3A3F}
 .cleanrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 @media (max-width:900px){.cgrid{grid-template-columns:1fr}}
 /* Billings Management (24 October 2026): the guided billing review (billing-ui.js) */
@@ -377,7 +377,7 @@ h2{font-size:21px}
 @media (max-width:640px){.bdep,.bdep.ben,.bdep.wide{grid-template-columns:1fr 1fr}.bform .fprev iframe{height:460px}.bform .fsw{grid-template-columns:1fr}}
 
 /* on hold (27 October 2026): a slate mark and a quiet band, so a held group reads as paused, not as a fault */
-:root{--holdMark:#5A687D;--holdBg:#EEF1F5;--holdText:#334155}
+:root{--holdMark:#586469;--holdBg:#EEF1F5;--holdText:#334155}
 .chip.hold{background:var(--holdBg);border-color:transparent;color:var(--holdText)}.chip.hold i{background:var(--holdMark)}
 .acc.r-hold{border-left-color:var(--holdMark);background:linear-gradient(90deg,var(--holdBg),transparent 40%)}.card.r-hold{border-left-color:var(--holdMark)}
 /* the banner only: .chip.hold is the small tag in the accounts table, and this rule used to catch it too */

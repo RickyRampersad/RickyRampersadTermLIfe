@@ -8,8 +8,8 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
-<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
 /* rrb-font-fallbacks */
 @font-face{font-family:'IBM Plex Sans Fallback';font-weight:100 500;src:local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');size-adjust:100.68%;ascent-override:101.81%;descent-override:27.32%;line-gap-override:0.00%}
@@ -22,9 +22,9 @@
 
 /* The corporate look (8 October 2026): the same tokens as the staff page, set for an employer reading on a phone. */
 :root{
-  --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#E8EDF4; --line:#CBD4E0; --line2:#B5C1D0;
+  --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#EDF2F2; --line:#CBD4E0; --line2:#B4BEC1;
   --ink:#142033; --ink2:#2B374C; --muted:#4B586C;
-  --primary:#1D5BC4; --primaryHover:#174CA6; --primarySoft:#EBF2FD; --primaryLine:#B8CEF4; --bar:#2A78D6;
+  --primary:#0A4A52; --primaryHover:#005D73; --primarySoft:#E2F1F3; --primaryLine:#B5DBE4; --bar:#00728D;
   --good:#067647; --goodBg:#E8F5EC; --warn:#A64B05; --warnBg:#FDF1E1; --warnMark:#E0891B; --bad:#D03B3B; --badBg:#FCEBE9; --badText:#B42318;
   --navy:var(--ink); --gold:var(--primary); --gold2:var(--primary); --bg:var(--canvas);
   --shadow:0 1px 2px rgba(16,24,40,.05); --shadowLg:0 24px 48px -16px rgba(16,24,40,.22);
@@ -36,7 +36,7 @@ button,input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 a{color:var(--primary)}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px}
-.mast{background:linear-gradient(120deg,#13408F,#1D5BC4 55%,#2A6FD8);color:#fff;padding:16px 0 24px}
+.mast{background:linear-gradient(120deg,#0A4A52,#0A4A52 55%,#00728D);color:#fff;padding:16px 0 24px}
 .brand{display:flex;align-items:center;gap:12px}
 .mark{width:38px;height:38px;border-radius:9px;overflow:hidden;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
 .mark img{width:100%;height:100%;display:block}
@@ -66,7 +66,7 @@ details.hist summary{list-style:none;cursor:pointer;display:flex;align-items:cen
 details.hist summary::-webkit-details-marker{display:none}
 details.hist summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;flex:none}
 details.hist[open] summary::before{transform:rotate(45deg)}
-details.hist summary:hover{background:#DCE8FB}
+details.hist summary:hover{background:#D3EBF0}
 details.hist summary .n{margin-left:auto;background:var(--primary);color:#fff;border-radius:99px;font-size:12px;padding:1px 9px}
 details.hist ul{list-style:none;margin:0;padding:4px 12px 8px;background:var(--paper);border-top:1px solid var(--primaryLine)}
 details.hist li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
@@ -102,7 +102,7 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--pa
 .stars{display:flex;gap:6px;margin:8px 0 4px}
 .star{background:none;border:0;padding:2px;cursor:pointer;border-radius:8px;transition:transform .15s}
 .star:hover{transform:scale(1.08)}
-.star svg{width:44px;height:44px;fill:#FFFFFF;stroke:#B5C1D0;stroke-width:1.5;stroke-linejoin:round;transition:fill .15s,stroke .15s}
+.star svg{width:44px;height:44px;fill:#FFFFFF;stroke:#B4BEC1;stroke-width:1.5;stroke-linejoin:round;transition:fill .15s,stroke .15s}
 .star[aria-checked="true"] svg,.star.hot svg{fill:#F2A900;stroke:#D18F00}
 .rlab{min-height:48px;margin:0 0 12px}
 .rlab b{display:block;font-size:17px}
@@ -113,11 +113,11 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--pa
 .key li:last-child{border-bottom:0}
 .key li.on{background:#FFF6DC}
 .key .ks{color:#E09B00;letter-spacing:1px;font-size:15px;white-space:nowrap}
-.key .ks i{font-style:normal;color:#C3CCD8}
+.key .ks i{font-style:normal;color:#C2C9CB}
 .key b{font-weight:600}
 @media (max-width:420px){.star svg{width:38px;height:38px}.key li{grid-template-columns:1fr;gap:0}}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.progress{position:sticky;top:0;background:#13408F;color:#fff;padding:8px 0;font-size:14px;z-index:2}
+.progress{position:sticky;top:0;background:#0A4A52;color:#fff;padding:8px 0;font-size:14px;z-index:2}
 footer{color:var(--muted);font-size:13px;padding:10px 0 40px;text-align:center}
 footer a{color:inherit}
 .hide{display:none!important}
@@ -130,7 +130,7 @@ footer a{color:inherit}
 @media (max-width:560px){.months{height:130px;gap:3px;padding:10px 4px 6px}.months .mo{font-size:11px}}
 /* the page's welcome (14 October 2026): who looks after them, the film, and the year at a glance */
 .hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0 0;box-shadow:var(--shadowLg)}
-.hero .av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#13408F,#2A6FD8);color:#fff;display:grid;place-items:center;font-weight:600;font-size:18px;letter-spacing:.02em}
+.hero .av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0A4A52,#00728D);color:#fff;display:grid;place-items:center;font-weight:600;font-size:18px;letter-spacing:.02em}
 .hero b{font-weight:600}.hero p{margin:0}.hero .muted{color:var(--muted);font-size:14px}
 .hero .links{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--primaryLine);background:var(--primarySoft);color:var(--primary);border-radius:99px;padding:7px 14px;font-weight:600;font-size:14px;text-decoration:none}
@@ -138,7 +138,7 @@ footer a{color:inherit}
 .pill.plain{background:var(--sunken);border-color:var(--line);color:var(--ink2);font-weight:500}
 .ytiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 12px}
 .ytiles div{background:linear-gradient(180deg,#FFFFFF,var(--paper));border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.ytiles b{display:block;font-size:24px;font-weight:600;color:#13408F;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ytiles b{display:block;font-size:24px;font-weight:600;color:#0A4A52;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .ytiles span{font-size:12px;color:var(--muted)}
 .thanks{text-align:center}
 .thanks .tick{width:76px;height:76px;border-radius:50%;background:var(--goodBg);color:var(--good);display:grid;place-items:center;margin:4px auto 14px;font-size:42px;font-weight:700;animation:pop .35s ease-out}
@@ -183,7 +183,7 @@ footer a{color:inherit}
 .ln[aria-pressed="true"]{background:var(--primarySoft);border-color:var(--primary);color:var(--primary);font-weight:600}
 .ln b{font-variant-numeric:tabular-nums}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
-.dot.life{background:#1D5BC4}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5B6B82}
+.dot.life{background:#0A4A52}.dot.health{background:#008C7A}.dot.pension{background:#8A4FD8}.dot.enrol{background:#5F6B70}
 .papp{border:1px solid var(--line);border-left:5px solid var(--primary);border-radius:10px;padding:14px 16px;margin:0 0 10px;background:#fff}
 .papp.warn{border-left-color:var(--warnMark)}.papp.bad{border-left-color:var(--bad)}
 .papp .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
@@ -214,7 +214,7 @@ footer a{color:inherit}
 .cgrp{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;min-width:0}
 .cgrp h3{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:15.5px;font-weight:600}
 .cgrp h3 .ic{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12.5px;font-weight:700}
-.cgrp.c65 .ic{background:#1D5BC4}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
+.cgrp.c65 .ic{background:#0A4A52}.cgrp.dep .ic{background:#008C7A}.cgrp.ret .ic{background:#8A4FD8}
 .cgrp h3 b{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
 .cgrp .hint{font-size:13px;color:var(--muted);margin:0 0 8px}
 .cgrp ul{list-style:none;margin:0;padding:0}
@@ -228,9 +228,9 @@ footer a{color:inherit}
 /* the two tabs of the page (25 October 2026): the service items and the billing, never on one screen */
 .ctabs{display:flex;gap:6px;margin:16px 0 0;border-bottom:2px solid var(--line)}
 .ctab{border:0;background:none;padding:12px 16px;font:inherit;font-weight:600;font-size:16px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;display:inline-flex;align-items:center;gap:8px}
-.ctab[aria-selected="true"]{color:var(--primary,#1D5BC4);border-color:var(--primary,#1D5BC4)}
-.ctab .n{font-size:12px;font-weight:600;background:var(--sunken,#E8EDF4);border-radius:99px;padding:1px 8px;color:var(--muted)}
-.ctab[aria-selected="true"] .n{background:var(--primarySoft,#EBF2FD);color:var(--primary,#1D5BC4)}
+.ctab[aria-selected="true"]{color:var(--primary,#0A4A52);border-color:var(--primary,#0A4A52)}
+.ctab .n{font-size:12px;font-weight:600;background:var(--sunken,#EDF2F2);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.ctab[aria-selected="true"] .n{background:var(--primarySoft,#E2F1F3);color:var(--primary,#0A4A52)}
 .ctab .bdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warnMark,#E0891B)}
 /* your people (25 October 2026): who is on the plans, who came off this year, who is pending, and a box to tell us */
 .ctabs{overflow-x:auto;scrollbar-width:none}.ctabs::-webkit-scrollbar{display:none}.ctab{white-space:nowrap}
@@ -282,7 +282,7 @@ footer a{color:inherit}
 .chg .srch{display:flex;gap:8px}.chg .srch .field{flex:1}
 .cres{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pickm{width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px}
-.pickm span{font-size:13px;color:var(--muted)}.pickm.on,.pickm:hover{border-color:var(--primary);background:var(--infoBg,#eef4fc)}
+.pickm span{font-size:13px;color:var(--muted)}.pickm.on,.pickm:hover{border-color:var(--primary);background:var(--infoBg,#E2F1F3)}
 .cform{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px}
 .cform .picked{font-size:14px;margin-bottom:4px}
 .deps .dep{display:grid;grid-template-columns:110px 1fr 70px 150px;gap:6px;margin:4px 0}.deps .dep.ben{grid-template-columns:100px 1fr 64px 140px 64px auto}
@@ -301,35 +301,207 @@ footer a{color:inherit}
 .st.ready{background:var(--primary);border-color:var(--primary);color:#fff}.tagt{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--warn);background:var(--warnBg);border-radius:99px;padding:1px 7px}
 @media (max-width:560px){.deps .dep,.deps .dep.ben,.deps .dep.wide{grid-template-columns:1fr 1fr}.fprev iframe{height:420px}.cfp{grid-template-columns:repeat(2,1fr)}}
 .cyears{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:4px 0 8px}
-.cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#13408F}.cyears span{font-size:12.5px;color:var(--muted)}
+.cyears div{background:var(--sunken);border-radius:10px;padding:10px 12px}.cyears b{display:block;font-size:18px;color:#0A4A52}.cyears span{font-size:12.5px;color:var(--muted)}
+
+/* ── The portal (26 November 2026): "a more professional and crisp look ... as easy as a 7-year-old can use it ...
+   Grouping is very important to separate and not jumbled up." Teal, the branch's own colours (the homepage's), in
+   place of the corporate blue of 8 October; a menu down the side (a strip of icons on a tablet, a tab bar on a phone),
+   and one thing in each place. White on --primary is 5.54:1, --muted on --canvas 5.2:1. ── */
+:root{--canvas:#E9F0F0;--paper:#FFFFFF;--sunken:#F1F5F5;--line:#D6DFE0;--line2:#879195;--ink:#11393F;--ink2:#2C3A3F;--muted:#586469;
+  --primary:#00728D;--primaryHover:#005D73;--primarySoft:#E2F1F3;--primaryLine:#B5DBE4;--bar:#00728D;--infoBg:#E2F1F3;--deep:#0A4A52;
+  --shadow:0 1px 2px rgba(17,57,63,.07);--shadowLg:0 18px 40px -18px rgba(17,57,63,.38)}
+body{background:var(--canvas)}
+.skip{position:absolute;left:-999px;top:0;background:#fff;color:var(--ink);padding:8px 12px;z-index:60;border-radius:6px}.skip:focus{left:8px;top:8px}
+.mast{background:linear-gradient(100deg,var(--deep),var(--primary));color:#fff;padding:0;position:relative;z-index:5}
+.mastin{display:flex;align-items:center;gap:16px;min-height:62px;padding:8px 22px;flex-wrap:wrap}
+.mast .mk{width:38px;height:38px;border-radius:10px;background:#fff;color:var(--deep);display:grid;place-items:center;flex:none}
+.mast .mk svg{width:28px;height:28px}
+.mast .bname{font-weight:600;font-size:15.5px;line-height:1.2}.mast .bsub{font-size:12.5px;color:rgba(255,255,255,.88)}
+.whobox{margin-left:auto;display:flex;align-items:center;gap:14px}
+.wn{text-align:right;line-height:1.25}.wn b{display:block;font-size:15px;font-weight:600}.wn span{font-size:12.5px;color:rgba(255,255,255,.88)}
+.so{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.55);color:#fff;border-radius:8px;padding:7px 16px;font-weight:600;font-size:14px;cursor:pointer;min-height:42px}
+.so:hover{background:rgba(255,255,255,.26)}
+.shell{display:flex;align-items:stretch;min-height:calc(100vh - 62px)}
+.colm{flex:1;min-width:0;display:flex;flex-direction:column}
+#app{width:100%;max-width:1120px;margin:0 auto;padding:24px 26px 30px;flex:1;outline:none;container:app/inline-size}
+footer{padding:14px 20px 30px}
+/* the sign-in: what the page is for on the left, the two boxes on the right */
+.gatewrap{display:flex;flex-wrap:wrap;border-radius:16px;overflow:hidden;box-shadow:var(--shadowLg);background:#fff;margin:14px auto 8px;max-width:980px;border:1px solid var(--line)}
+.gl{flex:1 1 22rem;background:linear-gradient(150deg,var(--deep),var(--primary));color:#fff;padding:38px 36px}
+.gl h2{margin:0 0 10px;font-size:clamp(1.6rem,1.2rem + 1.4vw,2.2rem);font-weight:600;line-height:1.15;letter-spacing:-.015em}
+.gl > p{margin:0 0 18px;font-size:16px;color:rgba(255,255,255,.92)}
+.gl ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.gl li{display:flex;gap:10px;align-items:flex-start;font-size:15.5px;line-height:1.4}
+.gck{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none;margin-top:1px}
+.gatewrap .gate{flex:1 1 20rem;max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;background:#fff;padding:38px 36px}
+.gatewrap .gate h2{font-size:24px}
+.gnote{font-size:14px;color:var(--muted);margin:16px 0 0}
+/* the menu: grouped, one place for each thing */
+.side{width:250px;flex:none;background:#fff;border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:2px}
+.nlab{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 12px 6px}
+.side > .nlab:first-child{padding-top:4px}
+.nv{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:10px 12px;font-size:15.5px;font-weight:500;color:var(--ink2);cursor:pointer;min-height:46px;position:relative}
+.nv .i{width:21px;height:21px;flex:none}
+.nv:hover{background:var(--sunken)}
+.nv.on{background:var(--primarySoft);color:var(--deep);font-weight:600}
+.nv.on::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--primary)}
+.nv .bd{margin-left:auto;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;background:var(--primarySoft);color:var(--deep);line-height:1.5}
+.nv.on .bd{background:#fff}
+.nv .bd.warn{background:var(--badBg);color:var(--badText)}
+.nv.more{display:none}
+.xs{display:contents}
+/* each page opens on its own title and one line on what to do there */
+.phd{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px}
+.phd h1{margin:0;font-size:28px;font-weight:600;letter-spacing:-.015em;color:var(--ink);line-height:1.2}
+.phd p{margin:5px 0 0;color:var(--muted);font-size:15.5px;max-width:64ch}
+.ct-forms .chg > h3:first-child{display:none}
+/* the figures: each one opens the page it counts */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.kpi{text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px 13px;cursor:pointer;display:flex;flex-direction:column;gap:1px;box-shadow:var(--shadow);border-top:4px solid var(--primary);transition:transform .15s,border-color .15s;font:inherit;color:inherit}
+.kpi:hover{transform:translateY(-2px);border-color:var(--primaryLine);border-top-color:var(--primary)}
+.kpi .kv{font-size:28px;font-weight:600;color:var(--ink);letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .kl{font-size:14.5px;font-weight:600;color:var(--ink2)}
+.kpi .ks{font-size:13px;color:var(--muted)}
+.kpi.alert{border-top-color:var(--bad)}.kpi.alert:hover{border-top-color:var(--bad)}.kpi.alert .kv{color:var(--badText)}
+@container app (max-width:46rem){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* panels: a title bar and a body, so each group reads as one thing */
+.pnl{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin:0 0 16px;min-width:0}
+.pnl > .h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.pnl > .h h2{margin:0;font-size:17px;font-weight:600;color:var(--ink)}
+.pnl > .h > span{font-size:13px;color:var(--muted)}
+.pnl > .pb{padding:14px 18px 16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:16px;margin:0 0 16px}
+.grid2 > .pnl{margin:0}
+.todorow{display:flex;gap:10px}
+.todorow select{flex:1;font-size:17px;min-height:54px;font-weight:500}
+.todorow .btn{min-width:110px;min-height:54px}
+.qlab{font-size:13.5px;color:var(--muted);margin:16px 0 8px}
+.qa{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@container app (max-width:40rem){.qa{grid-template-columns:repeat(2,minmax(0,1fr))}.qab{font-size:14.5px;padding:10px 11px;gap:9px}}
+.qab{display:flex;align-items:center;gap:11px;text-align:left;border:1px solid var(--line);background:var(--sunken);border-radius:10px;padding:12px 14px;font:inherit;font-weight:600;font-size:15px;color:var(--ink);cursor:pointer;min-height:58px}
+.qab .i{width:22px;height:22px;color:var(--primary);flex:none}
+.qab:hover{border-color:var(--primary);background:var(--primarySoft)}
+.arow{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.arow:first-child{border-top:0;padding-top:2px}
+.arow .t{flex:1 1 15rem;min-width:0}.arow .t b{display:block;font-weight:600;color:var(--ink)}.arow .t span{font-size:14px;color:var(--muted)}
+.tg{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;border-radius:6px;padding:2px 9px;white-space:nowrap}
+.tg.red{background:var(--badBg);color:var(--badText)}.tg.amb{background:var(--warnBg);color:var(--warn)}.tg.grn{background:var(--goodBg);color:var(--good)}.tg.blu{background:var(--primarySoft);color:var(--deep)}
+.btn.s2{padding:8px 16px;font-size:14.5px;min-height:42px}
+.btn.sec{background:#fff;color:var(--primary);border-color:var(--primary)}.btn.sec:hover{background:var(--primarySoft);color:var(--deep)}
+.btn.wa{background:#fff;color:#11634A;border-color:#128C7E}.btn.wa:hover{background:#E4F5EE}
+.btn .i{width:19px;height:19px;margin-right:8px;flex:none}
+a.btn{text-decoration:none}
+.allok{display:flex;align-items:center;gap:10px;color:var(--good);font-weight:600;padding:6px 0}
+.ok1{width:28px;height:28px;border-radius:50%;background:#1F8F55;color:#fff;display:grid;place-items:center;flex:none;font-size:15px}
+.care{display:flex;gap:14px;align-items:flex-start}
+.avb{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--deep),var(--primary));color:#fff;display:grid;place-items:center;font-weight:600;font-size:18px;flex:none}
+.care p{margin:0 0 4px}.care .muted{color:var(--muted);font-size:14px}
+.care .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pnl .ytiles{grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr))}
+.pnl .ytiles b{color:var(--deep)}
+.pnl .months{border:0;box-shadow:none;padding:10px 0 0;background:transparent}
+details.svc{margin-top:10px}details.svc > summary{cursor:pointer;font-weight:600;color:var(--primary);font-size:14.5px;padding:6px 0}
+details.svc .scroll{margin-top:8px}
+/* Your people in three parts, chosen at the top */
+.seg{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:5px;margin:0 0 16px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.sg{flex:1 1 auto;border:0;background:transparent;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;font-size:15px;color:var(--ink2);cursor:pointer;min-height:46px}
+.sg b{display:inline-block;margin-left:6px;font-size:12.5px;background:var(--sunken);border-radius:99px;padding:0 8px;color:var(--muted)}
+.sg[aria-selected="true"]{background:var(--primary);color:#fff}.sg[aria-selected="true"] b{background:rgba(255,255,255,.24);color:#fff}
+.sg:not([aria-selected="true"]):hover{background:var(--sunken)}
+/* your items, grouped by kind of work */
+.ct-items .cat{font-size:13px;letter-spacing:.07em;margin:22px 0 10px;color:var(--ink2);display:flex;align-items:center;gap:10px}
+.ct-items .cat::after{content:"";flex:1;height:1px;background:var(--line)}
+.ct-items .item{border-radius:12px;background:#fff;padding:16px 18px}
+.progress{position:sticky;top:0;background:var(--deep);z-index:4}
+.progress .pin{max-width:1120px;margin:0 auto;padding:0 26px}
+/* help */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:16px}
+.hgrid > .pnl{margin:0}
+.hcard .pb{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:20px}
+.hcard h2{margin:6px 0 0;font-size:18px;font-weight:600;color:var(--ink)}.hcard p{margin:0 0 8px;color:var(--muted);font-size:15px}
+.wad{width:50px;height:50px;border-radius:50%;background:#128C7E;color:#fff;display:grid;place-items:center}.wad svg{width:27px;height:27px}
+.avb.play{font-size:16px}
+/* a tablet: the menu is a strip of icons with their names under them */
+@media (min-width:640.02px) and (max-width:1023.98px){
+  .side{width:96px;padding:12px 6px}
+  .nlab{display:none}
+  .nv{flex-direction:column;gap:4px;font-size:12.5px;text-align:center;justify-content:center;padding:10px 4px;min-height:66px}
+  .nv .i{width:24px;height:24px}
+  .nv .bd{position:absolute;top:6px;right:12px;margin:0;padding:0 6px}
+  .nv.on::before{left:-6px}
+  #app{padding:20px 20px 26px}
+  .progress .pin{padding:0 20px}
+}
+/* a phone: a tab bar along the bottom, the rest under More */
+@media (max-width:640px){
+  .mastin{padding:8px 14px;min-height:56px;gap:10px}
+  .wn{display:none}
+  .so{padding:6px 12px;min-height:40px}
+  .shell{display:block}
+  .side{position:fixed;left:0;right:0;bottom:0;z-index:30;width:auto;flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:4px 4px 6px;box-shadow:0 -8px 22px -12px rgba(17,57,63,.45)}
+  .nlab{display:none}
+  .nv{flex:1 1 0;flex-direction:column;gap:3px;font-size:11.5px;padding:7px 2px 5px;min-height:58px;justify-content:center;text-align:center}
+  .nv .i{width:24px;height:24px}
+  .nv .bd{position:absolute;top:3px;left:calc(50% + 6px);margin:0;padding:0 6px;font-size:11px}
+  .nv.on::before{left:16px;right:16px;top:-4px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px}
+  .nv.more{display:flex}
+  .xs{display:none}
+  .side.open .xs{display:flex;flex-direction:column;position:fixed;left:10px;right:10px;bottom:78px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadowLg)}
+  .side.open .xs .nlab{display:block;padding:8px 10px 4px}
+  .side.open .xs .nv{flex-direction:row;font-size:16px;min-height:52px;justify-content:flex-start;text-align:left;padding:10px 12px;gap:12px}
+  .side.open .xs .nv .bd{position:static;margin-left:auto}
+  .side.open .xs .nv.on::before{display:none}
+  #app{padding:16px 14px 104px}
+  footer{padding-bottom:100px}
+  .phd h1{font-size:24px}
+  .gl,.gatewrap .gate{padding:26px 22px}
+  .gatewrap{margin:6px auto}
+  .todorow{flex-direction:column}
+  .kpi .kv{font-size:23px}
+  .kpi{padding:12px 13px}
+  .progress .pin{padding:0 14px}
+}
+@media (prefers-reduced-motion:reduce){.kpi{transition:none}.kpi:hover{transform:none}}
 </style>
 </head>
 <body>
-<header class="mast"><div class="wrap">
-  <div class="brand"><div class="mark"><img src="gcm-mark.png" alt=""></div><div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group client service page</div></div></div>
-  <h1 id="h1">Group client sign in</h1>
-  <p id="hsub">For employers whose group plans our branch looks after.</p>
+<a class="skip" href="#app">Skip to your page</a>
+<header class="mast"><div class="mastin">
+  <div class="brand"><span class="mk" aria-hidden="true"><svg viewBox="0 0 88 88"><path d="M44 9L73 21.5V41C73 60.5 60.5 72 44 78.5C27.5 72 15 60.5 15 41V21.5Z" fill="currentColor"/><path d="M30 44L39.5 53.5L58 32.5" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group client services</div></div></div>
+  <div class="whobox hide" id="who"><div class="wn"><b id="h1">Group client sign in</b><span id="hsub"></span></div><button class="so" type="button" id="so">Sign out</button></div>
 </div></header>
-<div class="progress hide" id="prog"><div class="wrap" id="progText"></div></div>
-<main class="wrap" id="app">
-  <form class="gate" id="gate" autocomplete="off">
-    <h2>Sign in</h2>
-    <p>Use the list bill and the access code from our e-mail.</p>
-    <label for="lb">List bill</label>
-    <input class="field code" id="lb" autocapitalize="characters" spellcheck="false" placeholder="e.g. A123" required>
-    <label for="code">Access code</label>
-    <input class="field code" id="code" autocapitalize="characters" spellcheck="false" required>
-    <div class="err" id="err" role="alert"></div>
-    <button class="btn full" type="submit" id="go">Open my service page</button>
-  </form>
-  <div class="what">Your page shows:
-    <ul><li>every item our team has open for your company, who is handling it, how long it has been open and its target date</li>
-    <li>our latest note on each item</li>
-    <li>our service record for you this year</li>
-    <li>a place to confirm each item, flag what needs changing, and rate our service</li></ul>
+<div class="shell" id="shell">
+  <nav class="side hide" id="side" aria-label="Your account"></nav>
+  <div class="colm">
+    <div class="progress hide" id="prog"><div class="pin" id="progText"></div></div>
+    <main id="app" tabindex="-1">
+      <div class="gatewrap">
+        <div class="gl">
+          <h2>Your group benefits account</h2>
+          <p>Group Health, Group Life and Pension, looked after by our branch, in one place.</p>
+          <ul>
+            <li><span class="gck" aria-hidden="true">✓</span>Every item we have open for your company, who has it and when it is due</li>
+            <li><span class="gck" aria-hidden="true">✓</span>Your bills, what we received, and a place to tell us about a payment</li>
+            <li><span class="gck" aria-hidden="true">✓</span>Your employees: who is pending, joining and leaving</li>
+            <li><span class="gck" aria-hidden="true">✓</span>Help on WhatsApp, any time</li>
+          </ul>
+        </div>
+        <form class="gate" id="gate" autocomplete="off">
+          <h2>Sign in</h2>
+          <p>Use the list bill and the access code from our e-mail.</p>
+          <label for="lb">List bill</label>
+          <input class="field code" id="lb" autocapitalize="characters" spellcheck="false" placeholder="e.g. A123" required>
+          <label for="code">Access code</label>
+          <input class="field code" id="code" autocapitalize="characters" spellcheck="false" required>
+          <div class="err" id="err" role="alert"></div>
+          <button class="btn full" type="submit" id="go">Open my service page</button>
+          <p class="gnote">Lost your code? <a href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20need%20my%20group%20service%20page%20access%20code." target="_blank" rel="noopener">Ask us on WhatsApp</a>.</p>
+        </form>
+      </div>
+    </main>
+    <footer>Questions? <a href="https://wa.me/18684357868?text=Hi%20HELP%20868%2C%20I%20am%20on%20our%20group%20service%20page%20and%20need%20a%20hand." target="_blank" rel="noopener">HELP 868 on WhatsApp</a> · <a href="mailto:rickyrampersadsalessupport@myguardiangroup.com">rickyrampersadsalessupport@myguardiangroup.com</a> · <a href="../index.html">Ricky Rampersad Branch</a></footer>
   </div>
-</main>
-<footer>Questions? <a href="mailto:rickyrampersadsalessupport@myguardiangroup.com">rickyrampersadsalessupport@myguardiangroup.com</a> · <a href="../index.html">Ricky Rampersad Branch</a></footer>
+</div>
 
 <script src="/myrenewal/renewal-card.js?v=2026-11-11"></script>
 <script>
@@ -367,6 +539,7 @@ function loadDraft() { try { A = JSON.parse(localStorage.getItem(draftKey()) || 
 function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(A)); } catch (e) {} }
 
 $('gate').addEventListener('submit', e => { e.preventDefault(); CRED = { lb: $('lb').value.trim(), code: $('code').value.trim() }; open_(); });
+$('so').onclick = () => { try { sessionStorage.removeItem('rrb-gcm-client'); } catch (e) {} location.reload(); };
 async function open_() {
   const err = $('err'), go = $('go');
   if (go) { err.textContent = ''; go.disabled = true; go.textContent = 'Opening your page…'; }
@@ -381,7 +554,7 @@ async function open_() {
   /* a star tapped in the bill e-mail rates the person who looks after the account, on the billing tab (27 October 2026) */
   const toBill = FROM === 'bill' && !!(D.billing && Array.isArray(D.billing.lines) && D.billing.lines.length);
   const fromStar = RATE_IN && (toBill ? !A._bstars : !A._stars);
-  if (fromStar) { if (toBill) A._bstars = RATE_IN; else A._stars = RATE_IN; saveDraft(); }
+  if (fromStar) { if (toBill) A._bstars = RATE_IN; else A._stars = RATE_IN; saveDraft(); CT = toBill ? 'billing' : 'items'; }
   render();
   loadRenewals();
   /* a star tapped in the reminder or the bill: the page opens on the rating, with that star chosen */
@@ -410,7 +583,7 @@ function pendHtml() {
     '<button type="button" class="ln" data-pf="all" aria-pressed="' + (PF === 'all') + '">All <b>' + P.length + '</b></button>' +
     lines.filter(n).map(l => '<button type="button" class="ln" data-pf="' + esc(l) + '" aria-pressed="' + (PF === l) + '"><span class="dot ' + (LINE_DOT[l] || 'enrol') + '" aria-hidden="true"></span>' + esc(l) + ' <b>' + n(l) + '</b></button>').join('') +
     (hasInc && hasApp ? '<button type="button" class="ln" data-pf="' + INC_PF + '" aria-pressed="' + (PF === INC_PF) + '"><span class="up" aria-hidden="true">↑</span>Increases <b>' + nInc + '</b></button>' : '') + '</div>';
-  h += '<p class="pgo"><button class="lnk" type="button" data-topeople>Comment on any of these, or see everyone on your plans, in Your people →</button></p>';
+  h += '<p class="pgo"><button class="lnk" type="button" data-topeople>Comment on any of these in Everyone on your plans →</button></p>';
   P.filter(c => PF === 'all' || (PF === INC_PF ? c.incs : c.lines.indexOf(PF) >= 0)).forEach(c => {
     const cls = ageCls(c.days, c.late);
     const since = [c.applied ? 'Application received ' + esc(dmy(c.applied)) : '', c.incSince ? 'Increase submitted ' + esc(dmy(c.incSince)) : ''].filter(Boolean).join(' · ') || 'With us since ' + esc(dmy(c.since));
@@ -485,18 +658,60 @@ function bindBrate() {
 }
 /* the page in two tabs (25 October 2026): the weekly items and the billing never share a screen. The bill e-mail's link
    carries ?tab=billing; the weekly letter's opens on the items. */
-let CT = /(^|[?&])tab=billing(&|$)/.test(location.search) ? 'billing' : /(^|[?&])tab=people(&|$)/.test(location.search) ? 'people' : 'items';
+/* the portal (26 November 2026) opens on Home; the weekly letter and its reminder open on the items, the bill e-mail on
+   the billing, and a link carrying ?form= (the "ready for you to check" e-mail) on Join & leave */
+const TAB = (QS.get('tab') || '').toLowerCase();
+let CT = /(^|[?&])form=/.test(location.search) ? 'forms' : ['billing', 'people', 'items', 'forms', 'help'].indexOf(TAB) >= 0 ? TAB : FROM === 'letter' || FROM === 'reminder' ? 'items' : 'home';
 /* ?tab=renewals opens on the renewals once they are read (they arrive after the page) */
 const WANT_REN = /(^|[?&])tab=renewals(&|$)/.test(location.search);
-function ctabsHtml(hasBill, items) {
-  const B = D.billing, owed = hasBill ? B.lines.reduce((n, l) => n + (l.owed > 0 ? 1 : 0), 0) : 0, pend = Array.isArray(D.pending) ? D.pending.length : 0;
-  return '<div class="ctabs" role="tablist" aria-label="Your page"><button type="button" role="tab" class="ctab" data-ct="items" aria-selected="' + (CT === 'items') + '"><span class="lg">Your service items</span><span class="sh">Items</span><span class="n">' + items + '</span></button>' +
-    (hasBill ? '<button type="button" role="tab" class="ctab" data-ct="billing" aria-selected="' + (CT === 'billing') + '"><span class="lg">Your billing</span><span class="sh">Billing</span>' + (owed ? '<i class="bdot" aria-hidden="true" title="an amount is still open"></i>' : '') + (B.statement ? '<span class="n">' + esc(B.statement.label.replace(/ \d{4}$/, '')) + '</span>' : '') + '</button>' : '') +
-    '<button type="button" role="tab" class="ctab" data-ct="people" aria-selected="' + (CT === 'people') + '"><span class="lg">Your people</span><span class="sh">People</span>' + (pend ? '<span class="n" title="' + pend + ' pending">' + pend + ' pending</span>' : '') + '</button>' +
-    /* general insurance renewals (29 October 2026): only when the group has one with a letter from us */
-    (renOn() ? '<button type="button" role="tab" class="ctab" data-ct="renewals" aria-selected="' + (CT === 'renewals') + '"><span class="lg">Your renewals</span><span class="sh">Renewals</span>' + (renOpen() ? '<span class="n">' + renOpen() + ' to approve</span>' : '') + '</button>' : '') + '</div>';
+/* the menu: grouped, one place for each thing; on a phone the first four sit in a tab bar and the rest under More */
+const WA = 'https://wa.me/18684357868?text=' + encodeURIComponent('Hi HELP 868, I am on our group service page and need a hand.');
+const ICON = {
+  home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
+  items: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3.5 6 1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5 2.5-2.5"/>',
+  billing: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/>',
+  forms: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>',
+  leave: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11h6"/>',
+  renewals: '<path d="M20 11a8 8 0 0 0-14.7-4.3L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.7 4.3L21 15"/><path d="M21 20v-5h-5"/>',
+  help: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.3A8 8 0 1 1 21 12z"/>',
+  pay: '<rect x="2.5" y="5.5" width="19" height="13" rx="2"/><path d="M2.5 10h19M6.5 15h4"/>',
+  more: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>'
+};
+const ico = k => '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + '</svg>';
+const WA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.3A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 9.2c.2-.5.6-.5.8-.5h.5l.8 1.8-.6.8c.5.9 1.2 1.6 2.1 2.1l.8-.6 1.8.8v.5c0 .2 0 .6-.5.8-.9.4-2.6-.1-4.1-1.6S9.1 10.1 9.5 9.2z" fill="currentColor"/></svg>';
+const pageHead = (t, sub) => '<div class="phd"><div><h1>' + t + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div></div>';
+function navHtml(hasBill) {
+  const toReview = D.items.filter(i => !(A[i.id] && A[i.id].v)).length, pend = Array.isArray(D.pending) ? D.pending.length : 0;
+  const b = (k, label, badge) => '<button type="button" class="nv' + (CT === k ? ' on' : '') + '" data-ct="' + k + '"' + (CT === k ? ' aria-current="page"' : '') + '>' + ico(k) + '<span class="nt">' + label + '</span>' +
+    (badge ? '<span class="bd' + (badge.warn ? ' warn' : '') + '" title="' + esc(badge.title) + '">' + badge.t + '</span>' : '') + '</button>';
+  return '<div class="nlab">Your account</div>' + b('home', 'Home') +
+    b('items', 'Your items', toReview ? { t: toReview, warn: true, title: toReview + ' still to answer' } : null) +
+    (hasBill ? b('billing', 'Billing') : '') +
+    b('people', 'Your people', pend ? { t: pend, title: pend + ' pending' } : null) +
+    '<button type="button" class="nv more' + (['forms', 'renewals', 'help'].indexOf(CT) >= 0 ? ' on' : '') + '" data-more aria-expanded="false">' + ico('more') + '<span class="nt">More</span></button>' +
+    '<div class="xs"><div class="nlab">Do something</div>' + b('forms', 'Join &amp; leave') +
+    (renOn() ? b('renewals', 'Renewals', renOpen() ? { t: renOpen(), warn: true, title: renOpen() + ' to approve' } : null) : '') +
+    '<div class="nlab">Help</div>' + b('help', 'Help &amp; contact') + '</div>';
 }
-function bindCtabs() { document.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => { CT = b.dataset.ct; render(); window.scrollTo(0, 0); }); }
+function bindNav() {
+  const side = $('side');
+  side.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => go(b.dataset.ct));
+  const m = side.querySelector('[data-more]'); if (m) m.onclick = () => { const o = side.classList.toggle('open'); m.setAttribute('aria-expanded', String(o)); };
+  document.querySelectorAll('#app [data-go]').forEach(b => b.onclick = () => go(b.dataset.go, b.dataset.then || ''));
+}
+/* one way to go anywhere: the menu, the figures, the shortcuts and the "What would you like to do?" list all use it */
+function go(where, then) {
+  $('side').classList.remove('open');
+  if (where === 'whatsapp') { window.open(WA, '_blank', 'noopener'); return; }
+  CT = where;
+  if (where === 'forms' && then) CF = cfFresh(then);
+  if (where === 'people' && then) PV = then;
+  render(); window.scrollTo(0, 0);
+  if (where === 'billing' && then) { const k = $('tkind'); if (k) { k.value = then === 'question' ? 'query' : 'payment'; k.dispatchEvent(new Event('change')); const t = $('tell'); if (t) t.scrollIntoView({ block: 'start' }); } }
+  else if (then === 'rate') { const r = $('rate'); if (r) r.scrollIntoView({ block: 'start' }); }
+  else { const a = $('app'); if (a) a.focus({ preventScroll: true }); }
+}
 /* the statement of account the bill e-mail carried: this month's lines, the earlier invoices still open, what changed */
 function statementHtml(B) {
   const s = B.statement; if (!s) return '';
@@ -527,7 +742,6 @@ function billingHtml() {
   if (L.openItems) h += '<p class="sub">' + L.openItems + ' billing item' + (L.openItems === 1 ? ' is' : 's are') + ' open on this line: it is in “Your open items” below, with who is on it and where it stands.</p>';
   if (L.changes && L.changes.length) h += '<h3>What you have told us</h3><ul class="feed">' + L.changes.map(c => '<li><b>' + esc(c.at) + '</b> · ' + esc(c.kind) + (c.member ? ' · ' + esc(c.member) : '') + ' · ' + esc(c.detail) + ' · <span class="st">' + esc(c.status) + '</span></li>').join('') + '</ul>';
   if (L.claims && L.claims.byYear && L.claims.byYear.length) h += '<h3>What your plan paid for your people</h3><div class="cyears">' + L.claims.byYear.map(y => '<div><b>' + money(y.paid) + '</b><span>' + esc(y.year) + ' · ' + y.claims + ' claim' + (y.claims === 1 ? '' : 's') + '</span></div>').join('') + '</div><p class="sub">Claims paid by the plan, by the year of the service. The last two months are still being processed.</p>';
-  h += chgHtml();
   h += '<div class="tell" id="tell"><h3>Tell us about a payment or a change</h3>' + (TELL.sent ? '<div class="ok">' + esc(TELL.sent) + '</div>' : '') +
     '<label for="tkind">What is it?</label><select class="field" id="tkind"><option value="payment">A payment we have made</option><option value="joiner">Someone has joined</option><option value="leaver">Someone has left</option><option value="dependent">A dependent added or removed</option><option value="query">A question about our billing</option></select>' +
     '<div id="tpay"><div class="row2"><div><label for="tamt">Amount (TT$)</label><input class="field" id="tamt" type="number" step="0.01" inputmode="decimal"></div><div><label for="tdate">Date paid</label><input class="field" id="tdate" type="date"></div></div>' +
@@ -540,7 +754,7 @@ function billingHtml() {
 }
 function bindBilling() {
   const sec = document.querySelector('.billing'); if (!sec) return;
-  bindChg(); bindBrate();
+  bindBrate();
   sec.querySelectorAll('[data-bt]').forEach(b => b.onclick = () => { BT = b.dataset.bt; const br = $('brate'); if (br) br.remove(); sec.outerHTML = billingHtml(); bindBilling(); });
   const kind = $('tkind'), swap = () => { const pay = kind.value === 'payment', q = kind.value === 'query'; $('tpay').classList.toggle('hide', !pay); $('tchg').classList.toggle('hide', pay || q); };
   kind.onchange = swap; swap();
@@ -929,7 +1143,7 @@ function bindPend() {
     PF = b.dataset.pf; const box = document.querySelector('.pend');
     if (box) { box.outerHTML = pendHtml(); bindPend(); }
   });
-  document.querySelectorAll('[data-topeople]').forEach(b => b.onclick = () => { CT = 'people'; PEO.f = 'pending'; PEO.q = ''; render(); window.scrollTo(0, 0); });
+  document.querySelectorAll('[data-topeople]').forEach(b => b.onclick = () => { CT = 'people'; PV = 'list'; PEO.f = 'pending'; PEO.q = ''; render(); window.scrollTo(0, 0); });
 }
 /* your people (25 October 2026): who is on your plans, who came off this year, and who is pending; what is open on each
    one with us, who on our team has it, and a box to tell us what is holding it up. A message goes onto that item in our
@@ -1064,26 +1278,79 @@ function comingHtml() {
   return h;
 }
 
-function render() {
-  $('h1').textContent = D.group;
-  $('hsub').textContent = 'Open service items as at ' + D.asAt + '. Please review each one by ' + dmy(D.respondBy) + '.';
-  const hasBill = !!(D.billing && Array.isArray(D.billing.lines) && D.billing.lines.length); if (!hasBill && CT === 'billing') CT = 'items';
-  const items = D.items, waiting = items.filter(i => /confirmation/i.test(i.status)).length, late = items.filter(i => i.late).length;
-  const cats = [];
-  items.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
+/* Home (26 November 2026): where everything stands, what needs them, and one list of everything they can do */
+let TODO = [];
+const kpiB = (go, v, l, sub, alert) => '<button type="button" class="kpi' + (alert ? ' alert' : '') + '" data-go="' + go + '"><span class="kv">' + v + '</span><span class="kl">' + l + '</span><span class="ks">' + sub + '</span></button>';
+function homeHtml(hasBill) {
+  const items = D.items, n = items.length, done = items.filter(i => A[i.id] && A[i.id].v).length, late = items.filter(i => i.late).length;
+  const B = D.billing, st = hasBill && B.statement ? B.statement : null, owedLines = hasBill ? B.lines.filter(l => l.owed > 0) : [];
+  const hr = new Date().getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  let h = pageHead(hello, esc(D.group) + ' · as at ' + esc(D.asAt));
+  h += '<div class="kpis">' +
+    kpiB('items', n, 'open items', n ? 'with our team now' : 'nothing open') +
+    kpiB('items', n - done, 'need your answer', n ? 'by ' + esc(dmy(D.respondBy)) : 'nothing to answer', n - done > 0) +
+    kpiB('items', late, 'past target', late ? 'we are on them' : 'none', late > 0) +
+    (st ? kpiB('billing', money(st.grand), 'to bring your account up to date', st.dueBy ? 'payable by ' + esc(dmy(st.dueBy)) : esc(st.label))
+      : kpiB('items', D.doneWeek, 'completed this week', 'for your company')) + '</div>';
+  TODO = [['items', '', 'Check this week’s items', 'items'], hasBill ? ['billing', 'payment', 'Tell us about a payment', 'pay'] : null,
+    ['forms', 'enrol', 'Add a new employee', 'forms'], ['forms', 'change', 'Someone has left, or a change', 'leave'],
+    hasBill ? ['billing', '', 'See my bill', 'billing'] : null, ['people', '', 'See my employees', 'people'],
+    renOn() ? ['renewals', '', 'See my renewals', 'renewals'] : null, hasBill ? ['billing', 'question', 'Ask about my bill', 'help'] : null,
+    ['help', '', 'Get help, or ask us on WhatsApp', 'help']].filter(Boolean);
+  const acts = [];
+  if (n && done < n) acts.push({ go: 'items', t: 'Check this week’s items', s: (n - done) + ' of ' + n + ' still to answer, then rate us and send · by ' + dmy(D.respondBy), tg: ['Your answer needed', 'red'], b: 'Start' });
+  if (renOn() && renOpen()) acts.push({ go: 'renewals', t: 'Approve your renewal' + (renOpen() > 1 ? 's' : ''), s: renOpen() + ' waiting for your yes', tg: ['Your answer needed', 'red'], b: 'Open' });
+  owedLines.forEach(l => acts.push({ go: 'billing', t: money(l.owed) + ' still open on ' + l.label, s: 'If you have paid it, tell us and we will match it', tg: ['Please check', 'amb'], b: 'Open' }));
+  if (Array.isArray(D.pending) && D.pending.length) acts.push({ go: 'people', then: 'pending', t: D.pending.length + (D.pending.length === 1 ? ' employee has' : ' employees have') + ' an application or increase pending', s: 'See what each one is waiting on, and who has it', tg: ['In progress', 'blu'], b: 'See' });
+  if (D.coming && D.coming.count) acts.push({ go: 'people', then: 'coming', t: D.coming.count + ' of your people have a date coming up', s: 'Turning ' + D.coming.convertAge + ', dependents coming of age, retirements', tg: ['Coming up', 'amb'], b: 'See' });
+  h += '<section class="pnl" aria-labelledby="acth"><div class="h"><h2 id="acth">Needs your attention</h2>' + (acts.length ? '<span class="tg red">' + acts.length + '</span>' : '') + '</div><div class="pb">' +
+    (acts.length ? acts.map(a => '<div class="arow"><div class="t"><b>' + esc(a.t) + '</b><span>' + esc(a.s) + '</span></div><span class="tg ' + a.tg[1] + '">' + a.tg[0] + '</span><button type="button" class="btn s2" data-go="' + a.go + '"' + (a.then ? ' data-then="' + a.then + '"' : '') + '>' + a.b + '</button></div>').join('')
+      : '<div class="allok"><span class="ok1" aria-hidden="true">✓</span>Nothing needs your attention. Thank you.</div>') + '</div></section>';
+  h += '<section class="pnl" aria-labelledby="todoh"><div class="h"><h2 id="todoh">What would you like to do?</h2></div><div class="pb">' +
+    '<div class="todorow"><label for="todo" class="vh">Choose what you would like to do</label><select class="field" id="todo"><option value="">Choose one…</option>' +
+    TODO.map((t, k) => '<option value="' + k + '">' + t[2] + '</option>').join('') + '</select><button type="button" class="btn" id="todogo">Go</button></div>' +
+    '<p class="qlab">Or tap one:</p><div class="qa">' + TODO.slice(0, 6).map(t => '<button type="button" class="qab" data-go="' + t[0] + '"' + (t[1] ? ' data-then="' + t[1] + '"' : '') + '>' + ico(t[3]) + '<span>' + t[2] + '</span></button>').join('') + '</div></div></section>';
   const ini = String(D.staff || 'RR').split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
-  let h = '<div class="hero"><div class="av" aria-hidden="true">' + esc(ini) + '</div><div>' +
-    (D.staff ? '<p>Your account is looked after by <b>' + esc(D.staff) + '</b> and our branch team.</p>' : '<p>Your account is looked after by our branch team.</p>') +
-    '<p class="muted">' + (D.lastAnswer ? 'You last answered us on ' + esc(D.lastAnswer.at) + (D.lastAnswer.name ? ' (' + esc(D.lastAnswer.name) + ')' : '') + '. ' : '') +
-    (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p></div>' +
-    '<div class="links"><a class="pill" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener"><span class="play" aria-hidden="true">▶</span>How this page works · ' + PAGE_FILM.length + '</a>' +
-    '<a class="pill plain" href="' + (CT === 'billing' ? '#brate' : '#rate') + '">Rate our service</a></div></div>' +
-    ctabsHtml(hasBill, items.length) + (CT === 'renewals' && renOn() ? renewalsHtml() : CT === 'billing' ? billingHtml() : CT === 'people' ? peopleHtml() : pendHtml() + comingHtml() +
-    '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
-    '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
-    '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>');
-  if (CT === 'items') {
-  if (!items.length) h += '<p>There is nothing open for your company right now.</p>';
+  h += '<div class="grid2"><section class="pnl" aria-labelledby="careh"><div class="h"><h2 id="careh">Who looks after you</h2></div><div class="pb"><div class="care"><div class="avb" aria-hidden="true">' + esc(ini) + '</div><div>' +
+    (D.staff ? '<p><b>' + esc(D.staff) + '</b> and our branch team look after your account.</p>' : '<p>Our branch team looks after your account.</p>') +
+    '<p class="muted">' + (D.lastAnswer ? 'You last answered us on ' + esc(D.lastAnswer.at) + (D.lastAnswer.name ? ' (' + esc(D.lastAnswer.name) + ')' : '') + '. ' : '') + (D.nextLetter ? 'Your next letter comes ' + esc(D.nextLetter) + '.' : '') + '</p>' +
+    '<div class="acts"><a class="btn wa s2" href="' + WA + '" target="_blank" rel="noopener">' + ico('help') + 'Message us on WhatsApp</a><a class="btn sec s2" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener">How this page works</a></div></div></div></div></section>' +
+    yearHtml() + '</div>';
+  return h;
+}
+function bindHome() {
+  const sel = $('todo'), g = $('todogo');
+  if (g) g.onclick = () => { const t = TODO[+sel.value]; if (sel.value === '' || !t) { sel.focus(); return; } go(t[0], t[1]); };
+}
+/* our service for them this year: the figures, the months, and the table behind a fold */
+function yearHtml() {
+  let h = '';
+  if (D.record.length) {
+    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 }), Y = D.year;
+    if (Y) h += '<div class="ytiles"><div><b>' + Y.done + '</b><span>completed for your company</span></div><div><b>' + Y.member + '</b><span>for your employees’ own policies</span></div>' +
+      '<div><b>' + (Y.onTimePct == null ? '–' : Y.onTimePct + '%') + '</b><span>done by the target date</span></div><div><b>' + (Y.avgDays == null ? '–' : Y.avgDays) + '</b><span>days on average</span></div></div>';
+    if (Y && Y.months && Y.months.length) {
+      const max = Math.max(1, ...Y.months.map(m => m.done));
+      h += '<div class="months" role="list" aria-label="Items completed for you, by month" style="grid-template-columns:repeat(' + Y.months.length + ',1fr)">' + Y.months.map(m => {
+        const mon = MON[Number(m.m.slice(5, 7)) - 1].slice(0, 3);
+        return '<div class="mo" role="listitem" title="' + mon + ': ' + m.done + ' completed" aria-label="' + mon + ': ' + m.done + ' completed"><b>' + m.done + '</b><div class="col" style="height:' + Math.round(100 * m.done / max) + '%"></div><span>' + mon + '</span></div>';
+      }).join('') + '</div>' +
+        '<p class="trend">' + esc((Y.member ? 'We also completed ' + Y.member + ' item' + (Y.member === 1 ? '' : 's') + ' for your employees’ own policies this year. ' : '') + (Y.trend || []).join(' ')) + '</p>';
+    }
+    h +=
+      '<details class="svc"><summary>By kind of service</summary><div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
+      D.record.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + (r.onTimePct == null ? '–' : r.onTimePct + '%') + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') +
+      '<tr><td><b>All services</b></td><td class="num"><b>' + tot.done + '</b></td><td></td><td></td><td class="num"><b>' + tot.open + '</b></td></tr></tbody></table></div></details>';
+  }
+  if (!h) return '';
+  return '<section class="pnl" aria-labelledby="yearh"><div class="h"><h2 id="yearh">Our service for you this year</h2></div><div class="pb">' + h + '</div></section>';
+}
+/* your items: grouped by kind of work, each with its three answers, then the rating and Send */
+function itemsHtml() {
+  const items = D.items, cats = [];
+  items.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
+  let h = pageHead('Your items', items.length ? 'For each one, tap whether it is right. If something needs our attention, mark it and add a short note. Then rate us and send, by ' + esc(dmy(D.respondBy)) + '.' : 'Everything our team has open for your company.');
+  if (!items.length) h += '<section class="pnl"><div class="pb"><div class="allok"><span class="ok1" aria-hidden="true">✓</span>There is nothing open for your company right now.</div></div></section>';
   cats.forEach(c => {
     h += '<div class="cat">' + esc(c) + '</div>';
     items.filter(i => i.cat === c).forEach(i => {
@@ -1103,24 +1370,6 @@ function render() {
         '<div class="notebox' + (a.v === 'change' || a.v === 'notours' || a.note ? '' : ' hide') + '" id="nb-' + esc(i.id) + '"><label for="n-' + esc(i.id) + '">What needs our attention?</label><textarea class="field" id="n-' + esc(i.id) + '" data-n="' + esc(i.id) + '" maxlength="1500">' + esc(a.note || '') + '</textarea></div></div>';
     });
   });
-  if (D.record.length) {
-    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 }), Y = D.year;
-    h += '<h2 class="sec">Our service record for you this year</h2><p class="sub">Completed items, the share done by their target date, and how many days they took on average.</p>';
-    if (Y) h += '<div class="ytiles"><div><b>' + Y.done + '</b><span>completed for your company</span></div><div><b>' + Y.member + '</b><span>for your employees’ own policies</span></div>' +
-      '<div><b>' + (Y.onTimePct == null ? '–' : Y.onTimePct + '%') + '</b><span>done by the target date</span></div><div><b>' + (Y.avgDays == null ? '–' : Y.avgDays) + '</b><span>days on average</span></div></div>';
-    if (Y && Y.months && Y.months.length) {
-      const max = Math.max(1, ...Y.months.map(m => m.done));
-      h += '<div class="months" role="list" aria-label="Items completed for you, by month" style="grid-template-columns:repeat(' + Y.months.length + ',1fr)">' + Y.months.map(m => {
-        const mon = MON[Number(m.m.slice(5, 7)) - 1].slice(0, 3);
-        return '<div class="mo" role="listitem" title="' + mon + ': ' + m.done + ' completed" aria-label="' + mon + ': ' + m.done + ' completed"><b>' + m.done + '</b><div class="col" style="height:' + Math.round(100 * m.done / max) + '%"></div><span>' + mon + '</span></div>';
-      }).join('') + '</div>' +
-        '<p class="trend">' + esc((Y.member ? 'We also completed ' + Y.member + ' item' + (Y.member === 1 ? '' : 's') + ' for your employees’ own policies this year. ' : '') + (Y.trend || []).join(' ')) + '</p>';
-    }
-    h +=
-      '<div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
-      D.record.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + (r.onTimePct == null ? '–' : r.onTimePct + '%') + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') +
-      '<tr><td><b>All services</b></td><td class="num"><b>' + tot.done + '</b></td><td></td><td></td><td class="num"><b>' + tot.open + '</b></td></tr></tbody></table></div>';
-  }
   h += '<div class="panel" id="rate"><h2 class="sec" style="margin-top:0">How are we doing?</h2><p class="sub">' + (D.rated ? 'You rated us this week already. Please rate us again with this week\'s answers.' : 'Rate the service you have received from our branch. A rating is needed before you send.') + '</p>' +
     '<div class="stars" role="radiogroup" aria-label="Your rating">' + [1, 2, 3, 4, 5].map(n => '<button type="button" class="star" role="radio" data-s="' + n + '" aria-checked="' + ((A._stars || 0) >= n) + '" aria-label="' + n + ' of 5: ' + RATE[n] + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></button>').join('') + '</div>' +
     '<div class="rlab" id="rl" aria-live="polite">' + rateLab(A._stars) + '</div>' +
@@ -1128,12 +1377,55 @@ function render() {
     '<label for="gen">What would make it better? (optional)</label><textarea class="field" id="gen" maxlength="2000">' + esc(A._gen || '') + '</textarea>' +
     '<div class="row2"><div><label for="nm">Your name</label><input class="field" id="nm" value="' + esc(A._who || '') + '"></div><div><label for="rl2">Your role</label><input class="field" id="rl2" value="' + esc(A._role || '') + '" placeholder="e.g. HR Manager"></div></div>' +
     '<div class="err" id="serr" role="alert"></div><button class="btn full" type="button" id="send">Send my answers</button>' +
-    '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our team is told the moment you send.</p></div>' +
-    '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
-  }
-  $('app').innerHTML = h;
+    '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our team is told the moment you send.</p></div>';
+  return h;
+}
+/* your people in three parts: who is pending, who has a date coming up, and everyone */
+let PV = '';
+function peopleTabHtml() {
+  const nP = Array.isArray(D.pending) ? D.pending.length : -1, nC = D.coming ? D.coming.count : -1, views = [];
+  if (nP >= 0) views.push(['pending', 'Pending applications', nP]);
+  if (nC >= 0) views.push(['coming', 'Coming up', nC]);
+  views.push(['list', 'Everyone on your plans', null]);
+  if (!views.some(v => v[0] === PV)) PV = nP > 0 ? 'pending' : 'list';
+  return pageHead('Your people', 'Your employees on Group Health, Group Life and Pension. Choose what to see.') +
+    '<div class="seg" role="tablist" aria-label="Show">' + views.map(v => '<button type="button" role="tab" class="sg" data-pv="' + v[0] + '" aria-selected="' + (PV === v[0]) + '">' + esc(v[1]) + (v[2] != null ? '<b>' + v[2] + '</b>' : '') + '</button>').join('') + '</div>' +
+    (PV === 'pending' ? pendHtml() : PV === 'coming' ? comingHtml() : peopleHtml());
+}
+function bindPeopleTab() {
+  document.querySelectorAll('[data-pv]').forEach(b => b.onclick = () => { PV = b.dataset.pv; render(); });
+  if (PV === 'pending') bindPend(); else if (PV === 'list') bindPeople();
+}
+/* help: WhatsApp first, the person who looks after them, and the film */
+function helpHtml() {
+  const C = carer(), ini = String(D.staff || 'RR').split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  return pageHead('Help &amp; contact', 'We are here. Pick whichever is easiest for you.') + '<div class="hgrid">' +
+    '<section class="pnl hcard"><div class="pb"><span class="wad">' + WA_ICON + '</span><h2>HELP 868 on WhatsApp</h2><p>Message us any time: a question about your bill, an employee, a form or this page. A person at our branch answers' + (C.first ? ', and ' + esc(C.first) + ' sees it too' : '') + '.</p><a class="btn wa" href="' + WA + '" target="_blank" rel="noopener">Open WhatsApp</a></div></section>' +
+    '<section class="pnl hcard"><div class="pb"><span class="avb" aria-hidden="true">' + esc(ini) + '</span><h2>' + (C.who ? esc(C.who) : 'Our branch team') + '</h2><p>' + (C.who ? 'Looks after your account: your bills, your items and your people’s applications.' : 'Looks after your bills, your items and your people’s applications.') + '</p><a class="btn sec" href="mailto:rickyrampersadsalessupport@myguardiangroup.com">E-mail our team</a></div></section>' +
+    '<section class="pnl hcard"><div class="pb"><span class="avb play" aria-hidden="true">▶</span><h2>How this page works</h2><p>A short film of every part of this page, ' + esc(PAGE_FILM.length) + '.</p><a class="btn sec" href="' + PAGE_FILM.href + '" target="_blank" rel="noopener">Watch the film</a></div></section>' +
+    '</div>';
+}
+function render() {
+  const hasBill = !!(D.billing && Array.isArray(D.billing.lines) && D.billing.lines.length);
+  if (CT === 'billing' && !hasBill) CT = 'home';
+  if (CT === 'renewals' && !renOn()) CT = 'home';
+  $('h1').textContent = D.group;
+  $('hsub').textContent = D.staff ? 'Looked after by ' + D.staff : 'Group client services';
+  $('who').classList.remove('hide');
+  const side = $('side'); side.classList.remove('hide', 'open'); side.innerHTML = navHtml(hasBill);
+  let h;
+  if (CT === 'home') h = homeHtml(hasBill);
+  else if (CT === 'billing') h = pageHead('Billing', (D.billing.statement ? 'Your ' + esc(D.billing.statement.label) + ' statement, each line’s bill, ' : 'Each line’s bill, ') + 'what we received, and a place to tell us about a payment.') + billingHtml();
+  else if (CT === 'people') h = peopleTabHtml();
+  else if (CT === 'forms') h = pageHead('Join &amp; leave', 'Add a new employee, end someone’s cover, or change their details. Pick one below and we fill Guardian Life’s form from our records.') + chgHtml();
+  else if (CT === 'renewals') h = pageHead('Renewals', 'Your general insurance renewing with Guardian General.') + renewalsHtml();
+  else if (CT === 'help') h = helpHtml();
+  else { CT = 'items'; h = itemsHtml(); }
+  const app = $('app'); app.className = 'ct-' + CT; app.innerHTML = h;
   $('prog').classList.toggle('hide', CT !== 'items');
-  bindCtabs(); if (CT === 'renewals' && renOn()) bindRenewals(); else if (CT === 'billing') bindBilling(); else if (CT === 'people') bindPeople(); else { bind(); bindPend(); progress(); }
+  bindNav();
+  if (CT === 'renewals') bindRenewals(); else if (CT === 'billing') bindBilling(); else if (CT === 'people') bindPeopleTab();
+  else if (CT === 'forms') bindChg(); else if (CT === 'home') bindHome(); else if (CT === 'items') { bind(); progress(); }
 }
 /* ── the group's general insurance renewals (29 October 2026): its property, liability, motor fleet and other covers
    renewing with Guardian General, read from GIRenewals.gs after the page opens, so the page never waits on them. The card
@@ -1151,7 +1443,7 @@ async function loadRenewals(said) {
   if (renOn() || had) render();
 }
 function renewalsHtml() {
-  return '<h2 class="sec">Your renewals</h2><p class="sub">Your general insurance with Guardian General, renewing soon: what renews, this year\'s premium against last year\'s, and your history since each policy began. Nothing is renewed until you say yes.</p>' +
+  return '<p class="sub">Your general insurance with Guardian General, renewing soon: what renews, this year\'s premium against last year\'s, and your history since each policy began. Nothing is renewed until you say yes.</p>' +
     (D.renSaid ? '<div class="done" role="status" style="margin:10px 0"><b>' + esc(D.renSaid) + '</b></div>' : '') +
     D.renewals.map(v => RenewalCard.html(v, { group: true })).join('');
 }
@@ -1183,7 +1475,6 @@ function bind() {
   const sw = document.querySelector('.stars'); if (sw) { sw.onmouseleave = () => paintStars(0); sw.addEventListener('focusout', () => paintStars(0)); }
   [['gen', '_gen'], ['nm', '_who'], ['rl2', '_role']].forEach(([id, k]) => $(id).oninput = () => { A[k] = $(id).value; saveDraft(); });
   $('send').onclick = send;
-  $('out').onclick = () => { try { sessionStorage.removeItem('rrb-gcm-client'); } catch (e) {} location.reload(); };
 }
 function progress() {
   const n = D.items.filter(i => A[i.id] && A[i.id].v).length;

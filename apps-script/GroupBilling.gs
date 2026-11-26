@@ -1372,8 +1372,8 @@ function gblTaskMail_(g, who, person, subject, text, due, priority, taskId) {
   if (!person.email) return false;
   var url = gblSfUrl_(taskId), first = String(person.name || '').split(' ')[0];
   var body = '<p>' + tEsc_(first) + ', <b>' + tEsc_(who.name) + '</b> has opened a task for you on <b>' + tEsc_(g.name) + '</b>' + (priority === 'High' ? ' (<b>high priority</b>)' : '') + ', due <b>' + tEsc_(tDmy_(due)) + '</b>:</p>' +
-    '<p style="font-size:16px"><b>' + tEsc_(subject) + '</b></p><div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #13408F;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(text) + '</div>' +
-    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
+    '<p style="font-size:16px"><b>' + tEsc_(subject) + '</b></p><div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #0A4A52;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(text) + '</div>' +
+    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#00728D;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
     '<p>Answer on the task’s Chatter: what you will do, and by when. It is also on the group’s billing review in <a href="' + GCM.SITE + '">group client management</a>.</p><p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
   return gblInternalMail_(person.email, who.name + ' opened a task for you · ' + subject.slice(0, 80), body, who.email);
 }
@@ -1401,8 +1401,8 @@ function gblTaskOwner_(id) {
 function gblCommentMail_(g, who, o, t, said) {
   var url = gblSfUrl_(t.id), first = String(o.name || '').split(' ')[0];
   var body = '<p>' + tEsc_(first) + ', <b>' + tEsc_(who.name) + '</b> wrote on your task <b>' + tEsc_(t.subject) + '</b> (' + tEsc_(g.name) + '):</p>' +
-    '<div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #13408F;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(said) + '</div>' +
-    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
+    '<div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #0A4A52;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(said) + '</div>' +
+    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#00728D;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
     '<p>Answer on the task’s Chatter: what you will do, and by when.</p><p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
   return gblInternalMail_(o.email, who.name + ' on your task · ' + String(t.subject || '').slice(0, 70), body, who.email);
 }
@@ -1538,39 +1538,39 @@ function gblBillMail_(g, month, bills, who, test, L) {
     .concat(['', 'You can also reply to this e-mail: it reaches our team.', '', 'Warm regards,', signer, 'Group client service, Ricky Rampersad Branch', 'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline])
     .join('\n').replace(/\n{3,}/g, '\n\n').trim();
   var font = "font-family:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif";
-  var rows = lineRows.map(function (r) { return '<tr><td style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#142033">' + E(r.what) + (r.extra ? '<div style="font:12px Arial,sans-serif;color:#5a687d">' + E(r.extra) + '</div>' : '') + '</td><td style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:700 14px Arial,sans-serif;color:#142033;text-align:right;white-space:nowrap">' + E(gcmMoney_(r.due)) + '</td></tr>'; }).join('');
+  var rows = lineRows.map(function (r) { return '<tr><td style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#11393F">' + E(r.what) + (r.extra ? '<div style="font:12px Arial,sans-serif;color:#5a687d">' + E(r.extra) + '</div>' : '') + '</td><td style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:700 14px Arial,sans-serif;color:#11393F;text-align:right;white-space:nowrap">' + E(gcmMoney_(r.due)) + '</td></tr>'; }).join('');
   var initials = (carer.full ? gcmNiceName_(carer.full).split(/\s+/).filter(String).map(function (w) { return w.charAt(0); }).slice(0, 2).join('') : 'RR').toUpperCase();
   var star = function (n) {
     return '<td width="20%" align="center" style="padding:0 3px"><a href="' + link(n) + '" style="display:block;text-decoration:none;border:1px solid #DCE3EC;border-radius:10px;background:#ffffff;padding:10px 0 8px">' +
-      '<span style="font:28px/1 Arial,sans-serif;color:#C98A00">&#9733;</span><br><span style="font:700 15px/1.4 Arial,sans-serif;color:#142033">' + n + '</span></a></td>';
+      '<span style="font:28px/1 Arial,sans-serif;color:#C98A00">&#9733;</span><br><span style="font:700 15px/1.4 Arial,sans-serif;color:#11393F">' + n + '</span></a></td>';
   };
   var pre = 'Your ' + label + ' billing is ready: ' + gcmMoney_(total) + (dueBy ? ', payable by ' + tDmy_(dueBy) : '') + '.' + (carer.first ? ' ' + carer.first + ' looks after your account.' : '');
   var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
     '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse">' +
     (test ? '<tr><td style="padding:10px 26px;background:#fdf1e1;font:700 13px Arial,sans-serif;color:#a64b05">TEST: this would go to ' + E(g.to.join(', ') || 'nobody') + '. Nothing has reached the group.</td></tr>' : '') +
-    '<tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;background-image:linear-gradient(120deg,#13408F,#1D5BC4 60%,#2A6FD8);padding:20px 28px 22px;' + font + '">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
+    '<tr><td bgcolor="#00728D" style="background:#00728D;background-image:linear-gradient(120deg,#0A4A52,#00728D 60%,#00728D);padding:20px 28px 22px;' + font + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
     '<td style="padding-left:12px;color:#ffffff;font:600 15px/1.25 Arial,sans-serif;' + font + '">Ricky Rampersad Branch<div style="font:400 12.5px/1.4 Arial,sans-serif;color:#D6E3F8">Group billing · Guardian Life of the Caribbean</div></td></tr></table>' +
     '<div style="font:600 24px/1.25 Arial,sans-serif;' + font + ';color:#ffffff;margin:18px 0 4px">Your ' + E(label) + ' billing</div>' +
     '<div style="font:15px/1.5 Arial,sans-serif;' + font + ';color:#E4ECFA">' + E(g.name) + (dueBy ? ' · payable by ' + E(tDmy_(dueBy)) : '') + '</div></td></tr>' +
-    '<tr><td style="padding:22px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#142033"><p style="margin:0 0 12px">' + E(greet) + '</p>' + paras.map(function (p) { return '<p style="margin:0 0 12px">' + E(p) + '</p>'; }).join('') +
+    '<tr><td style="padding:22px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#11393F"><p style="margin:0 0 12px">' + E(greet) + '</p>' + paras.map(function (p) { return '<p style="margin:0 0 12px">' + E(p) + '</p>'; }).join('') +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid #e2e7ef;margin:6px 0 16px">' + rows +
-    '<tr><td style="padding:10px;font:700 14px Arial,sans-serif;color:#142033;background:#ebf2fd">Total due</td><td style="padding:10px;font:700 16px Arial,sans-serif;color:#1d5bc4;background:#ebf2fd;text-align:right">' + E(gcmMoney_(total)) + '</td></tr></table>' +
+    '<tr><td style="padding:10px;font:700 14px Arial,sans-serif;color:#11393F;background:#E2F1F3">Total due</td><td style="padding:10px;font:700 16px Arial,sans-serif;color:#00728D;background:#E2F1F3;text-align:right">' + E(gcmMoney_(total)) + '</td></tr></table>' +
     stmt +
     /* who looks after the account */
     (carer.full ? '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:4px 0 16px;border:1px solid #DCE3EC;border-radius:10px;background:#F7F9FC"><tr>' +
-      '<td width="58" style="padding:14px 0 14px 14px;vertical-align:top"><div style="width:44px;height:44px;border-radius:22px;background:#13408F;color:#ffffff;font:700 16px/44px Arial,sans-serif;text-align:center">' + E(initials) + '</div></td>' +
-      '<td style="padding:14px 16px 14px 12px;font:14.5px/1.55 Arial,sans-serif;color:#142033"><div style="font:700 12px/1.3 Arial,sans-serif;color:#4B586C;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px">Your account manager</div>' +
+      '<td width="58" style="padding:14px 0 14px 14px;vertical-align:top"><div style="width:44px;height:44px;border-radius:22px;background:#0A4A52;color:#ffffff;font:700 16px/44px Arial,sans-serif;text-align:center">' + E(initials) + '</div></td>' +
+      '<td style="padding:14px 16px 14px 12px;font:14.5px/1.55 Arial,sans-serif;color:#11393F"><div style="font:700 12px/1.3 Arial,sans-serif;color:#4B586C;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px">Your account manager</div>' +
       '<b>' + E(carer.full) + '</b> looks after your account: your bills, your service items and your people’s applications. If anything on this billing does not look right, ' + E(cf) + ' will put it right.</td></tr></table>' : '') +
     /* the sign-in, to comment */
     '<p style="margin:0 0 6px;font-weight:700">Comment on your billing</p>' +
     '<p style="margin:0 0 12px">' + E(commentLine) + '</p>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px"><tr><td bgcolor="#13408F" style="background:#13408F;border-radius:8px"><a href="' + link(0) + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your billing</a></td></tr></table>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B8CEF4;background:#EBF2FD;margin:0 0 20px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px"><tr><td bgcolor="#0A4A52" style="background:#0A4A52;border-radius:8px"><a href="' + link(0) + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your billing</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B5DBE4;background:#E2F1F3;margin:0 0 20px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#11393F">' +
     'List bill: <b>' + E(g.bills[0] || '') + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(g.code || '(not set)') + '</b></td></tr></table>' +
     /* five stars for the person who looks after the account */
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 18px;background:#F4F7FA;border-radius:10px"><tr><td style="padding:14px 12px 12px">' +
-    '<p style="margin:0 0 4px 3px;font:700 15px/1.4 Arial,sans-serif;color:#142033">' + E(rateQ) + '</p>' +
+    '<p style="margin:0 0 4px 3px;font:700 15px/1.4 Arial,sans-serif;color:#11393F">' + E(rateQ) + '</p>' +
     '<p style="margin:0 0 10px 3px;font:13.5px/1.5 Arial,sans-serif;color:#2B374C">Tap a star: your page opens with it chosen, and you can add a comment.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr>' + [1, 2, 3, 4, 5].map(star).join('') + '</tr></table>' +
     '<p style="margin:8px 0 0 3px;font-size:12.5px;color:#2B374C">' + E([1, 2, 3, 4, 5].map(function (n) { return n + ' ' + words[n].toLowerCase(); }).join(' · ')) + '</p>' +
@@ -1730,7 +1730,7 @@ function gblFormHtml_(d) {
   var note = '<div class="note"><b>Change requested:</b> ' + E(d.kindLabel) + (d.effective ? ', effective ' + E(dmy(d.effective)) : '') + (d.reason ? ' · ' + E(d.reason) : '') +
     '<br>Pre-filled from Guardian Life of the Caribbean’s records by Ricky Rampersad Branch for ' + E(d.holder) + ' (' + E(d.lineLabel) + ') · submitted by ' + E(d.submitted.by) + ', ' + E(d.submitted.role) + ', ' + E(d.submitted.when) + '.</div>';
   var css = '<style>@page{size:letter;margin:12mm}body{font:10.5px/1.3 Arial,Helvetica,sans-serif;color:#000;margin:0}.pg{page-break-after:always}.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px}.hd .l{font-size:9px}.hd .t{font-weight:700;font-size:15px;letter-spacing:.02em}.hd .s{font-size:9px;font-weight:700}' +
-    '.note{border:1px solid #1d5bc4;background:#eef4fc;padding:5px 8px;margin:0 0 8px;font-size:9.5px}h3{background:#d9d9d9;font-size:10.5px;margin:9px 0 4px;padding:3px 6px;letter-spacing:.03em}table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #000;padding:4px 5px;vertical-align:top;font-size:10px;text-align:left}th{background:#f2f2f2;font-weight:700;font-size:9px}' +
+    '.note{border:1px solid #00728D;background:#E2F1F3;padding:5px 8px;margin:0 0 8px;font-size:9.5px}h3{background:#d9d9d9;font-size:10.5px;margin:9px 0 4px;padding:3px 6px;letter-spacing:.03em}table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #000;padding:4px 5px;vertical-align:top;font-size:10px;text-align:left}th{background:#f2f2f2;font-weight:700;font-size:9px}' +
     '.v{font-weight:700;text-transform:uppercase}.lab{font-weight:400;font-size:9px;display:block;color:#222}.rel{font-weight:700;width:14%}.cb{font-size:13px;line-height:1}.cbs span.cb{margin-left:6px}.small{font-size:8.5px;margin:3px 0 0}.sig td{height:30px}.blank{height:34px}.stamp{border:1px dashed #000;height:70px;display:flex;align-items:center;justify-content:center;font-size:9px}.pol{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:2px 0 6px;font-weight:700}.pol .v{border-bottom:1px solid #000;min-width:220px;display:inline-block;padding:0 6px}</style>';
   var a = '<h3>SECTION A – POLICYHOLDER/PRIMARY INSURED INFORMATION</h3><table>' +
     '<tr><td style="width:50%"><span class="lab">POLICYHOLDER:</span><span class="v">' + E(d.holder) + '</span></td><td><span class="lab">NAME OF PRIMARY INSURED:</span><span class="v">' + E(d.insured) + '</span></td></tr>' +
@@ -1998,7 +1998,7 @@ function gblSendPack_(g, who, pack, opt) {
   var cc = test ? (TRANSITION.CC || []).slice() : GBL_FORM.CC.slice(), gto = (g.to || [])[0] || '';
   if (!test && gcmYes_(opt.copyGroup) && gto && !gcmOurAddress_(gto)) cc.push(gto);
   var E = tEsc_;
-  var body = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:640px">' + (test ? '<p style="background:#fdf1e1;padding:8px 12px;font-weight:700;color:#a64b05">TEST: this would go to ' + E(GBL_FORM.TO) + ', copied to ' + E(GBL_FORM.CC.join(', ')) + '. Nothing has reached Guardian Life.</p>' : '') +
+  var body = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:640px">' + (test ? '<p style="background:#fdf1e1;padding:8px 12px;font-weight:700;color:#a64b05">TEST: this would go to ' + E(GBL_FORM.TO) + ', copied to ' + E(GBL_FORM.CC.join(', ')) + '. Nothing has reached Guardian Life.</p>' : '') +
     '<p>Dear EB Customer Care,</p>' + pack.lines.map(function (l) { return '<p>' + l + '</p>'; }).join('') +
     '<p>Kind regards,<br><b>' + E(who.role === 'client' ? 'Ricky Rampersad Branch, for ' + g.name : gcmSigner_(who, g)) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
@@ -2760,10 +2760,10 @@ function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
   if (!to.length) return false;
   var url = gblSfUrl_(taskId);
   var body = '<p><b>' + tEsc_(g.name) + '</b> (' + tEsc_(name + (role ? ', ' + role : '')) + ') wrote on their service page about <b>' + tEsc_(p.name) + '</b>' + (item ? ', on <b>' + tEsc_(item.what) + '</b>' : '') + ':</p>' +
-    '<div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #13408F;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(text) + '</div>' +
+    '<div style="background:#fff;border:1px solid #e2e7ef;border-left:4px solid #0A4A52;border-radius:10px;padding:11px 15px;white-space:pre-wrap">' + tEsc_(text) + '</div>' +
     '<p>' + (opened ? 'Nothing was open on ' + tEsc_(p.first) + ', so a task was opened' + (owner && owner.name ? ' for ' + tEsc_(owner.name) : '') + ', due ' + tEsc_(tDmy_(gcmAddDays_(gcmToday_(), GBL_ROSTER.DUE_DAYS))) + '.' : 'It is on the task’s Chatter.') +
     ' Answer there, and share a note for the group so they read the reply on their page.</p>' +
-    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#1d5bc4;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
+    (url ? '<p><a href="' + url + '" style="display:inline-block;background:#00728D;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:8px">Open the task</a></p>' : '') +
     '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
   var subject = 'Group wrote: ' + g.name + ' · about ' + p.name + (opened ? ' · task opened' : '');
   try { if (tMsCreds_()) { tMsSend_(to[0], subject, body, { cc: to.slice(1), replyTo: TRANSITION.MS_FROM }); return true; } } catch (e) {}
@@ -2998,14 +2998,14 @@ function gblLateMail_(g, bills, who, o) {
   if (!me) return false;
   var lines = bills.map(function (x) { return GBL.LABEL[x.line]; }).join(' and '), month = gblMonthLabel_(bills[0].month);
   var subject = (o.test ? '[TEST] ' : '') + 'Late bill: ' + g.name + ' · ' + month + ' ' + lines.toLowerCase() + ' · sent by ' + who.name;
-  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:640px">' +
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:640px">' +
     (o.test ? '<p style="background:#FFF4D6;border:2px solid #E0A800;padding:10px 14px"><b>TEST.</b> The bills are in test mode: this copy of the bill went to ' + E(o.to) + ', not to the group.</p>' : '') +
     '<p><b>' + E(who.name) + '</b> sent the <b>' + E(month) + ' ' + E(lines.toLowerCase()) + '</b> bill for <b>' + E(g.name) + '</b> by Send now at ' + E(o.at) + ', after ' + E(gblCutWords_(o.cut)) + '.</p>' +
     '<p style="margin:0 0 4px;font-weight:700">Why it was not done by then</p>' +
     '<div style="background:#FFF8E6;border-left:4px solid #E0A800;padding:10px 14px;margin:0 0 14px">' + (o.reason ? E(o.reason) : '<i>No reason given.</i>') + '</div>' +
     '<p>' + (o.test ? 'A TEST copy went to ' : 'It went to ') + E(o.to) + '. The reason is on the bill, on Group Changes and on the billing task’s Chatter' +
       (o.task ? '; the ' + E(GBL_DAY.TASK_TAG) + ' task for this cycle is answered with it and closed (' + E(o.task) + ')' : '') + '.</p>' +
-    '<p><a href="' + GCM.SITE + 'billing.html?g=' + encodeURIComponent(g.key) + '&m=' + encodeURIComponent(bills[0].month) + '" style="color:#1D5BC4;font-weight:700">Open the group’s billing</a></p>' +
+    '<p><a href="' + GCM.SITE + 'billing.html?g=' + encodeURIComponent(g.key) + '&m=' + encodeURIComponent(bills[0].month) + '" style="color:#00728D;font-weight:700">Open the group’s billing</a></p>' +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   return gblInternalMail_(me, subject, html, who.email || me);
 }
@@ -3139,7 +3139,7 @@ function gblDayTell_(sent, held, o) {
   if (o.rehearse) (o.approvers || []).forEach(function (a) { if (to.concat(cc).map(function (x) { return x.toLowerCase(); }).indexOf(a) < 0) cc.push(a); });
   var li = function (x, what) { return '<li><b>' + E(x.group) + '</b> · ' + E(gblMonthLabel_(x.month)) + ' · ' + E(x.lines.join(', ')) + ' · ' + what + ' · approved by ' + E(x.by) + '</li>'; };
   var subject = (o.rehearse ? '[TEST] ' : '') + 'Group bills, the ' + GBL_DAY.HOUR + ':00 run: ' + sent.length + ' sent' + (held.length ? ', ' + held.length + ' waiting' : '');
-  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:720px">' +
     (o.rehearse ? '<p><b>Rehearsal.</b> Each approved bill was sent to its approver and the branch, marked TEST. Nothing reached a group and nothing is marked as sent.</p>' : '') +
     (sent.length ? '<p style="margin:0 0 6px;font-weight:700">Went</p><ul>' + sent.map(function (x) { return li(x, (x.test ? 'TEST copy to ' : 'to ') + E(x.to) + (x.files ? ', ' + x.files + ' file' + (x.files === 1 ? '' : 's') : ', no file') +
       (x.late ? ' · <b>late</b>, after ' + E(gblCutWords_(x.late.cutoff)) + ': ' + (x.late.reason ? E(x.late.reason) : '<i>no reason given</i>') : '')); }).join('') + '</ul>' : '') +
@@ -3219,11 +3219,11 @@ function gblChaseList_(L, now) {
 function gblChaseMail_(o, list, tasks) {
   var E = tEsc_, first = String(o.name || '').split(/\s+/)[0] || 'team', n = o.missed.length, day = gblDayLabel_(list.cycle.end);
   var subject = 'Group bills: ' + n + ' of your groups had no bill for ' + list.month + ' · reply by ' + GCM_DAY.REPLY_BY;
-  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
-  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #0A4A52;font:700 13px Arial,sans-serif;color:#0A4A52"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#11393F;vertical-align:top"';
   var table = function (head, rows) { return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
     head.map(function (h) { return '<th ' + th + '>' + E(h) + '</th>'; }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; };
-  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:720px">' +
     '<p>Good morning, ' + E(first) + '.</p>' +
     '<p>The group bills went at ' + GBL_DAY.HOUR + ':00 today, ' + E(day.replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> Approve it today and it goes by itself at ' + GBL_DAY.HOUR + ':00 on ' +
       E(gblDayLabel_(gblNextWorkingDay_(list.cycle.end)).replace(/, \d+:\d+$/, '')) + ', or press Send now to send it at once. Each asks why it was not done by 10:00, and your reason comes to Mr Rampersad.</p>' +
@@ -3234,8 +3234,8 @@ function gblChaseMail_(o, list, tasks) {
     (tasks && Object.keys(tasks).length ? '<p>A Salesforce task (' + E(GCM_DAY.TASK_TYPE) + ') is open for each one in your name. Close it with your reason in its comments.</p>' : '') +
     '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each bill was not approved by ' + GBL_DAY.HOUR + ':00, and when it will go. Your reply goes to Mr Rampersad.</p>' +
     '<p style="margin:16px 0 6px;font-weight:700">From your training: Billings Management</p>' +
-    GBL_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #1D5BC4"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
-    '<p><a href="' + GCM.SITE + '" style="color:#1D5BC4;font-weight:700">Open group client management</a></p>' +
+    GBL_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #00728D"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
+    '<p><a href="' + GCM.SITE + '" style="color:#00728D;font-weight:700">Open group client management</a></p>' +
     (o.sent.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups whose bill went this cycle</p>' +
       table(['Group', 'Sent', 'Lines'], o.sent.map(function (x) { return ['<b>' + E(x.g.name) + '</b>', E(x.at) + (x.test ? ' (test copy)' : ''), E(x.lines.map(function (l) { return GBL.LABEL[l]; }).join(', '))]; })) : '') +
     (o.notReady.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups that cannot have a bill yet</p>' +
@@ -3304,12 +3304,12 @@ function gblDayHtml_(d, o) {
   var E = tEsc_, L = gcmLoad_(), list = (d.chase && d.chase.list) || gblChaseList_(L, o && o.now), info = d.info;
   var td = 'style="padding:7px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;vertical-align:top"';
   var row = function (cells) { return '<tr>' + cells.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; };
-  var head = function (cells) { return '<tr>' + cells.map(function (c) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F">' + E(c) + '</th>'; }).join('') + '</tr>'; };
+  var head = function (cells) { return '<tr>' + cells.map(function (c) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #0A4A52;font:700 13px Arial,sans-serif;color:#0A4A52">' + E(c) + '</th>'; }).join('') + '</tr>'; };
   var tbl = function (h, rows) { return rows.length ? '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px">' + head(h) + rows.join('') + '</table>' : ''; };
   var sentG = [], missed = [], notReady = [];
   list.owners.forEach(function (ow) { ow.sent.forEach(function (x) { sentG.push({ ow: ow, x: x }); }); ow.missed.forEach(function (x) { missed.push({ ow: ow, x: x }); }); ow.notReady.forEach(function (x) { notReady.push({ ow: ow, x: x }); }); });
   var n = sentG.length + missed.length, tasks = (d.chase && d.chase.tasks) || {};
-  var h = '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Group bills: ' + E(gblDayLabel_(d.cycle.end)) + '</h3>';
+  var h = '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#0A4A52">Group bills: ' + E(gblDayLabel_(d.cycle.end)) + '</h3>';
   if (d.cycle.isDay || (o && o.test)) {
     var r = d.run || { sent: [], held: [] };
     h += '<p><b>' + sentG.length + ' of ' + n + '</b> billed groups had their ' + E(list.month) + ' bill' + (sentG.length && sentG.every(function (s) { return s.x.test; }) ? ' (test copies: the bills are in test mode until gblGoLive)' : '') + '. ' +
@@ -3382,12 +3382,12 @@ function gblBillReport_(o) {
   var ready = rows.filter(function (r) { return r.ready; }), notStarted = rows.filter(function (r) { return !r.started && !r.cannot; }), left = rows.filter(function (r) { return !r.ready; });
   var when = gblDayLabel_(day), dayWords = when.replace(/, \d+:\d+$/, '');
   var subject = (o.test ? '[TEST] ' : '') + 'Group bills go ' + (gcmDays_(today, day) === 1 ? 'tomorrow, ' : '') + dayWords + ' at ' + GBL_DAY.HOUR + ':00: ' + ready.length + ' of ' + rows.length + ' groups ready';
-  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
-  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
-  var tile = function (n, what, bad) { return '<td style="padding:10px 12px;border:1px solid #E2E7EF;border-top:4px solid ' + (bad ? '#D03B3B' : '#1D5BC4') + ';font:13px/1.4 Arial,sans-serif;color:#4B586C;width:33%"><b style="display:block;font:700 22px Arial,sans-serif;color:' + (bad ? '#B42318' : '#142033') + '">' + n + '</b>' + what + '</td>'; };
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #0A4A52;font:700 13px Arial,sans-serif;color:#0A4A52"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#11393F;vertical-align:top"';
+  var tile = function (n, what, bad) { return '<td style="padding:10px 12px;border:1px solid #E2E7EF;border-top:4px solid ' + (bad ? '#D03B3B' : '#00728D') + ';font:13px/1.4 Arial,sans-serif;color:#4B586C;width:33%"><b style="display:block;font:700 22px Arial,sans-serif;color:' + (bad ? '#B42318' : '#11393F') + '">' + n + '</b>' + what + '</td>'; };
   var owners = [], cc = [];
   rows.forEach(function (r) { if (owners.indexOf(r.owner) < 0) owners.push(r.owner); if (r.email && r.email.toLowerCase() !== String(me).toLowerCase() && cc.map(function (x) { return x.toLowerCase(); }).indexOf(r.email.toLowerCase()) < 0) cc.push(r.email); });
-  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:760px">' +
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:760px">' +
     (o.test ? '<div style="background:#FFF4D6;border:2px solid #E0A800;padding:12px 16px;margin:0 0 14px;font:14px/1.5 Arial,sans-serif;color:#3D2E00"><b>TEST.</b> This report goes by itself at ' + GBL_DAY.REPORT_HOUR + ':00 on the ' + (gblDayOfMonth_() - 1) + 'th, or the working day before it (this cycle: ' + E(gblDayLabel_(repDay).replace(/, \d+:\d+$/, '')) + '), to you, copied to ' + E(cc.join(', ') || 'nobody') + '.</div>' : '') +
     '<p>The group bills go by themselves <b>' + E(when) + '</b>: every line reconciled and approved by then, from support@ with its PDF' + (live ? '' : ' (in test mode: a TEST copy to whoever approved it, until gblGoLive)') + '. Here is who has worked each billed group, and what is left.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:6px 0;margin:0 0 16px"><tr>' +
@@ -3395,13 +3395,13 @@ function gblBillReport_(o) {
     owners.map(function (ow) {
       var mine = rows.filter(function (r) { return r.owner === ow; });
       /* one column, a block a group and a line under it, so it reads on a phone as well as at a desk */
-      return '<p style="margin:18px 0 6px;font-weight:700;font-size:16px;color:#13408F;border-bottom:2px solid #13408F;padding:0 0 4px">' + E(ow) + ' · ' + mine.filter(function (r) { return r.ready; }).length + ' of ' + mine.length + ' ready</p>' +
+      return '<p style="margin:18px 0 6px;font-weight:700;font-size:16px;color:#0A4A52;border-bottom:2px solid #0A4A52;padding:0 0 4px">' + E(ow) + ' · ' + mine.filter(function (r) { return r.ready; }).length + ' of ' + mine.length + ' ready</p>' +
         mine.map(function (r) {
-          var head = '<div style="font:700 15px/1.4 Arial,sans-serif;color:#142033;margin:12px 0 4px">' + E(r.g.name) + (r.ready ? ' <span style="color:#067647;font-size:12.5px">✓ ready</span>' : '') + '</div>';
+          var head = '<div style="font:700 15px/1.4 Arial,sans-serif;color:#11393F;margin:12px 0 4px">' + E(r.g.name) + (r.ready ? ' <span style="color:#067647;font-size:12.5px">✓ ready</span>' : '') + '</div>';
           if (r.cannot) return head + '<div style="border-left:4px solid #E0A800;background:#FFF8E6;padding:8px 12px;margin:0 0 6px;font:14px/1.45 Arial,sans-serif">Cannot have a bill yet: ' + E(r.cannot) + '</div>';
           return head + r.states.map(function (x) {
             var c = x.ready ? '#12B76A' : x.worked ? '#E0A800' : '#D03B3B';
-            return '<div style="border-left:4px solid ' + c + ';background:#F7F9FC;padding:8px 12px;margin:0 0 6px;font:14px/1.45 Arial,sans-serif;color:#142033">' +
+            return '<div style="border-left:4px solid ' + c + ';background:#F7F9FC;padding:8px 12px;margin:0 0 6px;font:14px/1.45 Arial,sans-serif;color:#11393F">' +
               '<b>' + E(x.label) + '</b>' + (x.month ? ' <span style="color:#4B586C;font-size:12.5px">' + E(x.month) + '</span>' : '') + '<br>' + E(x.stage) +
               '<br><span style="color:#4B586C">Who worked it:</span> ' + (x.who ? E(x.who) : '<span style="color:#B42318;font-weight:700">nobody yet</span>') +
               (x.left ? '<br><span style="color:#4B586C">Left before ' + GBL_DAY.HOUR + ':00:</span> <b>' + E(x.left) + '</b>' : '') +
@@ -3410,7 +3410,7 @@ function gblBillReport_(o) {
         }).join('');
     }).join('') +
     '<p>A line approved after ' + E(when) + ' is a late bill and goes at ' + GBL_DAY.HOUR + ':00 the next working day, or when someone presses Send now; either way the approval or the send asks why it missed ' + GBL_DAY.HOUR + ':00. At 10:30 on ' + E(dayWords) + ' each staff member whose group had no bill is asked why, and a task opens' + (live ? '' : ' once the bills are live') + '.</p>' +
-    '<p><a href="' + GCM.SITE + 'billing.html" style="color:#1D5BC4;font-weight:700">Open Billings Management</a></p>' +
+    '<p><a href="' + GCM.SITE + 'billing.html" style="color:#00728D;font-weight:700">Open Billings Management</a></p>' +
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   var to = me;
   try {
@@ -3786,10 +3786,10 @@ function gblMemberLetter_(g, who, b, L) {
       'Reply to this e-mail, or call us on (868) 226-6461, and a licensed agent from our branch will go through the options with you. There is no charge for the conversation.'];
   }
   var html = '<div style="background:#f3f5f9;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
-    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
-    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean</div></td></tr></table></td></tr>' +
-    '<tr><td style="padding:22px 26px 0;font:700 22px/1.3 Arial,sans-serif;color:#142033">' + E(subject) + '</td></tr>' +
-    '<tr><td style="padding:16px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033"><p style="margin:0 0 12px">Dear ' + E(fn) + ',</p>' + paras.map(function (x) { return '<p style="margin:0 0 12px">' + E(x) + '</p>'; }).join('') +
+    '<tr><td style="padding:18px 26px;border-bottom:3px solid #00728D"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#11393F">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean</div></td></tr></table></td></tr>' +
+    '<tr><td style="padding:22px 26px 0;font:700 22px/1.3 Arial,sans-serif;color:#11393F">' + E(subject) + '</td></tr>' +
+    '<tr><td style="padding:16px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#11393F"><p style="margin:0 0 12px">Dear ' + E(fn) + ',</p>' + paras.map(function (x) { return '<p style="margin:0 0 12px">' + E(x) + '</p>'; }).join('') +
     '<p style="margin:0">Warm regards,<br><b>' + E(signer) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br><span style="color:#5a687d">9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p></td></tr></table></div>';
   if (!gcmYes_(b.send)) return { ok: true, preview: true, subject: subject, html: html, to: email, live: gblLive_(), said: email ? 'Preview. It goes to ' + email + (gblLive_() ? '' : ' once the bills are live; in test mode to you') + '.' : 'Preview. No e-mail is on record for this member: add it in Salesforce, or send the letter through the group.' };
   if (!tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so nothing can go from support@.' };
@@ -3866,17 +3866,17 @@ function gblBillChanges_(g, month, bills) {
  *  Tables and inline styles only, so it reads in any mail app and renders to PDF. */
 function gblStatementHtml_(g, d, o) {
   o = o || {};
-  var E = tEsc_, money = gcmMoney_, td = 'style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#142033"', tdr = 'style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#142033;text-align:right;white-space:nowrap"';
-  var th = 'style="text-align:left;padding:8px 10px;border-bottom:2px solid #1d5bc4;font:700 12px Arial,sans-serif;color:#1d5bc4;text-transform:uppercase;letter-spacing:.04em"', thr = th.replace('text-align:left', 'text-align:right');
+  var E = tEsc_, money = gcmMoney_, td = 'style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#11393F"', tdr = 'style="padding:9px 10px;border-bottom:1px solid #e2e7ef;font:14px Arial,sans-serif;color:#11393F;text-align:right;white-space:nowrap"';
+  var th = 'style="text-align:left;padding:8px 10px;border-bottom:2px solid #00728D;font:700 12px Arial,sans-serif;color:#00728D;text-transform:uppercase;letter-spacing:.04em"', thr = th.replace('text-align:left', 'text-align:right');
   var h = '<div style="background:#f3f5f9;padding:' + (o.inline ? '0' : '20px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">';
-  if (!o.inline) h += '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
-    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean · Group billing</div></td></tr></table></td>' +
+  if (!o.inline) h += '<tr><td style="padding:18px 26px;border-bottom:3px solid #00728D"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#11393F">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean · Group billing</div></td></tr></table></td>' +
     '<td style="text-align:right;font:12px/1.5 Arial,sans-serif;color:#5a687d">Statement of account<br>as at ' + E(d.asAt) + '</td></tr></table></td></tr>';
-  h += '<tr><td style="padding:' + (o.inline ? '8px 0 0' : '22px 26px 0') + '"><div style="font:700 ' + (o.inline ? '17' : '22') + 'px/1.3 Arial,sans-serif;color:#142033">' + (o.inline ? 'Statement of account · ' : '') + E(d.label) + ' billing' + (o.inline ? '' : ' · statement of account') + '</div>' +
+  h += '<tr><td style="padding:' + (o.inline ? '8px 0 0' : '22px 26px 0') + '"><div style="font:700 ' + (o.inline ? '17' : '22') + 'px/1.3 Arial,sans-serif;color:#11393F">' + (o.inline ? 'Statement of account · ' : '') + E(d.label) + ' billing' + (o.inline ? '' : ' · statement of account') + '</div>' +
     '<div style="font:14px/1.4 Arial,sans-serif;color:#5a687d;margin-top:6px">' + E(d.group) + (d.listBill ? ' · list bill ' + E(d.listBill) : '') + (d.dueBy ? ' · payable by ' + E(tDmy_(d.dueBy)) : '') + '</div></td></tr>';
   h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '18px 26px 0') + '"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse"><tr><th ' + th + '>This month</th><th ' + thr + '>Members</th><th ' + thr + '>Due</th></tr>' +
     d.lines.map(function (l) { return '<tr><td ' + td + '>' + E(l.label) + (l.ref ? '<div style="font:12px Arial,sans-serif;color:#5a687d">Ref ' + E(l.ref) + '</div>' : '') + '</td><td ' + tdr + '>' + (l.members || '') + '</td><td ' + tdr + '>' + E(money(l.due)) + '</td></tr>'; }).join('') +
-    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#ebf2fd') + ' colspan="2">Total for ' + E(d.label) + '</td><td ' + tdr.replace('color:#142033', 'color:#1d5bc4;font-weight:700;background:#ebf2fd') + '>' + E(money(d.total)) + '</td></tr></table></td></tr>';
+    '<tr><td ' + td.replace('color:#11393F', 'color:#11393F;font-weight:700;background:#E2F1F3') + ' colspan="2">Total for ' + E(d.label) + '</td><td ' + tdr.replace('color:#11393F', 'color:#00728D;font-weight:700;background:#E2F1F3') + '>' + E(money(d.total)) + '</td></tr></table></td></tr>';
   /* In the e-mail (o.inline) the earlier invoices are two columns, billed and received under the invoice's name, so the
      statement fits a phone: four columns of amounts ran 60px past one on 25 October 2026. The PDF keeps all four. */
   var span = o.inline ? '1' : '3';
@@ -3885,15 +3885,15 @@ function gblStatementHtml_(g, d, o) {
       if (o.inline) return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '<div style="font:12.5px/1.4 Arial,sans-serif;color:#5a687d">billed ' + E(money(x.billed)) + ' · received ' + (x.paid ? E(money(x.paid)) : 'nothing yet') + '</div></td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>';
       return '<tr><td ' + td + '>' + E(x.label) + ' · ' + E(x.monthLabel) + '</td><td ' + tdr + '>' + E(money(x.billed)) + '</td><td ' + tdr + '>' + (x.paid ? E(money(x.paid)) : '–') + '</td><td ' + tdr + '>' + E(money(x.owed)) + '</td></tr>';
     }).join('') +
-    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700;background:#fdf1e1') + ' colspan="' + span + '">Earlier months still owed</td><td ' + tdr.replace('color:#142033', 'color:#a64b05;font-weight:700;background:#fdf1e1') + '>' + E(money(d.owedTotal)) + '</td></tr>' +
-    '<tr><td ' + td.replace('color:#142033', 'color:#142033;font-weight:700') + ' colspan="' + span + '">Total to bring the account up to date</td><td ' + tdr.replace('color:#142033', 'color:#142033;font-weight:700') + '>' + E(money(d.grand)) + '</td></tr></table>' +
+    '<tr><td ' + td.replace('color:#11393F', 'color:#11393F;font-weight:700;background:#fdf1e1') + ' colspan="' + span + '">Earlier months still owed</td><td ' + tdr.replace('color:#11393F', 'color:#a64b05;font-weight:700;background:#fdf1e1') + '>' + E(money(d.owedTotal)) + '</td></tr>' +
+    '<tr><td ' + td.replace('color:#11393F', 'color:#11393F;font-weight:700') + ' colspan="' + span + '">Total to bring the account up to date</td><td ' + tdr.replace('color:#11393F', 'color:#11393F;font-weight:700') + '>' + E(money(d.grand)) + '</td></tr></table>' +
     gblArrearsNote_(d, E, money) + '</td></tr>';
   else h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#067647"><b>Nothing is owed from earlier months.</b> Thank you.' + (d.invoiceOwed ? ' Head Office\'s ' + E(gblArrearsLines_(d)) + ' invoice still shows ' + E(money(d.invoiceOwed)) + ' outstanding: our records show it paid, and we are having it cleared.' : '') + '</td></tr>';
   var ch = [];
   if (d.changes.joined) ch.push(d.changes.joined + ' joined');
   if (d.changes.left) ch.push(d.changes.left + ' left');
   if (d.changes.moved) ch.push(d.changes.moved + ' changed tier or premium');
-  h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#142033"><b>Changes on this billing:</b> ' + (ch.length ? E(ch.join(', ')) + '. The names are on the attached bills.' : 'no one joined or left, and no premium changed.') + '</td></tr>';
+  h += '<tr><td style="padding:' + (o.inline ? '12px 0 0' : '16px 26px 0') + ';font:14px/1.5 Arial,sans-serif;color:#11393F"><b>Changes on this billing:</b> ' + (ch.length ? E(ch.join(', ')) + '. The names are on the attached bills.' : 'no one joined or left, and no premium changed.') + '</td></tr>';
   if (d.attachments.length) h += '<tr><td style="padding:' + (o.inline ? '8px 0 0' : '10px 26px 0') + ';font:13px/1.5 Arial,sans-serif;color:#5a687d"><b>Attached:</b> ' + E(d.attachments.join('; ')) + '.</td></tr>';
   if (!o.inline) h += '<tr><td style="padding:18px 26px 22px;font:13px/1.5 Arial,sans-serif;color:#5a687d">Please pay as you do today and quote the invoice reference. Tell us about a payment, a joiner or a leaver on your service page, or reply to this e-mail.<br>Ricky Rampersad Branch, Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</td></tr>';
   return h + '</table></div>';
@@ -4158,14 +4158,14 @@ function gblInvShell_(headline, body, banner) {
   var E = tEsc_;
   return '<div style="background:#f3f5f9;padding:20px 0">' + (banner ? '<p style="max-width:640px;margin:0 auto 10px;background:#fdf1e1;padding:8px 12px;font:700 14px Arial,sans-serif;color:#a64b05">' + E(banner) + '</p>' : '') +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
-    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
-    '<td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
-    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean</div></td></tr></table></td></tr>' +
-    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#142033">' + E(headline) + '</div></td></tr>' +
-    '<tr><td style="padding:16px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033">' + body + (typeof tLegal_ === 'function' ? tLegal_(null) : '') + '</td></tr></table></div>';
+    '<tr><td style="padding:18px 26px;border-bottom:3px solid #00728D"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#11393F">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Guardian Life of the Caribbean</div></td></tr></table></td></tr>' +
+    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#11393F">' + E(headline) + '</div></td></tr>' +
+    '<tr><td style="padding:16px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#11393F">' + body + (typeof tLegal_ === 'function' ? tLegal_(null) : '') + '</td></tr></table></div>';
 }
 function gblInvButton_(href, label) {
-  return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 16px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + href + '" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">' + tEsc_(label) + '</a></td></tr></table>';
+  return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 16px"><tr><td style="background:#00728D;border-radius:6px"><a href="' + href + '" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">' + tEsc_(label) + '</a></td></tr></table>';
 }
 function gblInvSign_(g, r) {
   var carer = gblCarer_(g, gcmText_(r['Sent by']));

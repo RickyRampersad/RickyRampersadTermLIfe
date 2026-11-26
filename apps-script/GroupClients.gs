@@ -1947,15 +1947,15 @@ function gcmLetter_(g, today, staffName, intro, verified) {
     'We would be grateful for your answers by ' + dmy(respondBy) + '.', '', 'Warm regards,', staffName, 'Ricky Rampersad Branch, Guardian Life of the Caribbean',
     '9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline].join('\n').replace(/\n{3,}/g, '\n\n');
   var E = tEsc_;
-  var tile = function (n, label, warn) { return '<td style="padding:12px 8px;text-align:center;border:1px solid #e2e7ef;width:25%"><div style="font:700 24px/1.1 Arial,sans-serif;color:' + (warn ? '#b42318' : '#142033') + '">' + E(String(n)) + '</div><div style="font:12px/1.3 Arial,sans-serif;color:#5a687d;margin-top:4px">' + E(label) + '</div></td>'; };
+  var tile = function (n, label, warn) { return '<td style="padding:12px 8px;text-align:center;border:1px solid #e2e7ef;width:25%"><div style="font:700 24px/1.1 Arial,sans-serif;color:' + (warn ? '#b42318' : '#11393F') + '">' + E(String(n)) + '</div><div style="font:12px/1.3 Arial,sans-serif;color:#5a687d;margin-top:4px">' + E(label) + '</div></td>'; };
   var list = function (arr) { return arr.slice(0, 8).map(function (t) { return '<li style="margin:4px 0">' + E(gcmTitle_(t.subject, g.name)) + (t.owner ? ' <span style="color:#5a687d">· ' + E(t.owner) + '</span>' : '') + '</li>'; }).join('') + (arr.length > 8 ? '<li style="color:#5a687d">and ' + (arr.length - 8) + ' more on your page</li>' : ''); };
   var html = '<div style="background:#f3f5f9;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
-    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
-    '<td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
-    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Group client service report</div></td></tr></table></td></tr>' +
-    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#142033">' + E(headline) + '</div>' +
+    '<tr><td style="padding:18px 26px;border-bottom:3px solid #00728D"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#11393F">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Group client service report</div></td></tr></table></td></tr>' +
+    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#11393F">' + E(headline) + '</div>' +
     '<div style="font:14px/1.4 Arial,sans-serif;color:#5a687d;margin-top:6px">' + E(g.name) + ' · as at ' + E(dmy(today)) + '</div></td></tr>' +
-    '<tr><td style="padding:18px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033">' +
+    '<tr><td style="padding:18px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#11393F">' +
     '<p style="margin:0 0 12px">' + E(greet) + '</p>' + (intro ? '<p style="margin:0 0 12px">' + E(intro).replace(/\n/g, '<br>') + '</p>' : '') +
     '<p style="margin:0 0 16px">' + E(lines.join(' ')) + '</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 18px"><tr>' +
@@ -1964,12 +1964,12 @@ function gcmLetter_(g, today, staffName, intro, verified) {
     (waiting.length ? '<p style="margin:0 0 4px;font-weight:700">Waiting on your confirmation</p><ul style="margin:0 0 14px;padding-left:20px">' + list(waiting) + '</ul>' : '') +
     (late.length ? '<p style="margin:0 0 4px;font-weight:700">Past target</p><ul style="margin:0 0 14px;padding-left:20px">' + list(late) + '</ul>' : '') +
     (cmList.length ? '<p style="margin:0 0 6px;font-weight:700">Coming up for your people</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px;font:14px/1.45 Arial,sans-serif">' +
-      cmList.slice(0, 10).map(function (x) { return '<tr><td style="padding:7px 10px 7px 0;border-bottom:1px solid #e2e7ef;font-weight:700;color:#142033;vertical-align:top">' + E(x.who) + '</td>' +
+      cmList.slice(0, 10).map(function (x) { return '<tr><td style="padding:7px 10px 7px 0;border-bottom:1px solid #e2e7ef;font-weight:700;color:#11393F;vertical-align:top">' + E(x.who) + '</td>' +
         '<td style="padding:7px 10px;border-bottom:1px solid #e2e7ef;color:#2B374C;vertical-align:top">' + E(x.what) + '</td><td style="padding:7px 0;border-bottom:1px solid #e2e7ef;color:#2B374C;white-space:nowrap;vertical-align:top">' + E(x.when) + '</td></tr>'; }).join('') +
       '</table>' + (cmList.length > 10 ? '<p style="margin:-8px 0 14px;font-size:13px;color:#5a687d">And ' + (cmList.length - 10) + ' more on your page.</p>' : '') : '') +
     '<p style="margin:0 0 16px">Your service page shows every item: what it is, who on our team is handling it, how long it has been open, its target date and our latest note. Tell us whether each one is correct, add a note where something needs our attention, and rate our service.</p>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + GCM.SITE + 'client.html?from=letter" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #b8cef4;background:#ebf2fd;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#00728D;border-radius:6px"><a href="' + GCM.SITE + 'client.html?from=letter" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B5DBE4;background:#E2F1F3;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif">' +
     'List bill: <b>' + E(g.bills[0] || '') + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(g.code || '(not set)') + '</b></td></tr></table>' +
     '<p style="margin:0 0 18px">We would be grateful for your answers by <b>' + E(dmy(respondBy)) + '</b>.</p>' +
     '<p style="margin:0;border-top:1px solid #e2e7ef;padding-top:12px">Warm regards,<br><b>' + E(staffName) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
@@ -2062,7 +2062,7 @@ function gcmCannotMail_(g) {
 }
 /** The note above a letter sent again, so the group knows it is the same letter, and when it first went. */
 function gcmAgainBanner_(first, today) {
-  return '<div style="max-width:640px;margin:0 auto 10px;background:#EBF2FD;border:1px solid #B8CEF4;border-radius:8px;padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+  return '<div style="max-width:640px;margin:0 auto 10px;background:#E2F1F3;border:1px solid #B5DBE4;border-radius:8px;padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#11393F">' +
     '<b>Sent again on ' + tEsc_(tDmy_(today)) + '.</b> This is the letter that first went on ' + tEsc_(first) + '. Your service page always shows where things stand today.</div>';
 }
 
@@ -2331,7 +2331,7 @@ function gcmWelcome_(g, today, signed) {
     .concat(steps.map(function (s, i) { return (i + 1) + '. ' + s[0] + ': ' + s[1]; }))
     .concat(['', p2].concat(signIn).concat(['', 'Warm regards,', v.name, 'Group client service, Ricky Rampersad Branch', 'Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461', vline])).join('\n');
   var tile = function (n, label) {
-    return '<td width="25%" style="padding:12px 6px;text-align:center;border:1px solid #DCE3EC;background:#F4F7FA"><div style="font:700 22px/1.1 Arial,sans-serif;color:#13408F">' + E(String(n)) +
+    return '<td width="25%" style="padding:12px 6px;text-align:center;border:1px solid #DCE3EC;background:#F4F7FA"><div style="font:700 22px/1.1 Arial,sans-serif;color:#0A4A52">' + E(String(n)) +
       '</div><div style="font:12px/1.35 Arial,sans-serif;color:#4B586C;margin-top:4px">' + E(label) + '</div></td>'; };
   var yearHtml = yearLine ? '<p style="margin:6px 0 8px;font-weight:700">Your year with us so far</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 10px"><tr>' +
@@ -2342,24 +2342,24 @@ function gcmWelcome_(g, today, signed) {
   var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
     '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;border-collapse:collapse;background:#ffffff">' +
     /* the band: the corporate blue, with a plain blue behind it for Outlook, which draws no gradient */
-    '<tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;background-image:linear-gradient(120deg,#13408F,#1D5BC4 60%,#2A6FD8);padding:24px 28px 26px;' + font + '">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
+    '<tr><td bgcolor="#00728D" style="background:#00728D;background-image:linear-gradient(120deg,#0A4A52,#00728D 60%,#00728D);padding:24px 28px 26px;' + font + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
     '<td style="padding-left:12px;color:#ffffff;font:600 15px/1.25 Arial,sans-serif;' + font + '">Ricky Rampersad Branch<div style="font:400 12.5px/1.4 Arial,sans-serif;color:#D6E3F8">Group client service · Guardian Life of the Caribbean</div></td></tr></table>' +
     '<div style="font:600 26px/1.2 Arial,sans-serif;' + font + ';color:#ffffff;margin:22px 0 6px">Your account, in one place</div>' +
     '<div style="font:16px/1.5 Arial,sans-serif;' + font + ';color:#E4ECFA">One letter every Monday. Your own page to answer it. A team that acts on what you say.</div></td></tr>' +
     '<tr><td style="padding:22px 28px 6px"><a href="' + page + '" style="text-decoration:none"><img src="' + GCM.SITE + GCM_WELCOME.CARD + '" width="584" alt="Play the film: how your account works now, ' + E(GCM_WELCOME.LENGTH) + '" style="display:block;width:100%;max-width:584px;height:auto;border:0;border-radius:10px"></a>' +
-    '<div style="font:13px/1.5 Arial,sans-serif;color:#4B586C;margin:8px 0 0;text-align:center"><a href="' + page + '" style="color:#1D5BC4;font-weight:700;text-decoration:none">&#9654;&nbsp; Watch the film</a> · ' + E(GCM_WELCOME.LENGTH) + '</div></td></tr>' +
-    '<tr><td style="padding:16px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#142033">' +
+    '<div style="font:13px/1.5 Arial,sans-serif;color:#4B586C;margin:8px 0 0;text-align:center"><a href="' + page + '" style="color:#00728D;font-weight:700;text-decoration:none">&#9654;&nbsp; Watch the film</a> · ' + E(GCM_WELCOME.LENGTH) + '</div></td></tr>' +
+    '<tr><td style="padding:16px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#11393F">' +
     '<p style="margin:0 0 12px">' + E(greet) + '</p><p style="margin:0 0 16px">' + E(p1) + '</p>' + yearHtml +
     steps.map(function (s, i) {
       return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 10px;background:#F4F7FA;border:1px solid #DCE3EC;border-radius:10px"><tr>' +
-        '<td width="44" valign="top" style="padding:14px 0 14px 14px"><div style="width:30px;height:30px;line-height:30px;border-radius:15px;background:#1D5BC4;color:#ffffff;text-align:center;font:700 14px/30px Arial,sans-serif">' + (i + 1) + '</div></td>' +
-        '<td style="padding:12px 16px 13px 10px;font:15px/1.5 Arial,sans-serif;' + font + ';color:#142033"><b>' + E(s[0]) + '</b><br><span style="color:#4B586C">' + E(s[1]) + '</span></td></tr></table>';
+        '<td width="44" valign="top" style="padding:14px 0 14px 14px"><div style="width:30px;height:30px;line-height:30px;border-radius:15px;background:#00728D;color:#ffffff;text-align:center;font:700 14px/30px Arial,sans-serif">' + (i + 1) + '</div></td>' +
+        '<td style="padding:12px 16px 13px 10px;font:15px/1.5 Arial,sans-serif;' + font + ';color:#11393F"><b>' + E(s[0]) + '</b><br><span style="color:#4B586C">' + E(s[1]) + '</span></td></tr></table>';
     }).join('') +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 14px"><tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;border-radius:8px"><a href="' + page + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Watch how it works</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 14px"><tr><td bgcolor="#00728D" style="background:#00728D;border-radius:8px"><a href="' + page + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Watch how it works</a></td></tr></table>' +
     '<p style="margin:0 0 10px">' + E(p2) + '</p>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr><td bgcolor="#13408F" style="background:#13408F;border-radius:8px"><a href="' + site + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B8CEF4;background:#EBF2FD;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr><td bgcolor="#0A4A52" style="background:#0A4A52;border-radius:8px"><a href="' + site + '" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B5DBE4;background:#E2F1F3;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#11393F">' +
     'List bill: <b>' + E(bill) + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(code) + '</b></td></tr></table>' +
     '<p style="margin:0;border-top:1px solid #E2E7EF;padding-top:14px">Warm regards,<br><b>' + E(v.name) + '</b><br>Group client service, Ricky Rampersad Branch<br>' +
     '<span style="color:#4B586C">Guardian Life of the Caribbean · 9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</span></p>' +
@@ -2673,25 +2673,25 @@ function gcmRateMail_(g, st, today) {
   var font = "font-family:'IBM Plex Sans','Segoe UI',Roboto,Arial,sans-serif";
   var star = function (n) {
     return '<td width="20%" align="center" style="padding:0 3px"><a href="' + link(n) + '" style="display:block;text-decoration:none;border:1px solid #DCE3EC;border-radius:10px;background:#F4F7FA;padding:10px 0 8px">' +
-      '<span style="font:30px/1 Arial,sans-serif;color:#C98A00">&#9733;</span><br><span style="font:700 15px/1.4 Arial,sans-serif;color:#142033">' + n + '</span></a></td>';
+      '<span style="font:30px/1 Arial,sans-serif;color:#C98A00">&#9733;</span><br><span style="font:700 15px/1.4 Arial,sans-serif;color:#11393F">' + n + '</span></a></td>';
   };
   var html = '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' + E(pre) + '</div>' +
     '<div style="background:#E9EEF5;padding:22px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;border-collapse:collapse;background:#ffffff">' +
-    '<tr><td bgcolor="#1D5BC4" style="background:#1D5BC4;background-image:linear-gradient(120deg,#13408F,#1D5BC4 60%,#2A6FD8);padding:20px 28px 22px;' + font + '">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
+    '<tr><td bgcolor="#00728D" style="background:#00728D;background-image:linear-gradient(120deg,#0A4A52,#00728D 60%,#00728D);padding:20px 28px 22px;' + font + '">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="' + GCM.SITE + 'gcm-mark-teal.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px;border:1px solid #7FA3E0"></td>' +
     '<td style="padding-left:12px;color:#ffffff;font:600 15px/1.25 Arial,sans-serif;' + font + '">Ricky Rampersad Branch<div style="font:400 12.5px/1.4 Arial,sans-serif;color:#D6E3F8">Group client service · Guardian Life of the Caribbean</div></td></tr></table>' +
     '<div style="font:600 24px/1.25 Arial,sans-serif;' + font + ';color:#ffffff;margin:18px 0 4px">' + E(st.kind === 'waiting' ? 'How are we doing?' : 'One tap left') + '</div>' +
     '<div style="font:15px/1.5 Arial,sans-serif;' + font + ';color:#E4ECFA">' + E(g.name) + '</div></td></tr>' +
-    '<tr><td style="padding:20px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#142033">' +
+    '<tr><td style="padding:20px 28px 8px;font:15.5px/1.6 Arial,sans-serif;' + font + ';color:#11393F">' +
     '<p style="margin:0 0 12px">' + E(greet) + '</p>' +
-    '<p style="margin:0 0 12px;padding:10px 14px;background:#F4F7FA;border-left:3px solid #1D5BC4;font-size:14.5px;color:#2B374C">' + E(ref) + '</p>' +
+    '<p style="margin:0 0 12px;padding:10px 14px;background:#F4F7FA;border-left:3px solid #00728D;font-size:14.5px;color:#2B374C">' + E(ref) + '</p>' +
     '<p style="margin:0 0 16px">' + E(lead) + '</p>' +
     '<p style="margin:0 0 8px;font-weight:700">Tap a star: your page opens with it chosen</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 6px"><tr>' + [1, 2, 3, 4, 5].map(star).join('') + '</tr></table>' +
     '<p style="margin:0 0 4px;font-size:13px;color:#2B374C">' + E([1, 2, 3, 4, 5].map(function (n) { return n + ' ' + GCM_RATE.WORDS[n].toLowerCase(); }).join(' · ')) + '</p>' +
     '<p style="margin:0 0 16px;font-size:13px;color:#4B586C">Nothing is sent until you sign in and press Send on your page. You can add a comment there too.</p>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr><td bgcolor="#13408F" style="background:#13408F;border-radius:8px"><a href="' + site + '?from=reminder" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B8CEF4;background:#EBF2FD;margin:0 0 16px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#142033">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr><td bgcolor="#0A4A52" style="background:#0A4A52;border-radius:8px"><a href="' + site + '?from=reminder" style="display:inline-block;padding:13px 24px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #B5DBE4;background:#E2F1F3;margin:0 0 16px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif;color:#11393F">' +
     'List bill: <b>' + E(bill) + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(code) + '</b></td></tr></table>' +
     '<p style="margin:0 0 18px">We would be grateful by <b>' + E(by) + '</b>. ' + E(reply) + '</p>' +
     '<p style="margin:0;border-top:1px solid #E2E7EF;padding-top:14px">Warm regards,<br><b>' + E(signer) + '</b><br>Group client service, Ricky Rampersad Branch<br>' +
@@ -2981,11 +2981,11 @@ function gcmBackWords_(st) {
 function gcmChaseMail_(o, cycle, today, tasks) {
   var E = tEsc_, first = String(o.name || '').split(/\s+/)[0] || 'team', n = o.missed.length;
   var subject = 'Group letters: ' + n + ' of your groups had no letter this week · reply by ' + GCM_DAY.REPLY_BY;
-  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
-  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #0A4A52;font:700 13px Arial,sans-serif;color:#0A4A52"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#11393F;vertical-align:top"';
   var table = function (head, rows) { return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
     head.map(function (h) { return '<th ' + th + '>' + E(h) + '</th>'; }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; };
-  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:720px">' +
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:720px">' +
     '<p>Good morning, ' + E(first) + '.</p>' +
     '<p>This week’s group letters went at 10:00 on ' + E(gcmSendLabel_(cycle).replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> ' +
     'A letter not approved by 10:00 on Monday waits for the next Monday unless you send it now.</p>' +
@@ -2996,8 +2996,8 @@ function gcmChaseMail_(o, cycle, today, tasks) {
     (tasks && Object.keys(tasks).length ? '<p>A Salesforce task (' + E(GCM_DAY.TASK_TYPE) + ') is open for each one in your name. Close it with your reason in its comments.</p>' : '') +
     '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each one was not approved by 10:00 on Monday, and when it will go. Your reply goes to Mr Rampersad.</p>' +
     '<p style="margin:16px 0 6px;font-weight:700">From your training: the group client management manual</p>' +
-    GCM_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #1D5BC4"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
-    '<p><a href="' + GCM.SITE + GCM_DAY.MANUAL + '" style="color:#1D5BC4;font-weight:700">Open the manual</a> · <a href="' + GCM.SITE + '" style="color:#1D5BC4;font-weight:700">Open group client management</a></p>' +
+    GCM_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #00728D"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
+    '<p><a href="' + GCM.SITE + GCM_DAY.MANUAL + '" style="color:#00728D;font-weight:700">Open the manual</a> · <a href="' + GCM.SITE + '" style="color:#00728D;font-weight:700">Open group client management</a></p>' +
     (o.sent.length ? '<p style="margin:18px 0 6px;font-weight:700">Your groups that had this week’s letter, and what came back</p>' +
       table(['Group', 'Sent', 'What came back'], o.sent.map(function (x) { return ['<b>' + E(x.g.name) + '</b>', E(x.s.sentThisWeek), E(gcmBackWords_(x.st))]; })) +
       '<p style="font-size:13.5px;color:#2B374C">No answer by Friday: call or e-mail the contact before you approve the next letter (section 7). The star reminder goes to them each working day until they rate us.</p>' : '') +
@@ -3100,11 +3100,11 @@ function gcmDaySummary_(o) {
   all.forEach(function (a) { if (a.kind === 'sent' && a.x.st) back[a.x.st.kind] = (back[a.x.st.kind] || 0) + 1; });
   var td = 'style="padding:7px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;vertical-align:top"';
   var row = function (cells) { return '<tr>' + cells.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; };
-  var head = function (cells) { return '<tr>' + cells.map(function (c) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F">' + E(c) + '</th>'; }).join('') + '</tr>'; };
+  var head = function (cells) { return '<tr>' + cells.map(function (c) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #0A4A52;font:700 13px Arial,sans-serif;color:#0A4A52">' + E(c) + '</th>'; }).join('') + '</tr>'; };
   var tbl = function (h, rows) { return rows.length ? '<table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px">' + head(h) + rows.join('') + '</table>' : ''; };
   var rl = o.rate && o.rate.lists ? o.rate.lists : null;
   var subject = (o.test ? '[TEST] ' : '') + 'Group day, ' + tDmy_(today) + ': ' + sentN + ' of ' + ready + ' ready groups had this week’s letter' + (missedN ? ' · ' + missedN + ' missed' : '');
-  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#142033;max-width:760px">' +
+  var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:760px">' +
     '<p><b>' + sentN + ' of ' + ready + '</b> ready groups had this week’s letter (from ' + E(gcmSendLabel_(list.cycle)) + '). ' +
     '<b>' + missedN + '</b> did not. From the groups that had one: ' + back.rated + ' rated, ' + back.answered + ' answered without stars, ' + back.viewed + ' opened with no answer, ' + back.waiting + ' no answer yet.</p>' +
     (missedN ? '<p style="margin:14px 0 6px;font-weight:700">No letter this week</p>' + tbl(['Group', 'Looked after by', 'Why', 'Task'], all.filter(function (a) { return a.kind === 'missed'; }).map(function (a) {
@@ -3131,7 +3131,7 @@ function gcmDaySummary_(o) {
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   if (o.forms && (o.forms.chased.length || o.forms.answered.length || o.forms.closed.length || o.forms.waiting.length)) {
     var fl = function (x, what) { return '<li><b>' + E(x.member) + '</b> (' + E(x.group) + ') · ' + E(what) + (x.owner ? ' · ' + E(x.owner) : '') + '</li>'; };
-    html = html.replace(/<\/div>\s*$/, '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#13408F">Change forms with EB Customer Care</h3><ul style="margin:0;padding-left:18px">' +
+    html = html.replace(/<\/div>\s*$/, '<h3 style="margin:18px 0 6px;font:700 16px Arial,sans-serif;color:#0A4A52">Change forms with EB Customer Care</h3><ul style="margin:0;padding-left:18px">' +
       o.forms.chased.map(function (x) { return fl(x, 'follow-up ' + (x.chases + 1) + ' posted on the task, ' + x.days + ' working days with no reply'); }).join('') +
       o.forms.answered.map(function (x) { return fl(x, 'EB replied' + (x.reply ? ' ' + x.reply.at + ': ' + x.reply.subject : '') + '; noted on the task'); }).join('') +
       o.forms.closed.map(function (x) { return fl(x, 'task closed'); }).join('') + o.forms.waiting.map(function (x) { return fl(x, 'waiting, ' + x.days + ' working day' + (x.days === 1 ? '' : 's') + ' since ' + (x.chases ? 'the last follow-up' : 'it went')); }).join('') + '</ul></div>');
@@ -3189,13 +3189,13 @@ function gcmTeamCheck_(o) {
   var byWho = {};
   rows.forEach(function (r) { byWho[r.short] = (byWho[r.short] || 0) + 1; });
   var E = tEsc_, label = { system: 'Not reached by the run', held: 'Held at the run', none: 'Not approved', later: 'Approved too late', setup: 'Not set up' };
-  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #13408F;font:700 13px Arial,sans-serif;color:#13408F"';
-  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#142033;vertical-align:top"';
+  var th = 'style="text-align:left;padding:7px 10px;border-bottom:2px solid #0A4A52;font:700 13px Arial,sans-serif;color:#0A4A52"';
+  var td = 'style="padding:8px 10px;border-bottom:1px solid #E2E7EF;font:14px/1.45 Arial,sans-serif;color:#11393F;vertical-align:top"';
   var tag = function (k) { var c = k === 'system' ? '#5A687D' : k === 'setup' ? '#8A5A00' : '#B42318';
     return '<span style="display:inline-block;padding:2px 8px;border:1px solid ' + c + ';border-radius:10px;font:700 12px Arial,sans-serif;color:' + c + '">' + E(label[k]) + '</span>'; };
   var subject = (o.test ? '[TEST] ' : '') + 'Group letters this week: ' + sent.length + ' of ' + total + ' out · ' + rows.length + ' not out (' +
     Object.keys(byWho).map(function (k) { return k + ' ' + byWho[k]; }).join(', ') + ')';
-  var html = '<div style="font:15px/1.55 Arial,sans-serif;color:#142033;max-width:760px">' +
+  var html = '<div style="font:15px/1.55 Arial,sans-serif;color:#11393F;max-width:760px">' +
     (o.test ? '<p style="background:#FFF4D6;border:2px solid #E0A800;padding:10px 14px"><b>TEST.</b> The team letter as it would go now. It went to you alone.</p>' : '') +
     '<p>Team,</p><p>Every group is to have its letter each Monday at 10:00. At 11:00, <b>' + sent.length + ' of ' + total + '</b> groups have this week’s letter. ' +
     'These <b>' + rows.length + '</b> do not. Each is named with the reason and the person responsible for it.</p>' +
