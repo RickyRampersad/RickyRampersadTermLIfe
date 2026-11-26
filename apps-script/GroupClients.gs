@@ -141,7 +141,7 @@ var GCM_EXCLUDE_TYPES = ['HR', 'Lic/Staffing/SA/HR'];
 function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
-      case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
+      case 'gcm.ping':    return { ok: true, gcm: 1, project: (typeof GROUP_APP === 'object') ? 'group' : 'service', salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
                                    sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
                                    /* new members who fill in their own part (GroupBilling.gs, 17 November 2026) */
                                    enrol: typeof gblEnrolGet_ === 'function' ? 1 : 0,

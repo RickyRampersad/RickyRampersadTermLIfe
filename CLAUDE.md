@@ -4008,6 +4008,27 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   (`gcm.*`), signing staff in through `tWho_` like the assignment board,
   reading Salesforce through `ServiceSalesforce.gs`, sending through
   `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
+- **The group side gets a project of its own** (26 November 2026, built and waiting for the move). Asked for as *"I would
+  like it to flow fast and service project should not keep this back"*. The Service Questionnaire project loads 2.4 MB of
+  code on every call (a bare ping took 6 to 8 seconds), and the group side waited behind the orphan batches for the one
+  script lock. Moving the files to another GitHub repository would change neither, so the split is between Apps Script
+  projects:
+  - **The new project** is standalone, owned by support@. It holds `GroupClients.gs`, `GroupBilling.gs` and
+    `GIRenewals.gs`, plus `apps-script/group-project/GroupShared.gs` and `GroupApp.gs` (doGet and doPost, a ping, the
+    move in). It opens the Service Questionnaire sheet by `SQ_SHEET_ID` (for the Agent Skill Bank) and the group sheet
+    by `GCM_SHEET_ID`. The branch code is the `TEAM_CODE` Script property there, so a paste never blanks it.
+  - **The old project** loses those three files and gains `apps-script/GroupKeep.gs`: the 11 group pieces the orphan
+    side still calls (`gcmClaude_`, `gcmAiKey_`, `GCM`, `gblHolidays_`, the PDF helpers).
+  - **`tools/gas/split-group.js` writes both generated files** from the sources, parsing every file with acorn, so a
+    name counts only where code reads it. Never edit them by hand; `tests/test-group-split.js` fails if they are stale,
+    if either project reads a name it does not declare, or if a name is declared twice. It checked out at 60 shared
+    declarations (48 KB) and 11 kept (11 KB).
+  - **The move**: `apps-script/GroupMoveOut.gs` (pasted into the old project for the move: `groupMoveExport`,
+    `groupMoveStopOld`, `groupMoveCleanUp`) carries every Script property, the branch code and the group's timed jobs on
+    a hidden `_move_group` tab, the Move.gs pattern. `groupMoveImport` in the new project reads it, rebuilds the jobs with
+    the project's own installers and deletes the tab. `tools/move/repoint-group.py <new /exec>` then changes the 10 group
+    pages and only those; it refuses a page that also sends a non-group action. `gcm.ping` answers `project: "group"` or
+    `"service"`, so a browser can tell which project answered. `apps-script/group-project/README.md` has every click.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
   the same day ("if this is the sheet for managing groups why import into the
   service questionnaire"): `Group Register`, `Group Tasks`, `Group Increases`, `Group Milestones`, `Group Sends`,
