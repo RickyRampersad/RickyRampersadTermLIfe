@@ -7,7 +7,7 @@
  *  Copied word for word from GroupClients.gs, GroupBilling.gs (11 declarations).
  *  Used by: GBL_PDF (Letters.gs); GCM (Transition.gs); gblHolidays_ (Quotes.gs); gblSigned_ (Letters.gs); gblU8_ (Letters.gs); gcmAiKey_ (Help868.gs, StrategicMeeting.gs, Transition.gs); gcmClaude_ (Help868.gs, StrategicMeeting.gs, Transition.gs).
  *  Add this file to the Service Questionnaire project when GroupClients.gs, GroupBilling.gs and GIRenewals.gs leave it.
- *  While those files are still in the project, this one must NOT be: each name would then be declared twice.
+ *  Add it FIRST, then delete those files: every piece here is a var or a function, word for word the same, so the minute both are in is harmless, and nothing the orphan side calls is ever missing.
  */
 
 var GCM = {

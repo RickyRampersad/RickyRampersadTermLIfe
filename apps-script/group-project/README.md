@@ -68,10 +68,13 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
 - Merge. Then check that `<the site>/groupclientmanagement/` signs in. `gcm.ping` on the new address answers
   `project: "group"`.
 
-**5. Back in the old project**
-- Delete `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs` and `GroupMoveOut.gs`.
-- Add `GroupKeep.gs` from `apps-script/`.
-- Deploy → Manage deployments → pencil → New version.
+**5. Back in the old project**, only once step 4 works
+- Add `GroupKeep.gs` from `apps-script/` FIRST, and save. Its pieces are `var`s and functions copied word for word, so
+  the minute it sits beside the group files is harmless, and the orphan side's five-minute runs never find
+  `gcmClaude_` missing.
+- Then delete `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs` and `GroupMoveOut.gs`.
+- Deploy → Manage deployments → pencil → New version. Never New deployment: that issues a new `/exec`, and every
+  orphan page, the walls and the forms would lose the backend.
 - Its ping now answers faster. Group actions sent to it answer `Unknown action`.
 
 If the move stops half way, run `groupMoveCleanUp` in the old project. It deletes the tab and the secrets on it.

@@ -188,7 +188,7 @@ let outKeep = header('GROUP KEEP — what the Service Questionnaire project stil
   'Copied word for word from ' + [...new Set(keepNames.map(n => decl[n].file))].join(', ') + ' (' + keepNames.length + ' declarations).',
   'Used by: ' + Object.keys(users).sort().map(n => n + ' (' + [...users[n]].sort().join(', ') + ')').join('; ') + '.',
   'Add this file to the Service Questionnaire project when GroupClients.gs, GroupBilling.gs and GIRenewals.gs leave it.',
-  'While those files are still in the project, this one must NOT be: each name would then be declared twice.'
+  'Add it FIRST, then delete those files: every piece here is a var or a function, word for word the same, so the minute both are in is harmless, and nothing the orphan side calls is ever missing.'
 ]);
 outKeep += '\n' + keepNames.map(textOf).join('\n\n') + '\n';
 
