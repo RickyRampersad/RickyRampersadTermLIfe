@@ -10,7 +10,7 @@ blocking each other.
 
 ## What goes where
 
-| New group project (owned by support@) | Service Questionnaire project (stays) |
+| New group project | Service Questionnaire project (stays) |
 |---|---|
 | `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs` (from `apps-script/`) | `Service.gs`, `Transition.gs`, `ServiceSalesforce.gs`, `StrategicMeeting.gs`, `Quotes.gs`, `Help868.gs`, `Letters.gs` |
 | `GroupShared.gs` (this folder, generated) | `GroupKeep.gs` (`apps-script/`, generated) |
@@ -33,13 +33,15 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
   `_move_group`, and its message gives you the sheet's ID. Copy that ID.
 - Run `groupMoveStopOld`. The group's timed jobs stop here; the orphan side's keep running.
 
-**2. Share with support@rickyrampersadbranch.com as an editor**
-- The Service Questionnaire sheet.
-- The Group Client Management sheet.
-- The two training sheets.
-- The forms folder in Drive (`GCM_FORMS_FOLDER`).
+**2. Who owns the new project**
+- Make it under the same Google account that owns the sheets. Then nothing needs sharing.
+- support@rickyrampersadbranch.com has no Google account behind it (Drive refused to share with it on 26 November
+  2026), so it cannot own the project.
+- A different account (a Workspace one later) needs the Service Questionnaire sheet, the Group Client Management
+  sheet, the two training sheets and the "Group Client Management forms" folder shared with it as an editor.
+  `groupMoveImport` names anything it cannot open, and `groupMoveCheck` asks again after sharing.
 
-**3. In the new project** (signed in as support@ → script.google.com → New project, named "Group Client Management")
+**3. In the new project** (script.google.com → New project, named "Group Client Management")
 - Make five files and paste each in: `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs`, then `GroupShared.gs`
   and `GroupApp.gs` from this folder. File order does not matter.
 - Project Settings → Script properties → Add: `SQ_SHEET_ID` = the ID from step 1.
@@ -81,7 +83,7 @@ To undo step 1, run `gcmSetup` there again, and `gcmGroupDayStart` too if the 10
   no longer blank it there.
 - **A change to a borrowed function** (in `Transition.gs`, `Service.gs` or `ServiceSalesforce.gs`) reaches the group
   project only once you run `node tools/gas/split-group.js` and paste `GroupShared.gs` again.
-- **Mail** goes from support@ through Microsoft Graph, as before. If Graph refuses, the fallback now also sends from
-  support@ (Workspace, about 1,500 a day), no longer from the personal Gmail's 100.
+- **Mail** goes from support@ through Microsoft Graph, as before. If Graph refuses, the fallback sends from the
+  account that owns the project, as it does today.
 - **The two projects share the sheets**, not the code. Each has its own cache and its own lock, so a long orphan
   batch no longer holds up a staff member's group page.

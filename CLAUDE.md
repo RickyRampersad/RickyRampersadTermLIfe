@@ -4013,7 +4013,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   code on every call (a bare ping took 6 to 8 seconds), and the group side waited behind the orphan batches for the one
   script lock. Moving the files to another GitHub repository would change neither, so the split is between Apps Script
   projects:
-  - **The new project** is standalone, owned by support@. It holds `GroupClients.gs`, `GroupBilling.gs` and
+  - **The new project** is standalone, made under the Google account that owns the sheets, so nothing needs sharing (support@ has no Google account behind it: Drive refused to share with it on 26 November 2026). The import checks its time zone against the old project's before it changes anything. It holds `GroupClients.gs`, `GroupBilling.gs` and
     `GIRenewals.gs`, plus `apps-script/group-project/GroupShared.gs` and `GroupApp.gs` (doGet and doPost, a ping, the
     move in). It opens the Service Questionnaire sheet by `SQ_SHEET_ID` (for the Agent Skill Bank) and the group sheet
     by `GCM_SHEET_ID`. The branch code is the `TEAM_CODE` Script property there, so a paste never blanks it.
