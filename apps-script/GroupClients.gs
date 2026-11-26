@@ -3415,13 +3415,21 @@ function gcmFeedRefused_(e) {
  *  that a person reading them off an e-mail types as the letter O. No two list bills or codes differ by that alone. */
 function gcmSignKey_(k) { return String(k || '').replace(/O/g, '0'); }
 
+/** A health list bill on the register is the Group ID Guardian prints on the health bill, less its last digit
+ *  (the bill prints 01_DRACO001; the register holds 01_DRACO00). A group typing the number straight off its bill
+ *  is let in too (26 November 2026). Only that shape: two digits, a name, then 00; never a pension or life list bill. */
+function gcmSignMatch_(k, sb) {
+  var s = gcmSignKey_(k);
+  return s === sb || (/^\d\d[A-Z][A-Z0-9]*00$/.test(s) && s + '1' === sb);
+}
+
 function gcmClientAuth_(L, lb, code) {
   var bk = gcmBillKey_(lb), ck = gcmCodeKey_(code);
   if (!bk || !ck) return { ok: false, error: 'Enter your list bill and your access code.' };
   var tk = 'gcm-tries-' + gcmSignKey_(bk).slice(0, 30);
   if (tTries_(tk) >= GCM.TRIES) return { ok: false, error: 'Too many tries. Wait fifteen minutes, or ask our sales support team for your code.' };
   var sb = gcmSignKey_(bk), sc = gcmSignKey_(ck);
-  var g = L.reg.filter(function (x) { return x.billKeys.some(function (k) { return gcmSignKey_(k) === sb; }) && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmSignKey_(gcmCodeKey_(x.code)) === sc; })[0];
+  var g = L.reg.filter(function (x) { return x.billKeys.some(function (k) { return gcmSignMatch_(k, sb); }) && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmSignKey_(gcmCodeKey_(x.code)) === sc; })[0];
   if (!g) { tTriesAdd_(tk); return { ok: false, error: 'That list bill and access code do not match. Check both against the e-mail we sent.' }; }
   tTriesClear_(tk);
   return { ok: true, g: g };

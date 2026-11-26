@@ -4103,7 +4103,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   group's access code, so the page and the preview name the address, say
   where it came from and point out a personal one; staff tick that they
   checked before it goes.
-- **A group signs in with its list bill and its code, both.** The list bill is
+- **A group signs in with its list bill and its code, both.** A health list bill on the register is the Group ID Guardian prints on the health bill less its last digit (the bill prints `01_XXXXX001`, the register holds `01_XXXXX00`), so `gcmSignMatch_` also lets in the printed Group ID, for that shape only (26 November 2026); `tests/test-group-signin.js` covers it. **A group with nothing in List bills cannot sign in at all**, whatever its code. The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on
   `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 4417", "TGM4417" — an
