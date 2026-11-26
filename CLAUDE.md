@@ -5018,7 +5018,11 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - **The group's own page is never sent an employee's link**, in the list or in the answer to its "send it again"; the link is
       the employee's alone. In test mode the panel says so: an application from a copied link goes to the account manager, not
       to Guardian Life.
-    - `tests/test-enrol-invite.js` (98) and `tests/e2e-staff-links.js` (41, a laptop and a phone, the clipboard read back) cover it.
+    - **The panel is read after the page, and tries again by itself** (26 November 2026: on Ricky's screen at 12:45, a minute
+      into the 12:44 hourly refresh, the new-members part ended in a red "Could not reach the branch backend"). A call that
+      never arrives is tried once more three seconds on; a second miss says the system is busy and offers Try again. The
+      form and link actions are answered in `gblAct_` before the stored bills and `gblSf_` are read, since they need neither.
+    - `tests/test-enrol-invite.js` (98) and `tests/e2e-staff-links.js` (46, a laptop and a phone, the clipboard read back, a dropped call) cover it.
   - **The billing day: the 26th at 10:00, or the next working day; approved by staff, sent by the system, reported on the
     25th at 13:00, chased at 10:30** (24 October 2026: "on the 26th group billings go out and weekly on a Monday at 10am
     the queries go out but staff has to approve". On 25 October it went to a Tuesday for a few hours, so a client would

@@ -723,7 +723,8 @@ function invRow(v, i) {
   return h + '</div>';
 }
 function invHtml(r) {
-  if (!r.ok) return '<div class="note bad" style="margin:10px 0 0">' + esc(r.error || 'New members could not be read.') + (/Unknown action/i.test(r.error || '') ? ' GroupBilling.gs needs pasting and a New version publishing.' : '') + '</div>';
+  if (!r.ok) return '<div class="note bad" style="margin:10px 0 0">' + (/Could not reach/.test(r.error || '') ? 'The new members’ links could not be read just now: the branch system is busy for a minute or two. ' : esc(r.error || 'New members could not be read.')) + (/Unknown action/i.test(r.error || '') ? ' GroupBilling.gs needs pasting and a New version publishing.' : '') +
+    ' <button class="btn ghost sm" type="button" id="invAgain">Try again</button></div>';
   const inv = r.invites || [];
   const today = new Date().toISOString().slice(0, 10);
   return (r.live ? '' : '<div class="note" style="margin:10px 0">Test mode: an application made from these links goes to the account manager, not to Guardian Life, until the forms are switched live (gblGoLive). Send a link only to yourself or a colleague to try it.</div>') +
@@ -737,11 +738,15 @@ function invHtml(r) {
     '<label class="chk"><input type="checkbox" name="send"> Also e-mail the link to them</label>' +
     '<div style="margin-top:10px"><button class="btn" type="submit" id="mkGo">Make the link</button></div></form></details>';
 }
-async function loadInv() {
+/* A call that never reached the backend is tried once more by itself, three seconds on: the hourly refresh holds the
+   group sheet for a few minutes each hour, and a page opened then was left with a dead red box (26 November 2026). */
+async function loadInv(again) {
   const box = $('lnkInv'); if (!box || GROUP.canAct === false) return;
-  const r = await post({ action: 'gcm.billAct', group: GROUP.group.key, act: 'invites' });
+  let r = await post({ action: 'gcm.billAct', group: GROUP.group.key, act: 'invites' });
+  if (!r.ok && !r.refused && /Could not reach/.test(r.error || '') && !again) { await new Promise(z => setTimeout(z, 3000)); r = await post({ action: 'gcm.billAct', group: GROUP.group.key, act: 'invites' }); }
   if (!$('lnkInv')) return;
   LNK = r; $('lnkInv').innerHTML = invHtml(r); bindInv();
+  const t = $('invAgain'); if (t) t.onclick = () => { $('lnkInv').innerHTML = '<p class="small muted" style="margin:10px 0 0">Reading the new members’ links…</p>'; loadInv(true); };
 }
 function bindInv() {
   const box = $('lnkInv'); if (!box) return;
@@ -774,12 +779,13 @@ function bindLinks(d) {
   loadInv();
 }
 /* the top of a group: its welcome, its last letter, and the buttons to send them */
+function personName(n) { n = String(n || '').trim(); return n.split(/(\s+|-)/).map(w => /^[A-Za-z]/.test(w) && (w === w.toUpperCase() || w === w.toLowerCase()) && w.length > 1 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w).join(''); }
 function accountBar(d) {
   const a = d.account, s = d.stats;
   if (!a) return '';
   let h = '<div class="drawer" style="padding:12px 16px;margin:12px 0;box-shadow:var(--shadow)"><div style="display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center">' +
-    '<div><span class="small muted">Welcome</span><br>' + (a.welcome ? '<span class="chip good"><i></i>Sent ' + esc(shortAt(a.welcome.at)) + ' · ' + esc(a.welcome.by) + '</span>' : a.welcomeWhy ? '<span class="chip warn"><i></i>Not yet: ' + esc(a.welcomeWhy) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>Not sent yet</span>') + '</div>' +
-    '<div><span class="small muted">Last letter</span><br>' + (a.last ? '<span class="chip"><i style="background:var(--bar)"></i>' + esc(shortAt(a.last.at)) + ' · ' + esc(a.last.by) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>None yet</span>') + '</div>' +
+    '<div><span class="small muted">Welcome</span><br>' + (a.welcome ? '<span class="chip good"><i></i>Sent ' + esc(shortAt(a.welcome.at)) + ' · ' + esc(personName(a.welcome.by)) + '</span>' : a.welcomeWhy ? '<span class="chip warn"><i></i>Not yet: ' + esc(a.welcomeWhy) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>Not sent yet</span>') + '</div>' +
+    '<div><span class="small muted">Last letter</span><br>' + (a.last ? '<span class="chip"><i style="background:var(--bar)"></i>' + esc(shortAt(a.last.at)) + ' · ' + esc(personName(a.last.by)) + '</span>' : '<span class="chip"><i style="background:#9aa5b1"></i>None yet</span>') + '</div>' +
     '<div><span class="small muted">Opened · rated</span><br>' + rateHtml(a) + '</div>';
   if (d.canAct !== false) {
     h += '<div class="acts" style="margin-left:auto">';

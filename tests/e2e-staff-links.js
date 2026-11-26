@@ -30,7 +30,7 @@ async function mock(page, W) {
     if (req.method() !== 'POST') return route.fulfill({ status: 200, contentType: 'image/gif', body: Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64') });
     let b = {}; try { b = JSON.parse(req.postData() || '{}'); } catch (e) {} W.posts.push(b);
     if (b.action !== 'gcm.billAct') return json(route, { ok: false, error: 'Unknown action (mock): ' + b.action });
-    if (b.act === 'invites') return json(route, { ok: true, live: W.live, contact: 'Pat Admin', invites: W.invites });
+    if (b.act === 'invites') { if (W.dropInvites > 0) { W.dropInvites--; return route.abort('failed'); } return json(route, { ok: true, live: W.live, contact: 'Pat Admin', invites: W.invites }); }
     if (b.act === 'inviteMake') {
       const x = { ref: 'EN-261123-001', employee: b.first + ' ' + b.last, first: b.first, email: b.email || '', mobile: b.mobile || '', cover: b.covHealth === 'Y' && b.covLife === 'Y' ? 'Group Health and Group Life' : b.covLife === 'Y' ? 'Group Life' : 'Group Health',
         effective: b.effective, status: 'waiting', words: 'Waiting on ' + b.first, test: !W.live, link: LINK + 'a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9', expires: '2027-01-22', madeBy: 'made at the branch by Ricky Sample', sentBy: b.admin };
@@ -120,6 +120,20 @@ const clip = page => page.evaluate(() => navigator.clipboard.readText());
     await p2.waitForSelector('#lnkInv .lk.inv', { timeout: 8000 });
     ok('live: no test-mode note', !/Test mode/.test(await p2.textContent('#lnkInv')));
     await ctx2.close();
+    console.log('\nthe backend does not answer (26 November 2026: the hourly refresh holding the sheet)');
+    const ctx3 = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    const p3 = await ctx3.newPage(), W3 = world(true); W3.dropInvites = 1;
+    await mock(p3, W3); await openGroup(p3, true);
+    await p3.waitForSelector('#lnkInv .lk.inv', { timeout: 12000 });
+    ok('one call that never arrives is tried again by itself, and the links appear', W3.posts.filter(x => x.act === 'invites').length === 2 && !/could not be read/.test(await p3.textContent('#lnkInv')));
+    W3.dropInvites = 2; W3.posts.length = 0; await openGroup(p3, true);
+    await p3.waitForSelector('#invAgain', { timeout: 12000 });
+    const t3 = await p3.textContent('#lnkInv');
+    ok('two that never arrive: a plain sentence and Try again, not "could not reach the branch backend"', /busy for a minute or two/.test(t3) && !/Could not reach/.test(t3), t3.slice(0, 160));
+    await p3.click('#invAgain');
+    await p3.waitForSelector('#lnkInv .lk.inv', { timeout: 8000 });
+    ok('Try again reads the links', W3.posts.filter(x => x.act === 'invites').length === 3);
+    await ctx3.close();
   } finally { await browser.close(); srv.kill(); }
   console.log('\n' + passes + ' passed, ' + fails + ' failed');
   process.exit(fails ? 1 : 0);

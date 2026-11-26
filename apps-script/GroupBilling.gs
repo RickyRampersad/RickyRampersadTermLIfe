@@ -1364,6 +1364,9 @@ function gblAct_(b) {
   /* the bills in support@ (26 November 2026): found and read on the page, nothing uploaded */
   if (act === 'mailBills') return gblMailBills_(g, gcmYes_(b.fresh));
   if (act === 'mailFile') return gblMailFile_(g, String(b.mail || ''), String(b.att || ''));
+  /* the forms and the new members' links need neither the stored bills nor Salesforce's billing records: answered here, so
+     the staff page's links panel never waits on a Salesforce read (26 November 2026) */
+  if (['members', 'form', 'formSend', 'enrol', 'enrolSend', 'easi', 'easiSend', 'invites', 'inviteMake', 'inviteAgain'].indexOf(act) >= 0) return gblFormAct_(g, who, b);
   var bill = gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0];
   var sf = gblSf_(g);
   var log = function (kind, member, detail, amount, sfId, status) {
@@ -2997,7 +3000,7 @@ function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
  *  kept), the staff copied. At 10:30 on the billing day the group day asks each staff member whose group had no bill why,
  *  and opens the KPI task. When the 26th is a Monday the bills and the weekly letters both go at 10:00 that morning. */
 /* Which GroupBilling.gs is live: gcm.ping answers it as bills.build. Move it with every change worth pasting. */
-var GBL_BUILD = '2026-11-26b';
+var GBL_BUILD = '2026-11-26c';
 
 var GBL_DAY = {
   DAY: 26,                      // the bills go on this day (the GCM_BILL_DAY Script property overrides, 1 to 28)
