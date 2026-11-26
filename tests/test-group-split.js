@@ -145,7 +145,7 @@ function world(opts) {
       newTrigger: (fn) => builder(fn), getScriptId: () => opts.scriptId || 'SCRIPT-OLD', WeekDay: { MONDAY: 'MONDAY' } },
     SpreadsheetApp: { getActiveSpreadsheet: () => (opts.bound ? ss : null), openById: (id) => { if (id === sheet.id) return ss; if (opts.openIds && opts.openIds.includes(id)) return { getId: () => id, getName: () => 'Group Client Management', getSheetByName: () => null }; throw new Error('not found'); },
       getUi: () => { throw new Error('no ui'); } },
-    Session: { getEffectiveUser: () => ({ getEmail: () => opts.me || 'support@rickyrampersadbranch.com' }), getScriptTimeZone: () => 'America/Port_of_Spain' },
+    Session: { getEffectiveUser: () => ({ getEmail: () => opts.me || 'support@rickyrampersadbranch.com' }), getScriptTimeZone: () => opts.tz || 'America/Port_of_Spain' },
     Utilities: { formatDate: (d, tz, f) => { const x = new Date(d); return f === 'H' ? String(x.getUTCHours()) : f === 'u' ? String(((x.getUTCDay() + 6) % 7) + 1) : x.toISOString().slice(0, 10); },
       computeDigest: () => [1, 2, 3], DigestAlgorithm: { SHA_256: 1 }, Charset: { UTF_8: 1 }, base64Encode: (b) => Buffer.from(b).toString('base64'), newBlob: () => ({}) },
     ContentService: { createTextOutput: (t) => ({ text: t, setMimeType: function () { return this; } }), MimeType: { JSON: 'json' } },
@@ -207,12 +207,17 @@ const said2 = mo.sb.groupMoveExport();
 const tab = shared.tabs._move_group;
 ok('groupMoveExport writes a hidden _move_group tab, every value as text', !!tab && tab.hidden && tab.fmt === '@' && tab.rows.slice(1).every(r => /^v:/.test(r[2])));
 ok('it carries the branch code and the sheet ID, and names the ID in its message', /SQ-SHEET-ID-0123456789abcdefghij/.test(said2) && tab.rows.some(r => r[0] === 'meta' && r[1] === 'teamCode' && r[2] === 'v:BRANCH-CODE'));
+ok('it writes down the project\'s time zone and names it', tab.rows.some(r => r[0] === 'meta' && r[1] === 'timeZone' && r[2] === 'v:America/Port_of_Spain') && /America\/Port_of_Spain/.test(said2));
 ok('it writes down the group\'s timed jobs once each, and none of the orphan side\'s', JSON.stringify(tab.rows.filter(r => r[0] === 'job').map(r => r[1]).sort()) === JSON.stringify(['gcmDay1030', 'gcmMondaySend', 'gcmRefreshTick']));
 mo.sb.groupMoveStopOld();
 ok('groupMoveStopOld deletes the group\'s timed jobs and leaves the orphan side\'s running', JSON.stringify(mo.triggers.map(t => t.fn).sort()) === JSON.stringify(['transitionReceipts', 'transitionSendTick']));
 
 const mn = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
 ok('groupMoveImport asks for SQ_SHEET_ID first', /Set SQ_SHEET_ID first/.test(mn.sb.groupMoveImport()) && !!shared.tabs._move_group);
+const mz = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, tz: 'America/New_York', props: { SQ_SHEET_ID: shared.id }, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
+const saidZ = mz.sb.groupMoveImport();
+ok('groupMoveImport stops, changing nothing, when the new project is on another time zone', /Stopped before anything was changed/.test(saidZ) && /appsscript\.json/.test(saidZ) && !('MS_SECRET' in mz.props) && mz.triggers.length === 0 && !!shared.tabs._move_group, saidZ);
+ok('the ping says which time zone the project runs on', JSON.parse(mz.sb.doGet({ parameter: { action: 'ping' } }).text).timeZone === 'America/New_York');
 mn.props.SQ_SHEET_ID = 'SQ-SHEET-ID-0123456789abcdefghij';
 const said3 = mn.sb.groupMoveImport();
 ok('it carries every setting, the secrets included, but not the move\'s own marks', mn.props.MS_SECRET === 's3cret' && mn.props.ANTHROPIC_API_KEY === 'sk-test' && mn.props.GCM_HOLD === '{"all":false}' && !('MOVE_IMPORTED' in mn.props), said3);

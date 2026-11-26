@@ -43,18 +43,22 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
 - Make five files and paste each in: `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs`, then `GroupShared.gs`
   and `GroupApp.gs` from this folder. File order does not matter.
 - Project Settings → Script properties → Add: `SQ_SHEET_ID` = the ID from step 1.
-- Run `groupMoveImport`. It carries every setting across, the secrets included:
+- The clock: Project Settings → tick "Show appsscript.json manifest file in editor" → open `appsscript.json` →
+  set `"timeZone"` to the zone `groupMoveExport` named (`America/Port_of_Spain`, normally) → Save. A new project
+  takes the time zone of the account that made it, and every timed job runs by it. `groupMoveImport` refuses, and
+  changes nothing, until the two match.
+- Run `groupMoveImport`, and approve the permissions it asks for the first time. It carries every setting across, the secrets included:
   - the Microsoft, Salesforce and Claude keys;
   - the branch code, as `TEAM_CODE`.
 
   It then rebuilds the hourly refresh, the Monday 10:00 letters and the 10:30 group day, checks that every sheet
   and folder opens, and deletes the `_move_group` tab.
-- Approve the permissions it asks for.
 - Deploy → New deployment → Web app. Execute as: Me. Who has access: Anyone. Copy the `/exec` address.
 - Open `<the /exec>?action=ping` in a browser:
   - `sheets` should say `ok` twice;
   - `settings` should be all `true`;
-  - `jobs` should list `gcmRefreshTick`, `gcmMondaySend` and `gcmDay1030`.
+  - `jobs` should list `gcmRefreshTick`, `gcmMondaySend` and `gcmDay1030`;
+  - `timeZone` should be `America/Port_of_Spain`.
 
 **4. The site**
 - Run `python3 tools/move/repoint-group.py <the /exec>` and commit. It changes the 10 group pages and only

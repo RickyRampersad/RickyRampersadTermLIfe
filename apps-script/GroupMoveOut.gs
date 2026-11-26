@@ -19,10 +19,14 @@
  *  half way. Values are written as text behind a "v:", so Sheets never turns a setting into a number or a date.
  *
  *  The orphan side's own timed jobs are not touched: only the group's.
+ *
+ *  It also writes down this project's time zone. A new project takes the time zone of the account that made it, and
+ *  every timed job (the Monday 10:00 letters, the 10:30 group day, the billing day) runs by the project's clock, so
+ *  groupMoveImport refuses until the new project is set to the same zone.
  */
 
 var GROUP_MOVE = {
-  VERSION: '2026-11-26a',
+  VERSION: '2026-11-26b',
   TAB: '_move_group',
   JOBS: ['gcmRefreshTick', 'gcmMondaySend', 'gcmDay1030', 'gcmRehearseTick', 'gcmWelcomeTick'],
   SKIP: { GROUP_MOVED_OUT: 1, GROUP_MOVED_IN: 1, MOVE_STOPPED: 1, MOVE_IMPORTED: 1 }
@@ -38,15 +42,17 @@ function groupMoveExport() {
     if (GROUP_MOVE.JOBS.indexOf(fn) > -1 && jobs.indexOf(fn) < 0) jobs.push(fn);
   });
   var team = (typeof SVC === 'object' && SVC) ? String(SVC.TEAM_CODE || '').trim() : '';
-  var me = '';
+  var me = '', tz = '';
   try { me = Session.getEffectiveUser().getEmail() || ''; } catch (e) {}
+  try { tz = Session.getScriptTimeZone() || ''; } catch (e) {}
   var rows = [['Kind', 'Key', 'Value'],
     ['meta', 'exported', 'v:' + new Date().toISOString()],
     ['meta', 'from', 'v:' + me],
     ['meta', 'sheet', 'v:' + ss.getId()],
     ['meta', 'script', 'v:' + ScriptApp.getScriptId()],
     ['meta', 'version', 'v:' + GROUP_MOVE.VERSION],
-    ['meta', 'teamCode', 'v:' + team]];
+    ['meta', 'teamCode', 'v:' + team],
+    ['meta', 'timeZone', 'v:' + tz]];
   keys.forEach(function (k) { rows.push(['prop', k, 'v:' + String(props[k])]); });
   jobs.forEach(function (fn) { rows.push(['job', fn, 'v:']); });
   var sh = ss.getSheetByName(GROUP_MOVE.TAB) || ss.insertSheet(GROUP_MOVE.TAB);
@@ -57,6 +63,7 @@ function groupMoveExport() {
   try { sh.hideSheet(); } catch (e) {}
   return groupMoveSay_('Ready. ' + keys.length + ' settings' + (team ? ', the branch code' : ' (no branch code: TEAM_CODE is blank here)') +
     ' and ' + jobs.length + ' group timed job' + (jobs.length === 1 ? '' : 's') + ' (' + (jobs.join(', ') || 'none') + ') are on the hidden tab "' + GROUP_MOVE.TAB + '".\n\n' +
+    'This project runs on the time zone ' + (tz || '(unknown)') + '. The new project must be set to the same before groupMoveImport.\n\n' +
     'Next: run groupMoveStopOld here. Then, in the new group project, add the Script property SQ_SHEET_ID = ' + ss.getId() + ' and run groupMoveImport.');
 }
 

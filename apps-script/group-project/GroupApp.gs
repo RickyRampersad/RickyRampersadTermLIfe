@@ -33,7 +33,7 @@
  */
 
 var GROUP_APP = {
-  VERSION: '2026-11-26a',
+  VERSION: '2026-11-26b',
   MOVE_TAB: '_move_group',
   /* the group's own timed jobs, and how each is rebuilt here: the project's own installers, never a copy of them */
   JOBS: ['gcmRefreshTick', 'gcmMondaySend', 'gcmDay1030', 'gcmRehearseTick', 'gcmWelcomeTick'],
@@ -91,6 +91,7 @@ function groupPing_() {
     settings: { teamCode: has('TEAM_CODE'), microsoft: has('MS_TENANT') && has('MS_CLIENT') && has('MS_SECRET'),
                 salesforce: has('SF_KEY') && has('SF_SECRET'), ai: has('ANTHROPIC_API_KEY') },
     jobs: jobs,
+    timeZone: (function () { try { return Session.getScriptTimeZone() || ''; } catch (e) { return ''; } })(),
     movedIn: String(p.GROUP_MOVED_IN || '')
   };
 }
@@ -110,6 +111,16 @@ function groupMoveImport() {
   var m = groupMoveRead_(sh);
   if (!m) return groupSay_('There is no "' + GROUP_APP.MOVE_TAB + '" tab in the Service Questionnaire sheet. Run groupMoveExport in the old project first.');
   if (m.meta.script && m.meta.script === ScriptApp.getScriptId()) return groupSay_('This is the old project. groupMoveImport runs in the new group project.');
+
+  /* the clock: every timed job runs by the project's time zone, and a new project takes its maker's account zone */
+  var here = '';
+  try { here = Session.getScriptTimeZone() || ''; } catch (e) {}
+  if (m.meta.timeZone && here && here !== m.meta.timeZone) {
+    return groupSay_('Stopped before anything was changed: this project runs on the time zone ' + here + ', the old one on ' + m.meta.timeZone + '. ' +
+      'The letters, the 10:30 group day and the bills would run at the wrong hour.\n\n' +
+      'Fix: Project Settings (the cog) → tick "Show appsscript.json manifest file in editor" → open appsscript.json in the file list → ' +
+      'change the "timeZone" line to "' + m.meta.timeZone + '" → Save. Then run groupMoveImport again.');
+  }
 
   /* the settings, all of them: what the group side does not read is harmless, and a setting left behind is a silent fault */
   var keep = { SQ_SHEET_ID: store.getProperty('SQ_SHEET_ID') };
