@@ -183,6 +183,39 @@ function gblSamePerson_(a, b) {
   var xa = x.loose || x.last.concat(x.first), ya = y.loose || y.last.concat(y.first);
   return firstOk(xf, yf) && (lastOk(x.last, y.last) || lastOk(x.last, ya) || lastOk(y.last, xa));
 }
+/** The health bill against the life bill only: the two are typed by different Guardian desks, so one person comes
+ *  back spelt a letter or two apart ("Jankee"/"Jankie", "Sookbir"/"Sukbir"), or with a long name whose first name the
+ *  reader lost. Everything gblSamePerson_ takes, plus: each word within one letter (two for a word of six or more),
+ *  and a long double-barrelled surname alone when one side carries no first name. Kept apart from gblSamePerson_,
+ *  which also matches task subjects, where a looser rule would find people who are not there. */
+function gblSameMember_(a, b) {
+  if (gblSamePerson_(a, b)) return true;
+  var parts = function (s) {
+    s = String(s || '').toUpperCase().replace(/\(.*?\)/g, ' ').replace(/[^A-Z,;\- ']/g, ' ').trim();
+    var m = /^(.+?)\s*[,;]\s*(.*)$/.exec(s), w = function (x) { return x.replace(/-/g, ' ').split(/[\s'.]+/).filter(String); };
+    return m ? { last: w(m[1]), first: w(m[2]) } : null;
+  };
+  var x = parts(a), y = parts(b);
+  if (!x || !y || !x.last.length || !y.last.length) return false;
+  var near = function (u, v) {
+    if (u === v) return true;
+    var lim = Math.min(u.length, v.length) >= 6 ? 2 : Math.min(u.length, v.length) >= 4 ? 1 : 0;
+    if (!lim || Math.abs(u.length - v.length) > lim) return false;
+    var p = [], q, i, j;
+    for (j = 0; j <= v.length; j++) p[j] = j;
+    for (i = 1; i <= u.length; i++) {
+      q = [i];
+      for (j = 1; j <= v.length; j++) q[j] = Math.min(p[j] + 1, q[j - 1] + 1, p[j - 1] + (u[i - 1] === v[j - 1] ? 0 : 1));
+      p = q;
+    }
+    return p[v.length] <= lim;
+  };
+  var j1 = x.last.join(''), j2 = y.last.join('');
+  var lastNear = near(j1, j2) || x.last.some(function (u) { return u.length > 3 && y.last.some(function (v) { return near(u, v); }); });
+  if (!lastNear) return false;
+  if (!x.first.length || !y.first.length) return j1 === j2 && j1.length >= 12 && x.last.length > 1;
+  return x.first.some(function (u) { return y.first.some(function (v) { return near(u, v) || (u.length >= 3 && v.length >= 3 && (u.indexOf(v) === 0 || v.indexOf(u) === 0)); }); });
+}
 
 /* ── Salesforce: what the branch holds about a group's billing ───────────────────────── */
 function gblSf_(g, fresh) {
@@ -438,9 +471,13 @@ function gblCheck_(g, line, bill, sf, prev, today) {
     var hb = gblBillRows_(g).filter(function (b) { return b.line === 'health' && b.month === bill.month; })[0];
     if (hb) {
       var hl = gblLines_(g, 'health', bill.month).filter(function (l) { return l.kind === 'member'; });
-      var onlyH = hl.filter(function (h) { return !members.some(function (m) { return gblSamePerson_(m.name, h.name); }); });
-      var onlyL = members.filter(function (m) { return !hl.some(function (h) { return gblSamePerson_(m.name, h.name); }); });
-      if (onlyH.length) add('check', 'group', onlyH.length + ' on the health bill ' + (onlyH.length === 1 ? 'is' : 'are') + ' not on the life bill: ' + onlyH.map(function (h) { return gblNice_(h.name); }).join(', ') + '. A new joiner not yet added to life, or a name spelt differently.', { kind: 'hvl', aiText: onlyH.length + ' on health are not on life.' });
+      var onlyH = hl.filter(function (h) { return !members.some(function (m) { return gblSameMember_(m.name, h.name); }); });
+      var onlyL = members.filter(function (m) { return !hl.some(function (h) { return gblSameMember_(m.name, h.name); }); });
+      /* the same surname left on both sides is worth a word: one person under two first names, or two people */
+      var sur = function (n) { return (String(n || '').toUpperCase().split(/[,;]/)[0].match(/[A-Z]{3,}/) || [''])[0]; };
+      var pairs = [];
+      onlyH.forEach(function (h) { onlyL.forEach(function (m) { if (sur(h.name) && sur(h.name) === sur(m.name)) pairs.push(gblNice_(h.name) + ' on health and ' + gblNice_(m.name) + ' on life'); }); });
+      if (onlyH.length) add('check', 'group', onlyH.length + ' on the health bill ' + (onlyH.length === 1 ? 'is' : 'are') + ' not on the life bill: ' + onlyH.map(function (h) { return gblNice_(h.name); }).join(', ') + '. A new joiner not yet added to life, or a name spelt differently.' + (pairs.length ? ' Same surname on both bills, so check whether each is one person: ' + pairs.join('; ') + '.' : ''), { kind: 'hvl', aiText: onlyH.length + ' on health are not on life.' });
       if (onlyL.length) add('note', 'group', onlyL.length + ' on the life bill ' + (onlyL.length === 1 ? 'is' : 'are') + ' not on health: ' + onlyL.map(function (m) { return gblNice_(m.name); }).join(', ') + '.', { kind: 'lvh', aiText: onlyL.length + ' on life are not on health.' });
     }
     if (bill.reportDays && bill.reportDays !== GBL.REPORT_DAYS) add('note', 'us', 'The covering letter gives ' + bill.reportDays + ' days to report changes.', { kind: 'letter' });
