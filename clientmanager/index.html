@@ -2034,8 +2034,31 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       var n=d.getElementById('uwNote'); if(n)n.hidden=(e.target.value!=='No');
     }
   });
+  /* The upload only works once the backend can keep the file. Until its ping
+     says cv:1 the page asks for the CV by e-mail instead: from 19 to 26 Nov
+     2026 every CV attached on these pages was thrown away by a backend that
+     did not know about it. A ping that does not answer leaves the upload. */
+  var CVMODE='upload';
+  function cvEmailMode(){
+    if(CVMODE==='email'||!cvIn)return;
+    CVMODE='email';
+    try{cvIn.value=''}catch(e){}
+    cvIn.required=false;
+    var box=cvIn.closest('div'); if(box)box.hidden=true;
+    var sec=cvIn.closest('[data-sec]'), hint=sec&&sec.querySelector('.hint');
+    if(hint)hint.innerHTML='<b>Send your CV by e-mail, not here.</b> Once you press Send you will get a reference. E-mail your CV (PDF or Word) to Mr Rampersad at <b>'+TO+'</b> with that reference in the subject. Only he reads it.';
+    tick();
+  }
+  try{
+    var pc=('AbortController' in window)?new AbortController():null,
+        pt=setTimeout(function(){if(pc)pc.abort()},8000);
+    fetch(API+'?action=q.ping',{signal:pc?pc.signal:undefined})
+      .then(function(r){return r.json()})
+      .then(function(x){clearTimeout(pt);if(x&&x.ok&&x.cv!==1)cvEmailMode()})
+      .catch(function(){clearTimeout(pt)});
+  }catch(e){}
   function filled(n){
-    if(n==='cv')return !!(cvIn&&cvIn.files&&cvIn.files.length);
+    if(n==='cv')return CVMODE==='email'||!!(cvIn&&cvIn.files&&cvIn.files.length);
     if(MIN[n])return val(n).length>=MIN[n];
     if(FMT[n])return FMT[n].test(val(n));
     return !!val(n);
@@ -2099,7 +2122,8 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
       +'<div class="ref" aria-label="'+esc(ref)+'">'+esc(ref)+'</div>'
       +'<p>He reads it himself, within 48 hours. If it reads right, you will hear from him for twenty minutes on the phone &mdash; your two risks, and what you would change about renewals.</p>'
       +(sent&&cvOk?'<p class="small">Your CV went with it.</p>':'')
-      +(sent&&!cvOk?'<p class="warn">Your answers are filed, but the CV did not attach. Please e-mail it to <a href="mailto:'+TO+'?subject='+encodeURIComponent('CV — '+ref)+'">Mr Rampersad</a> quoting '+esc(ref)+'.</p>':'')
+      +(sent&&!cvOk&&CVMODE==='email'?'<p class="warn"><b>One last step: your CV.</b> E-mail it to <a href="mailto:'+TO+'?subject='+encodeURIComponent('CV — '+ref)+'">'+TO+'</a> with <b>'+esc(ref)+'</b> in the subject.</p>':'')
+      +(sent&&!cvOk&&CVMODE!=='email'?'<p class="warn">Your answers are filed, but the CV did not attach. Please e-mail it to <a href="mailto:'+TO+'?subject='+encodeURIComponent('CV — '+ref)+'">Mr Rampersad</a> quoting '+esc(ref)+'.</p>':'')
       +(!sent?'<p class="warn">We could not reach our system just now, so your mail app has opened with the same answers addressed to him. Press send there, and attach your CV to that e-mail.</p>':'');
     done.classList.add('on');
     done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
@@ -2251,6 +2275,7 @@ legend{font:600 var(--f--1)/1.4 var(--text);color:var(--ink);margin-bottom:.5rem
           {section:'At a glance',k:'scan_depth',label:'Depth',value:s[3]},
           {section:'Them',k:'town',label:'Where they live',value:val('town')},
           {section:'Them',k:'when_talk',label:'Best time for a call',value:val('when')},
+          {section:'Them',k:'cv_later',label:'CV',value:CVMODE==='email'?'Not attached: the page asked them to e-mail it quoting the reference':''},
           {section:'Experience',k:'uw_door',label:'Door',value:val('uw_door')},
           {section:'Experience',k:'uw_years',label:'Years in general insurance',value:val('uw_years')},
           {section:'Experience',k:'uw_classes',label:'Classes handled',value:classes().join(', ')},

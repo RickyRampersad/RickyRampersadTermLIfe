@@ -1671,6 +1671,30 @@ footer .ic{width:16px;height:16px}
     if(!f)return;
     var MAXB=6*1024*1024, OKEXT=/\.(pdf|docx?)$/i;
     function hasCv(){return !!(cvIn&&cvIn.files&&cvIn.files.length)}
+    /* The upload only works once the backend can keep the file. Until its
+       ping says cv:1, the page asks for the CV by e-mail instead: from 19 to
+       26 Nov 2026 every CV attached here was thrown away by a backend that
+       did not know about it, and applicants were told so only after sending.
+       A ping that does not answer leaves the upload as it is. */
+    var CVMODE='upload';
+    function cvEmailMode(){
+      if(CVMODE==='email'||!cvIn)return;
+      CVMODE='email';
+      try{cvIn.value=''}catch(e){}
+      var box=cvIn.closest('div'); if(box)box.hidden=true;
+      if(cvLater){cvLater.checked=true; var lab=cvLater.closest('label'); if(lab)lab.hidden=true}
+      var sec=cvIn.closest('[data-sec]'), hint=sec&&sec.querySelector('.hint');
+      if(hint)hint.innerHTML='<b>Send your CV by e-mail, not here.</b> Once you press Send you will get a reference. E-mail your CV (PDF or Word) to <b>support@rickyrampersadbranch.com</b> with that reference in the subject, and it joins your answers. Only Mr Rampersad reads it.';
+      tick();
+    }
+    try{
+      var pc=('AbortController' in window)?new AbortController():null,
+          pt=setTimeout(function(){if(pc)pc.abort()},8000);
+      fetch(API+'?action=q.ping',{signal:pc?pc.signal:undefined})
+        .then(function(r){return r.json()})
+        .then(function(x){clearTimeout(pt);if(x&&x.ok&&x.cv!==1)cvEmailMode()})
+        .catch(function(){clearTimeout(pt)});
+    }catch(e){}
     if(cvIn)cvIn.addEventListener('change',function(){
       var fl=cvIn.files&&cvIn.files[0];
       if(!fl){cvNote.textContent='Nothing attached yet.';return}
@@ -1713,7 +1737,7 @@ footer .ic{width:16px;height:16px}
         +'and have your answer ready. Keep the reference if you need to reach him: <a href="tel:+18686785821">678-5821</a>.</p>'
         +(sent&&cvState==='ok'?'<p class="small">Your CV went with it.</p>':'')
         +(sent&&cvState==='lost'?'<p class="warn">Your answers are filed, but the CV did not come through. Please e-mail it to <b>support@rickyrampersadbranch.com</b> quoting '+esc(ref)+'.</p>':'')
-        +(sent&&cvState==='later'?'<p class="small">When you e-mail your CV to <b>support@rickyrampersadbranch.com</b>, put '+esc(ref)+' in the subject so it lands with your answers.</p>':'')
+        +(sent&&cvState==='later'?'<p class="warn"><b>One last step: your CV.</b> E-mail it to <a href="mailto:support@rickyrampersadbranch.com?subject='+encodeURIComponent(ref+' CV')+'">support@rickyrampersadbranch.com</a> with <b>'+esc(ref)+'</b> in the subject, so it lands with your answers.</p>':'')
         +(sent?'':'<p class="warn">We could not reach our system just now, so your mail app has opened with the same answers addressed to him. Press send there, and attach your CV to that e-mail.</p>');
       done.classList.add('on');
       done.scrollIntoView({behavior:noMotion.matches?'auto':'smooth',block:'center'});
@@ -1850,7 +1874,7 @@ footer .ic{width:16px;height:16px}
       var tools=f.querySelectorAll('[name="tool"]:checked').length;
       if(!tools)items.push({k:'tool',t:'<b>No tools ticked.</b> That is a real answer, but if you have used Excel, Google Forms or WhatsApp Business even once, tick it.',b:'Look again'});
       else good.push(tools+' tool'+(tools===1?'':'s')+' ticked');
-      if(!hasCv()&&cvLater&&cvLater.checked)items.push({k:'cv',t:'<b>You will e-mail your CV.</b> If it is on this device after all, attaching it now saves you a step.',b:'Attach it'});
+      if(CVMODE!=='email'&&!hasCv()&&cvLater&&cvLater.checked)items.push({k:'cv',t:'<b>You will e-mail your CV.</b> If it is on this device after all, attaching it now saves you a step.',b:'Attach it'});
       else if(hasCv())good.push('CV attached');
       return {items:items,good:good,fx:fx};
     }

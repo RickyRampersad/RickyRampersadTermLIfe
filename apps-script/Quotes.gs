@@ -192,7 +192,13 @@ function quoteDoGet_(p) {
     /* The pages do not need this — they post and read the answer. It is
        here so a person can check from a browser that the deployment
        carrying the forms is the live one. */
-    return { ok: true, forms: Object.keys(QUOTE.FORMS), quotes: 1, hiring: 1 };
+    /* cv: 1 only when this script can keep a CV (QUOTE_CV_FOLDER set). The
+       two recruiting pages read it on load: without it they ask for the CV
+       by e-mail instead of offering an upload that would be thrown away,
+       which is what every applicant met from 19 to 26 Nov 2026. */
+    var cvOk = 0;
+    try { cvOk = QUOTE.CV.FOLDER() ? 1 : 0; } catch (e) {}
+    return { ok: true, forms: Object.keys(QUOTE.FORMS), quotes: 1, hiring: 1, cv: cvOk };
   }
   if (a === 'q.board') return quoteBoard_(p);
   return { ok: false, error: 'Unknown action' };
