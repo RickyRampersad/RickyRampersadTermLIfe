@@ -93,7 +93,7 @@ async function openDoor(browser, opt, W) {
     let { ctx, page, errs } = await openDoor(browser, { viewport: { width: 1366, height: 860 } }, W);
     const steps = await page.$$eval('#dstrip .dstep .l', els => els.map(e => e.textContent));
     ok('six steps', steps.length === 6, steps.join(' | '));
-    ok('in the order of the work', steps.join('|') === 'Upload the bills|What was found|Last month’s tasks|The members|The statement|Approve and send', steps.join('|'));
+    ok('in the order of the work', steps.join('|') === 'The bills|What was found|Last month’s tasks|The members|The statement|Approve and send', steps.join('|'));
     const geo = await page.evaluate(() => { const r = document.querySelector('#dstrip').getBoundingClientRect(), p = document.querySelector('#dpanel').getBoundingClientRect(), s = [...document.querySelectorAll('#dstrip .dstep')].map(e => e.getBoundingClientRect()); return { rail: { x: r.x, w: r.width }, panel: { x: p.x }, ys: s.map(x => x.y), xs: s.map(x => x.x) }; });
     ok('the rail is at the side of the open step', geo.rail.x + geo.rail.w <= geo.panel.x && geo.rail.w < 320, JSON.stringify(geo.rail));
     ok('the steps come down, one under another', geo.ys.every((y, i) => !i || y > geo.ys[i - 1]) && new Set(geo.xs.map(Math.round)).size === 1);

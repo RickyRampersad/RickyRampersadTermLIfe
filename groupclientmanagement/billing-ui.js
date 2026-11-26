@@ -49,7 +49,7 @@ async function openBilling(key, month) {
   VIEW = 'billing'; BILL = d; BILL_MONTH = d.month; drawBilling();
 }
 function blSteps(s) {
-  const steps = [['upload', 'Upload'], ['verify', 'Verify'], ['fixed', 'Fix'], ['reconciled', 'Reconcile'], ['approved', 'Approve'], ['sent', 'Send']];
+  const steps = [['upload', 'Read'], ['verify', 'Verify'], ['fixed', 'Fix'], ['reconciled', 'Reconcile'], ['approved', 'Approve'], ['sent', 'Send']];
   let cur = steps.findIndex(([k]) => !s[k]); if (cur < 0) cur = steps.length;
   return '<ol class="steps" aria-label="Where this line stands">' + steps.map(([k, l], i) => '<li class="' + (s[k] ? 'done' : i === cur ? 'now' : '') + '"><span class="n">' + (s[k] ? '✓' : i + 1) + '</span>' + l + (k === 'fixed' && s.open ? '<small>' + s.open + ' open</small>' : '') + '</li>').join('') + '</ol>';
 }
@@ -115,7 +115,7 @@ function blPreview(line, read) {
   const p = read.part;
   if (!p) return '<div class="note bad">Nothing readable was found in ' + esc(read.names.join(', ')) + '. ' + esc((read.warnings || []).join(' ')) + '</div>';
   const w = (p.warnings || []).concat(read.warnings || []);
-  let h = '<div class="pv"><b>Read from ' + esc(read.names.join(', ')) + '</b>: ' + (p.group ? esc(p.group) + ', ' : '') + (p.ref ? esc(p.ref) + ', ' : '') + esc(blMon(p.month) || 'month not found') + ' · ' + (p.count || (p.members || []).length) + ' ' + (line === 'listbill' ? 'policies' : 'members') + ' · due <b>' + esc(blMoney(p.due)) + '</b>' +
+  let h = '<div class="pv"><b>Read from ' + esc(read.names.join(', ')) + '</b>' + (read.source ? ' <span class="small muted">(' + esc(read.source) + ')</span>' : '') + ': ' + (p.group ? esc(p.group) + ', ' : '') + (p.ref ? esc(p.ref) + ', ' : '') + esc(blMon(p.month) || 'month not found') + ' · ' + (p.count || (p.members || []).length) + ' ' + (line === 'listbill' ? 'policies' : 'members') + ' · due <b>' + esc(blMoney(p.due)) + '</b>' +
     (line === 'life' && p.has ? ' · ' + ['bill', 'adj', 'letter'].filter(k => p.has[k]).map(k => ({ bill: 'member bill', adj: 'statement', letter: 'letter' })[k]).join(', ') + (p.has.bill && p.has.adj ? '' : ' <span class="chip warn"><i></i>' + (!p.has.bill ? 'no member bill yet' : 'no statement yet') + '</span>') : '') +
     (w.length ? '<ul class="pvw">' + w.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
     '<div class="uprow" style="margin-top:8px">' + (!p.month ? '<label class="sel">Month <input type="month" id="pvm-' + line + '"></label>' : '') + '<button class="btn" type="button" data-store="' + line + '">Store and check against Salesforce</button><button class="btn ghost" type="button" data-cancel="' + line + '">Cancel</button></div></div>';
@@ -569,13 +569,16 @@ function blFormBind() {
 }
 
 /* ── reading a file on this device ── */
-async function blReadFiles(line, files) {
+/** Files read on the page: chosen from the device, or (opt.refs, 26 November 2026) fetched from the bill's e-mail in
+ *  support@, when what is kept for the approval is the reference to that e-mail and never the bytes. */
+async function blReadFiles(line, files, opt) {
+  opt = opt || {};
   const msg = $('upmsg-' + line); if (msg) msg.textContent = 'Reading…';
-  const parts = [], names = [], warnings = [], keep = [];
+  const parts = [], names = [], warnings = [], keep = opt.refs ? opt.refs.slice() : [];
   try {
     for (const f of files) {
       const buf = await f.arrayBuffer(); names.push(f.name);
-      keep.push({ name: f.name, type: f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : 'application/octet-stream'), b64: blB64(buf) });
+      if (!opt.refs) keep.push({ name: f.name, type: f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : 'application/octet-stream'), b64: blB64(buf) });
       if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') {
         await blScript(BL_LIB.pdf); pdfjsLib.GlobalWorkerOptions.workerSrc = BL_LIB.worker;
         const lines = await BillRead.lines(buf.slice(0));
@@ -595,7 +598,7 @@ async function blReadFiles(line, files) {
   let part = line === 'health' ? c.health : line === 'life' ? c.life : c.listbill;
   const other = Object.keys(c).filter(k => c[k] && k !== (line === 'listbill' ? 'listbill' : line));
   if (!part && other.length) warnings.push('This reads as a ' + other.map(k => BL_LABEL[k] || k).join(' and ') + ' document, not ' + BL_LABEL[line] + '. Upload it under that line.');
-  BILL_READ[line] = { part: part || null, names, warnings };
+  BILL_READ[line] = { part: part || null, names, warnings, source: opt.source || '' };
   if (part) BILL_FILES[line] = keep;
   if (msg) msg.textContent = '';
   const box = $('preview-' + line); if (box) { box.innerHTML = blPreview(line, BILL_READ[line]); blBindLines(); }
@@ -607,7 +610,7 @@ async function blStore(line, fromSf) {
   const mi = $('pvm-' + line), month = bill && !bill.month && mi ? mi.value : (bill ? bill.month : BILL.month);
   if (!month) return toast('Which month is this bill for? Choose it first.', true);
   const btn = $('app').querySelector('[data-store="' + line + '"], [data-fromsf="' + line + '"]'); if (btn) { btn.disabled = true; btn.textContent = 'Checking against Salesforce…'; }
-  const r = await post({ action: 'gcm.billUpload', group: BILL.group.key, line, month, bill: bill || undefined, fromSalesforce: fromSf ? 'Y' : '', files: read ? read.names.join(', ') : 'built from Salesforce' });
+  const r = await post({ action: 'gcm.billUpload', group: BILL.group.key, line, month, bill: bill || undefined, fromSalesforce: fromSf ? 'Y' : '', files: read ? read.names.join(', ') + (read.source ? ' · ' + read.source : '') : 'built from Salesforce' });
   if (!r.ok) { toast(r.error || 'Not stored', true); if (btn) { btn.disabled = false; btn.textContent = 'Store and check against Salesforce'; } return; }
   delete BILL_READ[line];
   toast(r.said || 'Stored and checked.');
@@ -695,9 +698,9 @@ function blApproveActs(o, b, s, d) {
 const BL_DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 function blDayLabel(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || ''); if (!m) return ymd || ''; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); const dow = d.getUTCDay() || 7; return BL_DAYS[dow] + ' ' + (+m[3]) + ' ' + BL_MON[+m[2] - 1].slice(0, 3); }
 async function blApprove(line, reason) {
-  const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], day = BILL.day || {};
+  const o = BILL.lines.find(x => x.line === line), files = blFilesFor(line), day = BILL.day || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST (test mode)';
-  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : ', with NO file attached (upload the PDF again in this session to attach it)');
+  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to go by itself on ' + (day.runLabel || day.label || 'the billing day at 10:00') + ' to ' + who + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' + (files.some(f => f.mail) ? ' (read from support@ when it goes; nothing is copied to Drive)' : '') : ', with NO file attached (read the bill again in this session to attach it)');
   /* after the cut-off: why it was not done by then, in the box (it stands for the confirmation) */
   if (reason === undefined && o.cut && o.cut.past) return blLateAsk(o, 'approve', 'Approve ' + what + '.');
   if (reason === undefined && !confirm('Approve ' + what + '?')) return;
@@ -712,10 +715,12 @@ async function blUnapprove(line) {
   const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'unapprove' });
   toast(r.ok ? r.said : (r.error || 'Not cancelled'), !r.ok); if (r.ok) openBilling(BILL.group.key, BILL.month);
 }
+/** What goes with an approval or Send now: the files read in this session, else the bill's e-mail in support@. */
+function blFilesFor(line) { const f = BILL_FILES[line] || []; return f.length ? f : (typeof dMailRefs === 'function' ? dMailRefs(line) : []); }
 async function blSend(line, reason) {
-  const o = BILL.lines.find(x => x.line === line), files = BILL_FILES[line] || [], b = o.bill || {};
+  const o = BILL.lines.find(x => x.line === line), files = blFilesFor(line), b = o.bill || {};
   const who = BILL.live ? 'the group (' + (BILL.group.contact || BILL.group.to.join(', ')) + ')' : 'you, marked TEST';
-  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to ' + who + ' from support@' + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : b.kept ? ', with the PDF kept at the approval' : ', with no file attached (upload the PDF again in this session to attach it)');
+  const what = 'the ' + blMon(BILL.month) + ' ' + o.label.toLowerCase() + ' bill to ' + who + ' from support@' + (files.length ? ', with ' + files.map(f => f.name).join(', ') + ' attached' : b.kept ? ', with the PDF kept at the approval' : ', with no file attached (read the bill again in this session to attach it)');
   /* Send now after the cut-off asks why it was not done by then; a reason given at a late approval is offered again */
   if (reason === undefined && !b.sentAt && o.cut && o.cut.missed) return blLateAsk(o, 'send', 'Send ' + what + '.');
   if (reason === undefined && !confirm('Send ' + what + '?')) return;

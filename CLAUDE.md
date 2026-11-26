@@ -5230,6 +5230,35 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     - Paste **GroupBilling.gs** and publish a New version; the pages go live with the merge (`billing-ui.js` and
       `billing-door.js` are `?v=2026-11-25a`). `tests/test-billing-speed.js` (24 checks; it fails on the code before) and
       `tests/e2e-billing-door.js` (47, Playwright, a laptop and a phone, the backend mocked on an invented group) cover it.
+  - **The bills are read from support@, not uploaded** (26 November 2026: "also show we remove the upload? Remember we
+    analyze the inbox ... do the analysis inside on the staff view the findings this will free up memory and space").
+    Head Office's bills already reach support@: easiConnect's "<GROUP> - <Month yyyy> Health Billing", Group Insurance
+    Administration's Life Billing, and the branch's own forwards.
+    - **Finding** (`gblMailBills_`, act `mailBills`, kept 15 minutes): Graph `$search` on support@'s messages, subject only
+      (`subject:<word> AND subject:billing`, the plain form if the mailbox refuses it), one search per match word's
+      longest word (`gblMailTerms_`). A message counts when its subject names the group (`gblMailNames_`: its Match
+      words or its name, "R&C" read as "R & C"), a line ("Health Billing", "Life Billing", "GROUP LIFE BILLINGS";
+      `gblMailLine_`) and a month (`gblMailMonth_`), it is from the last 120 days, and it carries a PDF or spreadsheet
+      that is not inline. A forward's copy of the same file (name and size) is listed once, under the original.
+      Immutable ids (`Prefer: IdType="ImmutableId"`), so a reference survives the e-mail being moved to a folder.
+    - **Matching is by the subject**, so a group whose bills carry another name must have it in its Match words. On 26
+      November one group's bills carried its full legal name, one e-mail per division, while its Match words held only
+      its abbreviation, so none was found until the full name goes into Match words on the Group Register.
+    - **Reading** (act `mailFile`, `gblMailFile_`): one attachment, base64, and only from an e-mail the scan found for that
+      group (`gblMailOwn_`); a real id from another group's e-mail is refused. The page builds a `File` from it and
+      `blReadFiles(line, files, { refs, source })` reads it exactly as a chosen file.
+    - **The door's first step is "The bills"** (`dMailBox`, `dMailLoad`, `dMailRead`, `dMailAuto`): the e-mails found for
+      each line and month, with their PDFs; one e-mail for a line with no bill stored is read straight away, two or more
+      wait for a person to choose; the device upload is folded under "Not in support@?" (open when nothing was found
+      or support@ cannot be read). Store and check against Salesforce is still one press: storing writes the billing
+      record and opens tasks, which a page opening must never do by itself.
+    - **Nothing is copied to Drive at the approval any more.** `BILL_FILES[line]` holds `{ name, type, mail, att }`;
+      `gblPageFiles_` checks each against the scan and keeps `mail:<message>|<attachment>` in Files kept;
+      `gblKeptRead_` reads it back from support@ for the billing-day run and Send now (a Drive id from before still
+      reads). With no file sent, the approval and Send now take the one e-mail found for that line and month
+      (`gblMailRefsFor_`). A bill chosen from the device still waits in "Bills to send".
+    - `gcm.ping` answers `bills.mailBills: 1` and `bills.build` `2026-11-26b`. `tests/test-billing-mail.js` (32) and
+      `tests/e2e-billing-mail.js` (29, Playwright, pdf.js and the reader stood in for) cover it.
   - **A month is read back as a month** (27 October 2026, the first bill stored live: a group's October health bill).
     Google Sheets turns "2026-10" written into a cell into the date 1 October, which read back as "2026-10-01" and never
     matched "2026-10" again: the page said nothing was uploaded, opened itself as `m=2026-10-01`, looked in Salesforce for

@@ -646,6 +646,179 @@ function gblInbox_(L, g, fresh) {
     return out;
   } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 160), mails: [] }; }
 }
+/* ── The bills in support@ (26 November 2026) ──────────────────────────────────────────────────────────────────────
+ *  "Remember we analyze the inbox and its review by Claude so ... do the analysis inside on the staff view the findings
+ *  this will free up memory and space." Head Office's bills already reach support@: easiConnect's "<GROUP> - <Month
+ *  yyyy> Health Billing" e-mails, Group Insurance Administration's Life Billing, and the copies the branch forwards. So
+ *  the door finds each group's bills there and reads them on the page; nobody chooses a file. At the approval nothing
+ *  is copied to Drive: the bill keeps a reference to the e-mail ("mail:<message>|<attachment>" in Files kept) and the
+ *  send reads the PDF back from the mailbox. Upload stays, for a bill that never reached support@.
+ *  A message is looked at only when its subject names the group (its Match words, or its name) and a billing line and
+ *  it carries a PDF or a spreadsheet; an attachment is fetched only from a message this scan found for that group. */
+var GBL_MAILBILL = {
+  DAYS: 120, TTL: 900, PAGES: 3, MAX_BYTES: 6000000,
+  BILL: /\bbillings?\b/i,
+  LINES: [[/\bhealth\b/i, 'health'], [/\blife\b/i, 'life'], [/\bpension|\blist\s*bill/i, 'listbill']],
+  FILE: /\.(pdf|xlsx|xls|csv)$/i,
+  MONTHS: ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+};
+/** The month a subject names ("December 2026", "DECEMBER 2026"), as yyyy-MM, else ''. */
+function gblMailMonth_(subject) {
+  var m = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d\d)\b/i.exec(String(subject || ''));
+  if (!m) return '';
+  var i = GBL_MAILBILL.MONTHS.indexOf(m[1].toLowerCase()) + 1;
+  return m[2] + '-' + (i < 10 ? '0' : '') + i;
+}
+/** The billing line a subject names, else ''. "Health Billing" is health, "Life Billing" and "GROUP LIFE BILLINGS" life. */
+function gblMailLine_(subject) {
+  var s = String(subject || '');
+  if (!GBL_MAILBILL.BILL.test(s)) return '';
+  for (var i = 0; i < GBL_MAILBILL.LINES.length; i++) if (GBL_MAILBILL.LINES[i][0].test(s)) return GBL_MAILBILL.LINES[i][1];
+  return '';
+}
+/** Whether a subject names the group: a match word (or the group's own name) starting a word, the way gcmNames_ reads a
+ *  task, with "R&C" and "R & C" read alike. */
+function gblMailNames_(subject, g) {
+  var amp = function (s) { return String(s || '').replace(/\s*&\s*/g, ' & ').replace(/\s+/g, ' ').trim(); };
+  var text = amp(subject), words = (g.match || []).concat([g.name]).map(amp).filter(function (w) { return w.length >= 3; });
+  return words.some(function (w) {
+    var end = /\s/.test(w) ? '' : '(?![A-Za-z0-9])';
+    return new RegExp('(?:^|[^A-Za-z0-9])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + end, 'i').test(text);
+  });
+}
+/** The words Microsoft is asked for: the longest word of each match word, so "R & C ENTERPRISES" asks for ENTERPRISES. */
+function gblMailTerms_(g) {
+  var out = [];
+  (g.match || []).concat([g.name]).forEach(function (w) {
+    var best = String(w || '').split(/[^A-Za-z0-9]+/).filter(function (x) { return x.length >= 3 && !/^(limited|ltd|company|the|and)$/i.test(x); })
+      .sort(function (a, b) { return b.length - a.length; })[0];
+    if (best && out.indexOf(best.toUpperCase()) < 0) out.push(best.toUpperCase());
+  });
+  return out.slice(0, 3);
+}
+function gblGraph_(path, token) {
+  var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + path,
+    { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token, Prefer: 'IdType="ImmutableId"' } });
+  var code = res.getResponseCode();
+  if (code !== 200) throw new Error('HTTP ' + code + (code === 403 ? ': the Entra app needs the Graph permission Mail.Read' : ''));
+  return JSON.parse(res.getContentText());
+}
+/** Every billing e-mail in support@ for the group in the last DAYS days, newest first, with its PDFs and spreadsheets.
+ *  One entry an e-mail: { id, subject, from, ours, at, ts, line, month, files: [{ id, name, type, size }] }. A copy of
+ *  the same file (a forward of easiConnect's e-mail) is listed once, under the original. Kept TTL seconds. */
+function gblMailBills_(g, fresh) {
+  try {
+    if (typeof tMsCreds_ !== 'function' || !tMsCreds_()) return { ok: false, error: 'Microsoft 365 is not set up on this project, so support@ cannot be read.', mails: [] };
+    var key = 'gbl-mailbills-' + g.key.slice(0, 40), hit = fresh ? null : gblCacheGet_(key);
+    if (hit) return hit;
+    var terms = gblMailTerms_(g);
+    if (!terms.length) { var none = { ok: true, mails: [], said: 'The group has no Match words to look for.' }; gblCachePut_(key, none, GBL_MAILBILL.TTL); return none; }
+    var token = tMsToken_(), since = Date.now() - GBL_MAILBILL.DAYS * 86400000, seen = {}, found = [];
+    terms.forEach(function (t) {
+      /* the subject only ("subject:HARBOUR AND subject:billing"): a word such as RAMPERSAD is in every signature, so a
+         search of the whole message would bury the bill under the branch's own mail. A mailbox that refuses the form is
+         asked the plain way. */
+      var base = '/messages?$select=id,subject,from,receivedDateTime,hasAttachments&$top=25&$search=', url = base + encodeURIComponent('"subject:' + t + ' AND subject:billing"'), plain = false;
+      for (var p = 0; url && p < GBL_MAILBILL.PAGES; p++) {
+        var j;
+        try { j = gblGraph_(url, token); }
+        catch (e) { if (plain || p || !/HTTP 400/.test(String(e && e.message))) throw e; plain = true; p = -1; url = base + encodeURIComponent('"' + t + ' billing"'); continue; }
+        (j.value || []).forEach(function (m) {
+          if (seen[m.id]) return;
+          seen[m.id] = 1;
+          var subj = String(m.subject || ''), ts = new Date(m.receivedDateTime).getTime();
+          if (!m.hasAttachments || !(ts >= since) || !gblMailNames_(subj, g)) return;
+          var line = gblMailLine_(subj);
+          if (!line) return;
+          var from = String(((m.from || {}).emailAddress || {}).address || '').toLowerCase();
+          found.push({ id: m.id, subject: subj.slice(0, 160), from: from, ours: /@rickyrampersadbranch\.com$/.test(from) || /^\s*(fw|fwd)\s*:/i.test(subj),
+            ts: ts, at: gcmWhen_(new Date(ts)), line: line, month: gblMailMonth_(subj), files: [] });
+        });
+        var next = j['@odata.nextLink'] || '';
+        url = next ? next.replace(/^https:\/\/graph\.microsoft\.com\/v1\.0\/users\/[^/]+/, '') : '';
+      }
+    });
+    /* originals first, so a forward's copy of the same file is the one dropped */
+    found.sort(function (a, b) { return (a.ours - b.ours) || (a.ts - b.ts); });
+    var had = {};
+    found.slice(0, 40).forEach(function (m) {
+      var a = gblGraph_('/messages/' + encodeURIComponent(m.id) + '/attachments?$select=id,name,contentType,size,isInline', token);
+      (a.value || []).forEach(function (f) {
+        var name = String(f.name || ''), type = String(f.contentType || '');
+        if (f.isInline || !(GBL_MAILBILL.FILE.test(name) || /pdf|spreadsheet|excel|csv/i.test(type)) || !(f.size > 0) || f.size > GBL_MAILBILL.MAX_BYTES) return;
+        var k = m.line + '|' + m.month + '|' + name.toLowerCase() + '|' + f.size;
+        if (had[k]) return;
+        had[k] = 1;
+        m.files.push({ id: f.id, name: name.slice(0, 120), type: type || (/\.pdf$/i.test(name) ? 'application/pdf' : 'application/octet-stream'), size: f.size });
+      });
+    });
+    var mails = found.filter(function (m) { return m.files.length; }).sort(function (a, b) { return b.ts - a.ts; });
+    var out = { ok: true, mails: mails, looked: terms, at: gcmWhen_(new Date()) };
+    gblCachePut_(key, out, GBL_MAILBILL.TTL);
+    return out;
+  } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 160), mails: [] }; }
+}
+/** One attachment, as the page reads it: only from an e-mail the scan found for this group (never any other message in
+ *  support@), base64 as Microsoft gives it. */
+function gblMailFile_(g, msgId, attId) {
+  var own = gblMailOwn_(g, msgId, attId);
+  if (!own) return { ok: false, error: 'That file is not one of this group’s bills in support@. Look again.' };
+  try {
+    var f = gblGraph_('/messages/' + encodeURIComponent(msgId) + '/attachments/' + encodeURIComponent(attId), tMsToken_());
+    var b64 = String(f.contentBytes || '');
+    if (!b64) return { ok: false, error: 'Microsoft gave back no file.' };
+    return { ok: true, name: own.file.name, type: own.file.type, size: own.file.size, b64: b64, subject: own.mail.subject, at: own.mail.at, from: own.mail.from };
+  } catch (e) { return { ok: false, error: 'support@ would not give the file: ' + String(e && e.message ? e.message : e).slice(0, 140) }; }
+}
+/** The scan's e-mail and file for a reference, or null: a second, fresh look when the kept answer has expired. */
+function gblMailOwn_(g, msgId, attId) {
+  var pick = function (r) {
+    var m = (r.mails || []).filter(function (x) { return x.id === msgId; })[0], f = m && m.files.filter(function (x) { return x.id === attId; })[0];
+    return f ? { mail: m, file: f } : null;
+  };
+  return pick(gblMailBills_(g)) || pick(gblMailBills_(g, true));
+}
+/** A kept reference ("mail:<message>|<attachment>") as a blob, for the approval run and Send now. */
+function gblMailBlob_(ref, token) {
+  var m = /^mail:([^|]+)\|(.+)$/.exec(String(ref || ''));
+  if (!m) return null;
+  var f = gblGraph_('/messages/' + encodeURIComponent(m[1]) + '/attachments/' + encodeURIComponent(m[2]), token || tMsToken_());
+  if (!f.contentBytes) return null;
+  return Utilities.newBlob(Utilities.base64Decode(String(f.contentBytes)), String(f.contentType || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80));
+}
+/** The one billing e-mail in support@ for a line and month, as kept references, else [] (none found, or more than one
+ *  and a person has to say which). The approval and Send now use it when the page sends no file. */
+function gblMailRefsFor_(g, line, month) {
+  var r = gblMailBills_(g), hits = (r.mails || []).filter(function (m) { return m.line === line && m.month === month; });
+  return hits.length === 1 ? hits[0].files.map(function (f) { return 'mail:' + hits[0].id + '|' + f.id; }) : [];
+}
+/** The files the page sends with an approval or Send now: a reference to a bill in support@ (checked against the scan)
+ *  or, for a file chosen from the device, its bytes. refs: 'mail:…' strings; blobs: the uploaded files. */
+function gblPageFiles_(g, files) {
+  var refs = [], blobs = [], bad = 0;
+  (Array.isArray(files) ? files : []).slice(0, 6).forEach(function (f) {
+    if (f && f.mail && f.att) { if (gblMailOwn_(g, String(f.mail), String(f.att))) refs.push('mail:' + f.mail + '|' + f.att); else bad++; return; }
+    try { var bytes = Utilities.base64Decode(String((f && f.b64) || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
+  });
+  return { refs: refs, blobs: blobs, bad: bad };
+}
+/** The files kept for one bill at its approval, as blobs: Drive copies (bills approved before 26 November 2026, or a file
+ *  chosen from the device) and references to support@. missing names what could not be read back. */
+function gblKeptRead_(b, token) {
+  var blobs = [], missing = '';
+  (b.kept || '').split(',').map(function (x) { return x.trim(); }).filter(String).forEach(function (id) {
+    if (/^mail:/.test(id)) {
+      try { var mb = gblMailBlob_(id, token); if (mb) blobs.push(mb); else missing = 'the e-mail with the ' + GBL.LABEL[b.line].toLowerCase() + ' bill is gone from support@'; }
+      catch (e) { missing = 'support@ would not give back the ' + GBL.LABEL[b.line].toLowerCase() + ' bill (' + String(e && e.message ? e.message : e).slice(0, 100) + ')'; }
+      return;
+    }
+    var f = gblFileById_(id);
+    if (!f) { missing = 'the PDF kept for the ' + GBL.LABEL[b.line].toLowerCase() + ' bill is gone from Drive'; return; }
+    try { var bl = f.getBlob(); bl.setName(String(f.getName()).split(' · ').pop()); blobs.push(bl); } catch (e2) { missing = 'Drive would not give back the PDF (' + String(e2 && e2.message ? e2.message : e2).slice(0, 100) + ')'; }
+  });
+  return { blobs: blobs, missing: missing };
+}
+
 /** What to do next, in order, from where the lines stand: the page shows it at the top. */
 function gblGuide_(v) {
   var steps = [];
@@ -1188,6 +1361,9 @@ function gblAct_(b) {
   var act = String(b.act || ''), line = gblLine_(b.line), month = String(b.month || '');
   if (act === 'note') return gblNoteTask_(g, who, b);
   if (act !== 'comment' && !gcmMine_(who, g)) return gcmNotYours_(g);
+  /* the bills in support@ (26 November 2026): found and read on the page, nothing uploaded */
+  if (act === 'mailBills') return gblMailBills_(g, gcmYes_(b.fresh));
+  if (act === 'mailFile') return gblMailFile_(g, String(b.mail || ''), String(b.att || ''));
   var bill = gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0];
   var sf = gblSf_(g);
   var log = function (kind, member, detail, amount, sfId, status) {
@@ -1478,16 +1654,14 @@ function gblSend_(b) {
   var to = test ? [who.email || gcmDayManager_()].filter(String) : g.to.slice(0, 1);
   if (!to.length) return { ok: false, error: 'No address to send the test to: your e-mail is not on the Agent Skill Bank.' };
   var cc = test ? (TRANSITION.CC || []).slice() : gcmCc_(g);
-  var files = Array.isArray(b.attachments) ? b.attachments : [];
-  var blobs = [], keptUsed = false;
-  files.slice(0, 6).forEach(function (f) {
-    try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
-  });
-  if (!blobs.length && fresh.length) {   // nothing read in this session: the PDFs kept in Drive at the approval
+  var pf = gblPageFiles_(g, b.attachments), blobs = pf.blobs, keptUsed = false;
+  pf.refs.forEach(function (r) { try { var mb = gblMailBlob_(r); if (mb) blobs.push(mb); } catch (e) {} });
+  if (!blobs.length && fresh.length) {   // nothing read in this session: the files kept at the approval (support@, or Drive)
     var kb = gblKeptBlobs_(fresh);
-    if (kb.missing.length) return { ok: false, error: 'The PDF kept at the approval of the ' + kb.missing.join(' and ').toLowerCase() + ' bill is gone from Drive. Upload the bill again here and press Send now.' };
+    if (kb.missing.length) return { ok: false, error: 'The file kept at the approval of the ' + kb.missing.join(' and ').toLowerCase() + ' bill cannot be read back. Read the bill again here and press Send now.' };
     blobs = kb.blobs; keptUsed = blobs.length > 0;
   }
+  if (!blobs.length) bills.forEach(function (x) { gblMailRefsFor_(g, x.line, x.month).forEach(function (r) { try { var mb = gblMailBlob_(r); if (mb) blobs.push(mb); } catch (e) {} }); });
   var mail = gblBillMail_(g, month, bills, who, test, L), stmtBlob = gblStatementBlob_(g, month, bills, L);
   if (stmtBlob) blobs.push(stmtBlob);
   try { tMsSend_(to[0], (test ? '[TEST] ' : '') + mail.subject, mail.html, { cc: cc.concat(to.slice(1)), attachments: blobs, replyTo: TRANSITION.MS_FROM }); }
@@ -2823,7 +2997,7 @@ function gblPostMail_(g, name, role, p, item, text, taskId, owner, opened) {
  *  kept), the staff copied. At 10:30 on the billing day the group day asks each staff member whose group had no bill why,
  *  and opens the KPI task. When the 26th is a Monday the bills and the weekly letters both go at 10:00 that morning. */
 /* Which GroupBilling.gs is live: gcm.ping answers it as bills.build. Move it with every change worth pasting. */
-var GBL_BUILD = '2026-11-26a';
+var GBL_BUILD = '2026-11-26b';
 
 var GBL_DAY = {
   DAY: 26,                      // the bills go on this day (the GCM_BILL_DAY Script property overrides, 1 to 28)
@@ -2926,7 +3100,7 @@ function gblDayInfo_(now) {
   var today = gcmYmd_(now), next = gblNextBillDay_(now), c = gblCycle_(now), run = gblNextRunDay_(now), rep = gblReportDayOf_(next);
   var moved = next.slice(8) !== ('0' + gblDayOfMonth_()).slice(-2);
   return { next: next, label: gblDayLabel_(next), date: tDmy_(next), daysTo: gcmDays_(today, next), isDay: c.isDay, dayOfMonth: gblDayOfMonth_(), hour: GBL_DAY.HOUR, drive: !!gblFolderId_(), live: gblLive_(),
-    run: run, runLabel: gblDayLabel_(run), late: run !== next, moved: moved, report: rep, reportLabel: GCM_DAYS[gcmDow_(rep)] + ' ' + tDmy_(rep).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.REPORT_HOUR + ':00', reportHour: GBL_DAY.REPORT_HOUR, payroll: typeof gblPayroll_ === 'function' ? 1 : 0, build: GBL_BUILD };
+    run: run, runLabel: gblDayLabel_(run), late: run !== next, moved: moved, report: rep, reportLabel: GCM_DAYS[gcmDow_(rep)] + ' ' + tDmy_(rep).replace(/ \d{4}$/, '') + ', ' + GBL_DAY.REPORT_HOUR + ':00', reportHour: GBL_DAY.REPORT_HOUR, payroll: typeof gblPayroll_ === 'function' ? 1 : 0, build: GBL_BUILD, mailBills: 1 };
 }
 function gblFolderId_() { try { return PropertiesService.getScriptProperties().getProperty(GBL_PDF.FOLDER_PROP) || ''; } catch (e) { return ''; } }
 function gblSubfolder_(name) {
@@ -3007,13 +3181,7 @@ function gblLateBefore_(via, end) { var m = /cut-off (\d{4}-\d{2}-\d{2})/.exec(S
 /** The PDFs kept in Drive at the approval, for Send now when none was read in this session. */
 function gblKeptBlobs_(bills) {
   var blobs = [], missing = [];
-  bills.forEach(function (b) {
-    (b.kept || '').split(',').map(function (x) { return x.trim(); }).filter(String).forEach(function (id) {
-      var f = gblFileById_(id);
-      if (!f) { missing.push(GBL.LABEL[b.line]); return; }
-      try { var bl = f.getBlob(); bl.setName(String(f.getName()).split(' · ').pop()); blobs.push(bl); } catch (e) { missing.push(GBL.LABEL[b.line]); }
-    });
-  });
+  bills.forEach(function (b) { var k = gblKeptRead_(b); blobs = blobs.concat(k.blobs); if (k.missing) missing.push(GBL.LABEL[b.line]); });
   return { blobs: blobs, missing: missing };
 }
 /** That cycle's GROUP BILL NOT SENT task for the group (opened at 10:30 on the cut-off day): the reason posted on its
@@ -3071,10 +3239,9 @@ function gblApprove_(g, who, bill, b, L) {
   if (st.fixes && !gcmYes_(b.force)) return { ok: false, error: st.fixes + ' finding' + (st.fixes === 1 ? '' : 's') + ' marked “fix” ' + (st.fixes === 1 ? 'is' : 'are') + ' still open. Fix or resolve each one first.' };
   var why = gcmCannotMail_(g);
   if (why) return { ok: false, error: 'Cannot approve: ' + why + '.' };
-  var files = Array.isArray(b.attachments) ? b.attachments : [], blobs = [];
-  files.slice(0, 6).forEach(function (f) {
-    try { var bytes = Utilities.base64Decode(String(f.b64 || '')); if (bytes.length && bytes.length < 3000000) blobs.push(Utilities.newBlob(bytes, String(f.type || 'application/pdf'), String(f.name || 'bill.pdf').replace(/[^\w.\- ]/g, '_').slice(0, 80))); } catch (e) {}
-  });
+  var pf = gblPageFiles_(g, b.attachments), blobs = pf.blobs, refs = pf.refs;
+  if (pf.bad) return { ok: false, error: 'A file sent with the approval is not one of this group’s bills in support@. Read the bill again and approve.' };
+  if (!blobs.length && !refs.length) refs = gblMailRefsFor_(g, line, month);   /* nothing read in this session: the bill's e-mail in support@ */
   if (blobs.length && !gblFolderId_()) return { ok: false, error: 'The PDF has nowhere to wait until ' + gblDayLabel_(gblNextRunDay_(now)) + ': the branch manager sets the ' + GBL_PDF.FOLDER_PROP + ' Script property to the Drive folder (GROUP-CLIENTS-SETUP.md). Until then no bill can be approved with its PDF.' };
   /* after the cut-off: why it was not done by then (staff and the deputy must say; the branch manager may) */
   var cut = gblPast_(gblCutoffOf_(bill), now) ? gblCutoffOf_(bill) : '', lr = { reason: '' };
@@ -3084,16 +3251,18 @@ function gblApprove_(g, who, bill, b, L) {
   }
   var lateSay = cut ? ' After ' + gblCutWords_(cut) + (lr.reason ? '. Why: ' + lr.reason : ', no reason given') + '.' : '';
   var ids = [];
-  try { ids = gblKeepQueued_(g, bill, blobs); } catch (e) { return { ok: false, error: 'Drive would not keep the PDF: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+  try { ids = blobs.length ? gblKeepQueued_(g, bill, blobs) : []; } catch (e) { return { ok: false, error: 'Drive would not keep the PDF: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+  ids = ids.concat(refs);   /* a bill read from support@ is kept as a reference to the e-mail: nothing is copied to Drive */
+  var nFiles = blobs.length + refs.length;
   var forDay = gblNextRunDay_(now), at = gcmWhen_(now), email = who.email || gblStaffEmail_(who.name);
   var patch = { Status: 'approved', 'Approved at': at, 'Approved by': who.name, 'Approved e-mail': email, 'Approved for': forDay, 'Files kept': ids.join(',') };
   if (lr.reason) patch['Late reason'] = lr.reason + GBL_LATE.BY + who.name + ', ' + at;
   gblBillPatch_(bill, patch);
-  log('approved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ' approved for the ' + gblDayLabel_(forDay) + ' run' + (blobs.length ? ' with ' + blobs.map(function (x) { return x.getName(); }).join(', ') : ' with no file attached') + '.' + lateSay);
-  gblPostBilling_(g, line, month, 'The ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill (' + gcmMoney_(bill.due) + ') is approved by ' + who.name + ' to go to the group on ' + gblDayLabel_(forDay) + (blobs.length ? ' with the PDF' : '') + '.' + lateSay, who);
+  log('approved', GBL.LABEL[line] + ' ' + gblMonthLabel_(month) + ' approved for the ' + gblDayLabel_(forDay) + ' run' + (nFiles ? ' with ' + blobs.map(function (x) { return x.getName(); }).concat(refs.length ? [refs.length + ' file' + (refs.length === 1 ? '' : 's') + ' from the e-mail in support@'] : []).join(', ') : ' with no file attached') + '.' + lateSay);
+  gblPostBilling_(g, line, month, 'The ' + gblMonthLabel_(month) + ' ' + GBL.LABEL[line].toLowerCase() + ' bill (' + gcmMoney_(bill.due) + ') is approved by ' + who.name + ' to go to the group on ' + gblDayLabel_(forDay) + (nFiles ? ' with the PDF' : '') + '.' + lateSay, who);
   var live = gblLive_();
-  return { ok: true, approvedFor: forDay, label: gblDayLabel_(forDay), files: blobs.length, late: cut ? { cutoff: cut, reason: lr.reason } : null,
-    said: 'Approved' + (cut ? ' (after ' + gblCutWords_(cut) + (lr.reason ? '; your reason is on the bill' : '') + ')' : '') + '. It goes by itself on ' + gblDayLabel_(forDay) + (live ? ' to ' + g.to.join(', ') + ', from support@, copied to sales support' : ' as a TEST to you and the branch (the bills are in test mode until the branch manager runs gblGoLive)') + (blobs.length ? ', with ' + blobs.length + ' file' + (blobs.length === 1 ? '' : 's') + ' attached.' : ', with no file attached.'),
+  return { ok: true, approvedFor: forDay, label: gblDayLabel_(forDay), files: nFiles, fromMail: refs.length, late: cut ? { cutoff: cut, reason: lr.reason } : null,
+    said: 'Approved' + (cut ? ' (after ' + gblCutWords_(cut) + (lr.reason ? '; your reason is on the bill' : '') + ')' : '') + '. It goes by itself on ' + gblDayLabel_(forDay) + (live ? ' to ' + g.to.join(', ') + ', from support@, copied to sales support' : ' as a TEST to you and the branch (the bills are in test mode until the branch manager runs gblGoLive)') + (nFiles ? ', with ' + nFiles + ' file' + (nFiles === 1 ? '' : 's') + ' attached' + (refs.length ? ' (read from support@ when it goes: nothing is copied to Drive)' : '') + '.' : ', with no file attached.'),
     steps: gblSteps_(gblBillRows_(g).filter(function (x) { return x.line === line && x.month === month; })[0]) };
 }
 
@@ -3120,11 +3289,9 @@ function gblDayRun_(o) {
       var why = !g ? 'the group is no longer on the Group Register' : !mail ? 'Microsoft 365 is not set up on the backend' : gcmCannotMail_(g);
       var blobs = [];
       if (!why) bills.forEach(function (b) {
-        (b.kept || '').split(',').map(function (s) { return s.trim(); }).filter(String).forEach(function (id) {
-          var f = gblFileById_(id);
-          if (!f) { why = 'the PDF kept for the ' + GBL.LABEL[b.line].toLowerCase() + ' bill is gone from Drive: approve it again with the file'; return; }
-          try { var bl = f.getBlob(); bl.setName(String(f.getName()).split(' · ').pop()); blobs.push(bl); } catch (e) { why = 'Drive would not give back the PDF (' + String(e && e.message ? e.message : e).slice(0, 100) + ')'; }
-        });
+        var k = gblKeptRead_(b);
+        blobs = blobs.concat(k.blobs);
+        if (k.missing && !why) why = k.missing + ': approve it again with the file';
       });
       var hold = function (text) {
         if (!o.rehearse) bills.forEach(function (b) { gblBillPatch_(b, { Status: 'held: ' + text }); });

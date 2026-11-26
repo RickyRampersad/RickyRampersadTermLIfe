@@ -314,6 +314,17 @@ h2{font-size:21px}
 .sfrow{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
 .upload{border:1.5px dashed var(--line2);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff}
 .uprow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+/* the bills in support@ (26 November 2026): found and read on the page; the device upload folds away */
+.mbox{margin:0 0 8px}
+.mbox>p{margin:0 0 6px}
+.mitem{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0;background:#fff;display:grid;gap:6px}
+.mitem.on{border-color:var(--bar);background:color-mix(in srgb,var(--bar) 6%,#fff)}
+.mhead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;overflow-wrap:anywhere}
+.mfiles{display:flex;flex-wrap:wrap;gap:6px}
+.mitem .btn{justify-self:start}
+.upalt{margin:6px 0 0}
+.upalt>summary{cursor:pointer;font-size:14px;color:var(--muted,#5b6670);padding:4px 0}
+.upalt[open]>summary{margin-bottom:6px}
 .pv{background:var(--primarySoft);border:1px solid var(--primaryLine);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
 .pvw{margin:6px 0 0;padding-left:18px;color:var(--warn);font-size:13px}
 .bill-tiles{margin:12px 0 6px}

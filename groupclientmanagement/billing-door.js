@@ -87,7 +87,7 @@ function render() {
   const todo = groups.filter(blTodo).length, done = groups.filter(blDone).length, mine = groups.filter(g => g.own).length;
   if (LIST.show === 'mine' && !mine) LIST.show = 'all';
   const pill = (b, s, cls) => '<span class="pill' + (cls ? ' ' + cls : '') + '"><b>' + esc(b) + '</b>' + esc(s) + '</span>';
-  $('mhello').innerHTML = '<h1>Billings Management</h1><p style="margin:6px 0 0;color:rgba(255,255,255,.85);max-width:72ch">The ' + esc(blMon(month)) + ' bills, one group at a time: upload the Group Health, Group Life and pension bills with the claims experience, see what the checks found, answer the questions, bring last month’s tasks up to date on Chatter, record the terminations and enrolments, look at the people, read the statement, approve.</p>' +
+  $('mhello').innerHTML = '<h1>Billings Management</h1><p style="margin:6px 0 0;color:rgba(255,255,255,.85);max-width:72ch">The ' + esc(blMon(month)) + ' bills, one group at a time: read the Group Health and Group Life bills straight from support@ (the pension list from Salesforce) with the claims experience, see what the checks found, answer the questions, bring last month’s tasks up to date on Chatter, record the terminations and enrolments, look at the people, read the statement, approve.</p>' +
     '<div class="pills">' + pill(groups.length, 'groups') + pill(todo, 'with billing to do', todo ? 'hot' : 'ok') + pill(done, 'approved or sent') +
     (day ? pill(day.label.replace(/, \d+:\d+$/, ''), day.isDay ? 'the bills go today at ' + day.hour + ':00' : 'the bills go out at ' + day.hour + ':00' + (day.daysTo ? ' · in ' + day.daysTo + ' day' + (day.daysTo === 1 ? '' : 's') : '')) : '') +
     (d.billingLive === false ? pill('Test mode', 'a send goes to you, marked TEST') : '') + '</div>';
@@ -113,10 +113,10 @@ function dGroupCard(g) {
 /* ── the door: one group, one month, eight steps ── */
 /* six steps since 25 November 2026 ("the 6 steps at the side coming down, much more easy"): what was found and its
    questions are one step, and the changes and the people are one (the members); the old names still open them */
-const D_STEPS = [['upload', 'Upload the bills'], ['check', 'What was found'], ['tasks', 'Last month’s tasks'], ['members', 'The members'], ['statement', 'The statement'], ['approve', 'Approve and send']];
+const D_STEPS = [['upload', 'The bills'], ['check', 'What was found'], ['tasks', 'Last month’s tasks'], ['members', 'The members'], ['statement', 'The statement'], ['approve', 'Approve and send']];
 const D_ALIAS = { findings: 'check', ask: 'check', changes: 'members', people: 'members' };
 let DOOR = dFresh();
-function dFresh() { return { step: '', sig: '', chk: {}, inbox: null, ask: null, upd: null, people: null, stmt: null, aiRead: null, aiBusy: false, loading: {}, posted: {}, letters: {}, seenStmt: false }; }
+function dFresh() { return { step: '', sig: '', chk: {}, mail: null, mailBusy: false, mailAuto: {}, mailRead: {}, mailNow: {}, inbox: null, ask: null, upd: null, people: null, stmt: null, aiRead: null, aiBusy: false, loading: {}, posted: {}, letters: {}, seenStmt: false }; }
 function dSig(d) { return d.lines.map(o => o.bill ? [o.bill.checkedAt, o.bill.reconciledAt, o.bill.sentAt, Object.keys(o.bill.resolved || {}).length, o.steps.status].join('~') : '').join('|') + '|' + (d.tasks || []).length + '|' + (d.changes || []).length; }
 async function openBilling(key, month) {
   const same = VIEW === 'billing' && BILL && BILL.group.key === key && (!month || month === BILL.month);
@@ -231,8 +231,11 @@ function dBindPanel() {
   const ml = $('dMail'); if (ml) ml.onclick = dMail;
   const ib = $('dInbox'); if (ib) ib.onclick = dInbox;
   const ai = $('dAiGo'); if (ai) ai.onclick = () => { DOOR.aiRead = null; dAiRead(true); };
+  app.querySelectorAll('[data-mread]').forEach(b => b.onclick = () => dMailRead(b.dataset.line, b.dataset.mread));
+  app.querySelectorAll('[data-mlook]').forEach(b => b.onclick = () => { DOOR.mail = null; DOOR.mailAuto = {}; dMailLoad(true); dDrawPanel(); });
 }
 function dAfterDraw(step) {
+  if (step === 'upload') { if (!DOOR.mail) dMailLoad(false); else dMailAuto(); }
   if (step === 'check') { dAiRead(false); if (!DOOR.ask && !DOOR.loading.ask) dLoad('ask'); }
   if (step === 'tasks' && !DOOR.upd && !DOOR.loading.upd) dLoad('upd');
   if (step === 'members' && !DOOR.people && !DOOR.loading.people) dLoad('people');
@@ -269,19 +272,79 @@ const dSfRow = o => { const rec = o.sf.rec; return '<div class="sfrow">' + (rec 
 /* ── step 1: upload ── */
 function dUpload() {
   const d = BILL;
-  let h = '<h3 class="ptitle">Upload the ' + esc(d.monthLabel) + ' bills</h3><p class="plead">One line at a time: Head Office’s Group Health invoice, the Group Life pack (the member bill, the statement of adjustment and the letter together) and the branch’s pension list bill. Each is read here on your device, then stored and checked against Salesforce. The claims experience spreadsheet goes in under Group Health.</p>';
+  let h = '<h3 class="ptitle">The ' + esc(d.monthLabel) + ' bills</h3><p class="plead">Head Office’s bills reach support@: easiConnect’s Group Health invoice and the Group Life pack. They are found there and read here, on this page: nothing is chosen from your device and nothing is copied to Drive. Check what was read, then press Store and check against Salesforce. A bill that never reached support@ can still be chosen from your device, and the pension list bill is built from Salesforce. The claims experience spreadsheet goes in under Group Health.</p>';
   h += d.lines.map(dUploadCard).join('');
   return h + dNav('upload');
+}
+/* ── the bills in support@ (26 November 2026): found and read here, nothing uploaded ── */
+const D_FROM = f => /easiconnect@/i.test(f) ? 'easiConnect' : /premiumsapplication|groupinsurance/i.test(f) ? 'Group Insurance Administration' : /@rickyrampersadbranch\.com$/i.test(f) ? 'support@' : f.replace(/@.*/, '').replace(/[._]/g, ' ');
+const D_KB = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+function dMailFor(line) { return DOOR.mail && DOOR.mail.ok ? (DOOR.mail.mails || []).filter(m => m.line === line && m.month === BILL.month) : []; }
+/** The e-mails found for one line, each with its files and Read this bill. */
+function dMailBox(o) {
+  const line = o.line, label = o.label.toLowerCase();
+  if (line === 'listbill' && o.fromSalesforce) return '';
+  if (!DOOR.mail) return '<div class="mbox" id="mb-' + line + '"><p class="small muted">Looking in support@ for the ' + esc(BILL.monthLabel) + ' ' + esc(label) + ' bill…</p></div>';
+  if (!DOOR.mail.ok) return '<div class="mbox" id="mb-' + line + '"><p class="small"><b>support@ could not be read:</b> ' + esc(DOOR.mail.error || 'no answer') + '. Choose the file from your device below.</p></div>';
+  const hits = dMailFor(line), now = DOOR.mailNow[line];
+  if (!hits.length) return '<div class="mbox" id="mb-' + line + '"><p class="small">No ' + esc(label) + ' billing e-mail for ' + esc(BILL.monthLabel) + ' in support@ yet' + (DOOR.mail.looked && DOOR.mail.looked.length ? ' (looked for ' + esc(DOOR.mail.looked.join(', ')) + ' in the last 120 days)' : '') + '. <button class="lnk" type="button" data-mlook="1">Look again</button></p></div>';
+  return '<div class="mbox" id="mb-' + line + '"><p class="small"><b>Found in support@</b>' + (hits.length > 1 ? ': ' + hits.length + ' e-mails, read the one for this bill' : '') + '</p>' + hits.map(m => {
+    const read = DOOR.mailRead[line] === m.id;
+    return '<div class="mitem' + (read ? ' on' : '') + '"><div class="mhead"><b>' + esc(m.subject) + '</b><span class="small muted">' + esc(D_FROM(m.from)) + ' · ' + esc(m.at) + '</span></div>' +
+      '<div class="mfiles">' + m.files.map(f => '<span class="chip"><i style="background:var(--bar)"></i>' + esc(f.name) + ' · ' + D_KB(f.size) + '</span>').join('') + '</div>' +
+      (BILL.canAct === false ? '' : '<button class="btn' + (read ? ' ghost' : '') + ' sm" type="button" data-mread="' + esc(m.id) + '" data-line="' + line + '"' + (now ? ' disabled' : '') + '>' + (now === m.id ? 'Reading from support@…' : read ? 'Read it again' : 'Read this bill') + '</button>') + '</div>';
+  }).join('') + '</div>';
+}
+async function dMailLoad(fresh) {
+  if (DOOR.mailBusy) return;
+  const key = BILL.group.key; DOOR.mailBusy = true;
+  const r = await post({ action: 'gcm.billAct', group: key, line: 'health', month: BILL.month, act: 'mailBills', fresh: fresh ? 'Y' : '' });
+  DOOR.mailBusy = false;
+  if (!BILL || BILL.group.key !== key) return;
+  DOOR.mail = r && typeof r === 'object' ? r : { ok: false, error: 'no answer' };
+  if (DOOR.step === 'upload') { dDrawPanel(); }
+}
+/** The e-mail's files fetched through the backend and read here exactly as a chosen file is: the figures, the members,
+ *  the warnings, then Store and check. What is kept for the approval is a reference to the e-mail, never the bytes. */
+async function dMailRead(line, id) {
+  const m = (DOOR.mail && DOOR.mail.mails || []).find(x => x.id === id); if (!m) return;
+  DOOR.mailNow[line] = id; dDrawPanel();
+  const files = [], refs = [];
+  for (const f of m.files) {
+    const r = await post({ action: 'gcm.billAct', group: BILL.group.key, line, month: BILL.month, act: 'mailFile', mail: id, att: f.id });
+    if (!r.ok) { DOOR.mailNow[line] = ''; dDrawPanel(); return toast(r.error || 'support@ would not give the file', true); }
+    const bin = atob(r.b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    files.push(new File([u], r.name, { type: r.type || 'application/pdf' }));
+    refs.push({ name: r.name, type: r.type, mail: id, att: f.id });
+  }
+  DOOR.mailNow[line] = ''; DOOR.mailRead[line] = id;
+  dDrawPanel();
+  await blReadFiles(line, files, { refs, source: 'support@ e-mail from ' + D_FROM(m.from) + ', ' + m.at });
+}
+/** One e-mail for a line with no bill stored and nothing read yet: read it straight away, so the findings are one press off. */
+function dMailAuto() {
+  if (!DOOR.mail || !DOOR.mail.ok || BILL.canAct === false) return;
+  BILL.lines.forEach(o => {
+    const hits = dMailFor(o.line);
+    if (o.bill || BILL_READ[o.line] || DOOR.mailAuto[o.line] || hits.length !== 1) return;
+    DOOR.mailAuto[o.line] = true; dMailRead(o.line, hits[0].id);
+  });
+}
+/** For the approval: the references of the e-mail read for a line, or of the one e-mail found for it. */
+function dMailRefs(line) {
+  const hits = dMailFor(line), id = DOOR.mailRead[line] || (hits.length === 1 ? hits[0].id : ''), m = hits.find(x => x.id === id);
+  return m ? m.files.map(f => ({ name: f.name, type: f.type, mail: m.id, att: f.id })) : [];
 }
 function dUploadCard(o) {
   const d = BILL, b = o.bill, can = d.canAct !== false;
   let h = '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(o.steps) + '</div>' + dSfRow(o);
   if (!b || BILL_READ[o.line]) {
-    h += '<div class="upload" id="up-' + o.line + '"><p class="small">' + esc(BL_HINT[o.line]) + '</p>';
+    const mb = dMailBox(o), found = dMailFor(o.line).length > 0;
+    h += '<div class="upload" id="up-' + o.line + '">' + mb + '<details class="upalt"' + (found || !mb ? '' : ' open') + '><summary>' + (o.line === 'listbill' ? 'Upload the list or build it from Salesforce' : 'Not in support@? Choose the file from your device') + '</summary><p class="small">' + esc(BL_HINT[o.line]) + '</p>';
     if (can) h += '<div class="uprow"><label class="btn ghost" for="file-' + o.line + '">Choose the file' + (o.line === 'life' ? 's' : '') + '</label><input type="file" id="file-' + o.line + '" data-line="' + o.line + '" accept="' + (o.line === 'listbill' ? '.xlsx,.xls,.csv,.pdf' : '.pdf') + '"' + (o.line === 'life' ? ' multiple' : '') + ' class="hide">' +
       (o.line === 'listbill' && o.fromSalesforce ? '<button class="btn ghost" type="button" data-fromsf="listbill">Build it from Salesforce (' + o.fromSalesforce.count + ' policies, ' + esc(blMoney(o.fromSalesforce.total)) + ')</button>' : '') + '<span class="small muted" id="upmsg-' + o.line + '"></span></div>';
     else h += '<p class="small muted">Only ' + esc(d.group.assigned || 'the owner') + ', the assistant branch manager or the branch manager can upload here.</p>';
-    h += '<div id="preview-' + o.line + '">' + (BILL_READ[o.line] ? blPreview(o.line, BILL_READ[o.line]) : '') + '</div></div>';
+    h += '</details><div id="preview-' + o.line + '">' + (BILL_READ[o.line] ? blPreview(o.line, BILL_READ[o.line]) : '') + '</div></div>';
   }
   if (b) {
     const v = b.variance;
@@ -289,8 +352,8 @@ function dUploadCard(o) {
       '<div class="tile"><b>' + b.members + '</b><span>' + (o.line === 'listbill' ? 'policies' : 'members') + ' on the bill</span></div>' +
       (b.arrears ? '<div class="tile alert"><b>' + esc(blMoney(b.arrears)) + '</b><span>earlier months shown unpaid</span></div>' : '') +
       '<div class="tile' + (Math.abs(v) > 0.05 ? ' alert' : '') + '"><b>' + (b.sfRecord ? esc(blMoney(b.sfBilled)) : '–') + '</b><span>billed in Salesforce' + (b.sfRecord ? (Math.abs(v) > 0.05 ? ' · ' + (v > 0 ? esc(blMoney(v)) + ' more than' : esc(blMoney(-v)) + ' short of') + ' the ' + esc(blMoney(blCharged(o.line, b))) + ' charged' : ' · the same as the ' + esc(blMoney(blCharged(o.line, b))) + ' charged') : ' · no record') + '</span></div></div>' +
-      '<p class="small muted">' + (b.ref ? 'Ref ' + esc(b.ref) + ' · ' : '') + (b.dated ? 'dated ' + esc(dmy(b.dated)) + ' · ' : '') + 'uploaded by ' + esc(b.by) + ' ' + esc(b.checkedAt) + (b.files ? ' · ' + esc(b.files) : '') + (b.reconciledAt ? ' · <b>reconciled ' + esc(b.reconciledAt) + '</b>' : '') + (b.sentAt ? ' · <b>sent ' + esc(b.sentAt) + '</b>' : '') +
-      (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">upload again</button>' : '') + '</p>';
+      '<p class="small muted">' + (b.ref ? 'Ref ' + esc(b.ref) + ' · ' : '') + (b.dated ? 'dated ' + esc(dmy(b.dated)) + ' · ' : '') + 'stored by ' + esc(b.by) + ' ' + esc(b.checkedAt) + (b.files ? ' · ' + esc(b.files) : '') + (b.reconciledAt ? ' · <b>reconciled ' + esc(b.reconciledAt) + '</b>' : '') + (b.sentAt ? ' · <b>sent ' + esc(b.sentAt) + '</b>' : '') +
+      (can && !BILL_READ[o.line] ? ' · <button class="lnk" type="button" data-reup="' + o.line + '">read it again</button>' : '') + '</p>';
   }
   if (o.line === 'health') h += blClaims(o, can);
   return h + '</section>';
@@ -301,7 +364,7 @@ const dInner = h => h.replace(/^<h3 class="ptitle">[\s\S]*?<\/h3><p class="plead
 function dCheck() {
   const d = BILL, withBill = d.lines.filter(o => o.bill), A = DOOR.ask;
   let h = '<h3 class="ptitle">What was found</h3><p class="plead">Every bill checked against Salesforce. Answer each question with one tap: the answer goes onto the line’s billing task under your name, settles what was found, or opens what comes next. Every check is underneath, line by line.</p>';
-  if (!withBill.length) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('check');
+  if (!withBill.length) return h + '<div class="dnote">No bill is read for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Read the bills first</button></div>' + dNav('check');
   if (d.ai) h += '<div id="blAiBox">' + (DOOR.aiRead ? dAiHtml(DOOR.aiRead) : '<div class="drawer ai"><p class="muted" style="margin:0">' + (DOOR.aiBusy ? 'Reading this month with AI: the findings as counts, the Salesforce figures, the open tasks…' : 'The AI read of this month comes here.') + '</p></div>') + '</div>';
   h += '<h3 class="blsec">The questions</h3>' + dInner(dAsk(true));
   h += '<h3 class="blsec" style="margin-top:20px">Every check, line by line</h3>';
@@ -341,7 +404,7 @@ async function dAiRead(force) {
 function dAsk(inner) {
   const d = BILL, A = DOOR.ask, can = d.canAct !== false;
   let h = '<h3 class="ptitle">Answer the questions</h3><p class="plead">The checks ask what only a person knows, and the AI adds its own from the figures. One tap answers each. Every answer goes onto the line’s billing task in Salesforce under your name, settles the finding it came from, or opens what comes next: a task, a payment, the termination form.</p>';
-  if (!d.lines.some(o => o.bill)) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + (inner ? '' : dNav('ask'));
+  if (!d.lines.some(o => o.bill)) return h + '<div class="dnote">No bill is read for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Read the bills first</button></div>' + (inner ? '' : dNav('ask'));
   if (!A) return h + '<div class="dnote"><p class="muted" style="margin:0">Reading the findings and asking the AI…</p></div>' + (inner ? '' : dNav('ask'));
   if (!A.ok) return h + '<div class="note bad">' + esc(A.error) + '</div>' + (inner ? '' : dNav('ask'));
   const left = A.total - A.answered;
@@ -382,7 +445,7 @@ async function dAnswer(qid, v, btn) {
 /** What an answer opens next: a second upload, the Salesforce fix, the payment box, the task panel with the kind chosen, the termination form. */
 function dNext(n, q) {
   if (!n || !n.kind) return;
-  if (n.kind === 'reup') { BILL_READ[n.line] = { part: null, names: [], warnings: [], again: true }; dGo('upload'); const b = $('preview-' + n.line); if (b) b.innerHTML = ''; toast('Upload the ' + (BL_LABEL[n.line] || '') + ' bill again.'); }
+  if (n.kind === 'reup') { BILL_READ[n.line] = { part: null, names: [], warnings: [], again: true }; dGo('upload'); const b = $('preview-' + n.line); if (b) b.innerHTML = ''; toast('Read the ' + (BL_LABEL[n.line] || '') + ' bill again.'); }
   else if (n.kind === 'fix' && (n.fix === 'sfAmount' || n.fix === 'sfWrite')) { toast('Writing to Salesforce…'); post({ action: 'gcm.billAct', group: BILL.group.key, line: n.line, month: BILL.month, act: n.fix }).then(r => { toast(r.ok ? r.said : (r.error || 'Not set'), !r.ok); if (r.ok) { DOOR.ask = null; dRefreshBill().then(() => dLoad('ask')); } }); }
   else if (n.kind === 'pay') blPayment(n.line, n.month || BILL.month, n.amount);
   else if (n.kind === 'task') { const fid = /^a\d+$/.test(q.id) ? '' : q.id; if (fid) blTaskPanel(n.line || 'health', fid, n.task, n.member || ''); else { blTaskPanel(n.line || 'health', ''); dPreset(n.task, n.member || ''); } }
@@ -479,7 +542,7 @@ function dChanges(inner) {
 function dPeople(inner) {
   const d = BILL, P = DOOR.people, can = d.canAct !== false;
   let h = '<h3 class="ptitle">The people on the bills</h3><p class="plead">Everyone on the health and life bills, matched to their Salesforce record: their dependants, who turns 65 (the group cover ends and an individual plan is offered), which dependants reach the dependant age, who retires on the company pension within five years, and the records to put right. The group’s page shows counts only; the names stay here.</p>';
-  if (!d.lines.some(o => o.bill && o.line !== 'listbill')) return h + '<div class="dnote">No health or life bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + (inner ? '' : dNav('people'));
+  if (!d.lines.some(o => o.bill && o.line !== 'listbill')) return h + '<div class="dnote">No health or life bill is read for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Read the bills first</button></div>' + (inner ? '' : dNav('people'));
   if (!P) return h + '<div class="dnote"><p class="muted" style="margin:0">Matching every member to Salesforce…</p></div>' + (inner ? '' : dNav('people'));
   if (!P.ok) return h + '<div class="note bad">' + esc(P.error) + '</div>' + (inner ? '' : dNav('people'));
   const c = P.counts;
@@ -536,7 +599,7 @@ async function dLetter(ds) {
 function dStatement() {
   const d = BILL, S = DOOR.stmt;
   let h = '<h3 class="ptitle">The statement of account</h3><p class="plead">What the group owes, on one page: this month’s lines, the earlier invoices Salesforce still shows unpaid, what changed since last month, and what is attached. It goes inside the bill e-mail and as a PDF beside the bills when you press Send now, and in the billing-day run.</p>';
-  if (!d.lines.some(o => o.bill)) return h + '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>' + dNav('statement');
+  if (!d.lines.some(o => o.bill)) return h + '<div class="dnote">No bill is read for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Read the bills first</button></div>' + dNav('statement');
   if (!S) return h + '<div class="dnote"><p class="muted" style="margin:0">Writing the statement from the bills and Salesforce…</p></div>' + dNav('statement');
   if (!S.ok) return h + '<div class="note bad">' + esc(S.error) + '</div>' + dNav('statement');
   if (!S.data) return h + '<div class="dnote">' + esc(S.said) + '</div>' + dNav('statement');
@@ -583,11 +646,11 @@ function dApprove() {
   h += blDayStrip(d.day, d.live);
   if (withBill.length) h += '<div class="dnote dmail"><div><b>The e-mail the group gets</b><span class="small muted"> · addressed to their contact by name, signed by the person who looks after the account, with the sign-in to comment on any line and five stars to rate that person.</span></div><button class="btn ghost sm" type="button" id="dMail">See the e-mail as the group reads it</button></div>';
   if (!d.live) h += '<div class="note info"><div><b>Sending is in test mode.</b> A bill sent from here goes to you and the branch, marked TEST, until the branch manager runs gblGoLive in the script editor. Everything else is live: the checks, the Salesforce fixes, the tasks and the Chatter.</div></div>';
-  if (!withBill.length) h += '<div class="dnote">No bill is uploaded for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Upload first</button></div>';
+  if (!withBill.length) h += '<div class="dnote">No bill is read for ' + esc(d.monthLabel) + ' yet. <button class="lnk" type="button" data-go="upload">Read the bills first</button></div>';
   d.lines.forEach(o => {
     const b = o.bill, s = o.steps;
     h += '<section class="bline" id="line-' + o.line + '"><div class="blt"><h3>' + esc(o.label) + '</h3>' + blSteps(s) + '</div>';
-    if (!b) { h += '<p class="small muted">No bill uploaded for ' + esc(d.monthLabel) + (o.sf && o.sf.rec ? ', though Salesforce bills this line this month' : '') + '.</p></section>'; return; }
+    if (!b) { h += '<p class="small muted">No bill read for ' + esc(d.monthLabel) + (o.sf && o.sf.rec ? ', though Salesforce bills this line this month' : '') + '.</p></section>'; return; }
     h += '<div class="sfrow">' + (b.reconciledAt ? '<span class="chip good"><i></i>Reconciled ' + esc(b.reconciledAt) + ' by ' + esc(b.reconciledBy) + '</span>' : s.fixes ? '<span class="chip bad"><i></i>' + s.fixes + ' finding' + (s.fixes === 1 ? '' : 's') + ' to fix first</span>' : '<span class="chip warn"><i></i>Not reconciled yet</span>') +
       (b.sentAt ? '<span class="chip good"><i></i>Sent ' + esc(b.sentAt) + '</span>' : '') + '<span class="chip"><i style="background:var(--bar)"></i>' + esc(blMoney(b.due)) + ' for ' + b.members + ' ' + (o.line === 'listbill' ? 'policies' : 'members') + '</span>' + (b.files ? '<span class="chip"><i style="background:var(--bar)"></i>' + esc(b.files) + '</span>' : '') + '</div>';
     if (s.fixes && !b.reconciledAt) h += '<p class="small">Fix or resolve the findings marked fix on <button class="lnk" type="button" data-go="findings">What was found</button> first' + (d.role === 'branch' ? '. As branch manager you may reconcile over them' : '') + '.</p>';
