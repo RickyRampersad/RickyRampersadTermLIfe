@@ -166,7 +166,7 @@
     .track{display:none}
     /* Icons only. "Pause" and "Narrate" spelled out pushed the birthday chip
        off the right of a 390px screen. */
-    #pp .lbl,#nar .lbl{display:none}
+    #pp .lbl,#nar .lbl,#wallsBtn .lbl{display:none}
     .ctl .dot{padding:4px 7px}
     #cake{padding:4px 8px}
     #cake b{display:none}
@@ -204,7 +204,29 @@
     #stale{font-size:12px;padding:7px 10px calc(7px + env(safe-area-inset-top,0px))}
     #stale .hint{display:none}
   }
-  @media print{#chrome,#bar,#boot,#cake,#stale{display:none}}
+  /* THE SIDE LIST (27 Nov 2026): every wall and its numbered stops, down the left. */
+  #side{position:fixed;left:0;top:var(--chromeh,46px);bottom:0;z-index:36;width:300px;max-width:86vw;overflow:auto;
+    background:rgba(6,22,40,.97);border-right:1px solid var(--line);box-shadow:8px 0 30px rgba(0,0,0,.35);
+    transform:translateX(-102%);transition:transform .35s ease;padding:12px 12px 18px;font:500 13px var(--font-b)}
+  #side.open{transform:none}
+  #side .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  #side .sh b{font:800 15px var(--font-d)}
+  #side button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  #side .pre{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  #side .pre button{padding:5px 9px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-weight:700;font-size:12px}
+  #side .w{margin-top:10px}
+  #side .wn{display:flex;width:100%;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:8px;
+    font:800 12.5px var(--font-d);letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+  #side .wn:hover{background:rgba(239,194,75,.12)}
+  #side .wn i{font-style:normal;font:700 11px var(--font-b);letter-spacing:0;text-transform:none;color:var(--faint)}
+  #side .w.off .wn{color:var(--faint)} #side .w.off .st{opacity:.45}
+  #side .st{display:flex;width:100%;gap:9px;align-items:baseline;padding:5px 8px;border-radius:7px;text-align:left;color:var(--dim)}
+  #side .st:hover{background:rgba(255,255,255,.07)}
+  #side .st b{font:800 12px var(--font-d);min-width:20px;color:var(--ink)}
+  #side .st.on{background:rgba(55,177,236,.18);color:var(--ink)}
+  #side .hint{color:var(--faint);font-size:12px;line-height:1.4;margin:14px 6px 0}
+  .dot.out{opacity:.3}
+  @media print{#chrome,#bar,#boot,#cake,#stale,#side{display:none}}
 </style>
 </head>
 <body>
@@ -219,6 +241,7 @@
 
 <div id="chrome">
   <div class="ctl">
+    <button class="dot" type="button" id="wallsBtn" title="the walls and their slides (w)">☰<span class="lbl"> Walls</span></button>
     <button class="dot" type="button" id="prev" title="previous story (←)">‹</button>
     <button class="dot" type="button" id="pp" title="pause or go on (space)">⏸<span class="lbl"> Pause</span></button>
     <button class="dot" type="button" id="next" title="next story (→)">›</button>
@@ -229,6 +252,13 @@
   <div id="dots"></div>
   <div id="cake" hidden><span class="i">🎂</span><b id="cakeWho"></b></div>
 </div>
+
+<nav id="side" aria-label="The walls and their slides">
+  <div class="sh"><b>The walls</b><button type="button" id="sideX" title="close">✕</button></div>
+  <div class="pre"><button type="button" data-only="pending,dues">Today · Pending + Premium due</button><button type="button" data-only="">All walls</button></div>
+  <div id="sideList"></div>
+  <p class="hint">Tap a slide to show it and hold it there. Tap a wall's name to stream only that wall.</p>
+</nav>
 
 <div id="boot">
   <div class="in">
@@ -251,10 +281,10 @@ var SLIDES = [
      first because a room reads the top of the hour. */
   /* 'The day so far' (day.html) taken off on 24 Nov 2026: Ricky, "remove slide 1 as this is duplicate"; the hour-by-hour stop carries the day. */
   /* No blocks since 17 October: the system sets each desk's day at check-in. This stop is that day (27 October 2026). */
-  { file:'blocks.html',     tab:'The day, hour by hour', secs:32 },
+  { file:'blocks.html', wall:'day',     tab:'The day, hour by hour', secs:32 },
   /* The papers, the same day: what came in, what went out on the bag and what is waiting (28 October 2026). Read
      live from the Log Book in RR Operations, counts and first names only. */
-  { file:'transmittal.html', tab:'The transmittal', secs:26 },
+  { file:'transmittal.html', wall:'day', tab:'The transmittal', secs:26 },
   /* The pipeline, before the book: a case pending is one that has not become
      a policy yet, and it is the only screen here that can still be changed
      by somebody picking up a phone this afternoon. */
@@ -265,15 +295,15 @@ var SLIDES = [
      then what is outstanding and who is moving it. */
   /* THE FIRST PENDING STOP since 27 November 2026: today only, from Salesforce. "So when agents and staff look at
      the board they know this morning it is being actioned." Two views, sixteen seconds each. */
-  { file:'today.html',      tab:'Pending \u00b7 today',        secs:32 },
-  { file:'pending.html',    tab:'Pending \u00b7 policies',     secs:24 },
-  { file:'reqs.html',       tab:'Pending \u00b7 requirements', secs:24 },
+  { file:'today.html', wall:'pending',      tab:'Pending \u00b7 today',        secs:90 },   // six views of fifteen seconds
+  { file:'pending.html', wall:'pending',    tab:'Pending \u00b7 policies',     secs:24 },
+  { file:'reqs.html', wall:'pending',       tab:'Pending \u00b7 requirements', secs:24 },
   /* THE THIRD PENDING STOP, asked for on 17 September 2026: "on the Pendings
      we must include in a separate slide the increases, group life and group
      health". Not a column on either of the other two, because those are built
      from the life new-business extract and an increase, a group scheme and a
      health plan are none of them on it. This one reads Salesforce itself. */
-  { file:'increases.html',  tab:'Pending \u00b7 increases & group', secs:22 },
+  { file:'increases.html', wall:'pending',  tab:'Pending \u00b7 increases & group', secs:22 },
   /* THE FOURTH PENDING STOP. "Should we not have one overall general
      dashboard, but however on each of those codes a further breakdown?
      … if we do need to have two, three or four dashboards related to the
@@ -281,24 +311,24 @@ var SLIDES = [
      Salesforce." The board says what is on each agent's desk; this says
      who is holding each requirement, which is the other way to read the
      same join and the one a branch meeting argues from. */
-  { file:'codes.html',      tab:'Pending \u00b7 code by code', secs:34 },
+  { file:'codes.html', wall:'pending',      tab:'Pending \u00b7 code by code', secs:34 },
   /* 24 November 2026, for the branch meeting: the pending wall by unit (what is holding settlement, underwriting, the
      team), then the clawbacks, replacements kept off, red where nothing went in or no task is open. */
-  { file:'units.html',      tab:'Pending \u00b7 units & underwriting', secs:32 },
-  { file:'clawbacks.html',  tab:'Clawbacks', secs:32 },
+  { file:'units.html', wall:'pending',      tab:'Pending \u00b7 units & underwriting', secs:32 },
+  { file:'clawbacks.html', wall:'production',  tab:'Clawbacks', secs:32 },
   /* WHAT BECAME A POLICY, asked for on 28 October 2026: "and what about the
      policies issued this month by agent and unit?". After the four pending
      stops, the month's issued business from Guardian's production report:
      each unit and each agent against their own usual month, never ranked.
      Code by code holds longer since the same day: its pages turn every eight
      seconds and every code has to come round. */
-  { file:'issued.html',     tab:'Issued this month', secs:24 },
+  { file:'issued.html', wall:'production',     tab:'Issued this month', secs:24 },
   /* The orphan campaign, 28 October 2026. Asked for the same day: "can a
      dash on the orphans management, can a dash be created to assign to that
      wall?". Where the households stand, today's list for each desk and what
      was done on it, and the clients named to an agent: counts and first names
      only, from the campaign script rather than the tracker. */
-  { file:'orphans.html',    tab:'The orphan campaign', secs:30 },
+  { file:'orphans.html', wall:'orphans',    tab:'The orphan campaign', secs:30 },
   /* The same afternoon: "the $200 … how much actually still pending in all
      and how much paid so far … how much sales … premiums paid back,
      reinstated … a reward system for the staff". What the campaign has
@@ -306,33 +336,33 @@ var SLIDES = [
      back in force, what clients say), then the First-Contact Cup for Client
      Support with who looks after whom. Same answer, same rules: counts and
      first names. */
-  { file:'orphans-results.html', tab:'Orphan results', secs:30 },
-  { file:'orphans-cup.html',     tab:'First-Contact Cup', secs:30 },
+  { file:'orphans-results.html', wall:'orphans', tab:'Orphan results', secs:30 },
+  { file:'orphans-cup.html', wall:'orphans',     tab:'First-Contact Cup', secs:30 },
   /* The same evening: "put me as the branch manager, the kinds of emails and
      what I am doing from the automation that went out … I need to be
      recognized. I need to state when the staff is responding". His prompts
      on the orphan tasks by kind, what his automation sent, when the team
      answers a prompt, and what the team's notes say. Same answer, same rules. */
-  { file:'orphans-driver.html',  tab:"The Branch Manager's drive", secs:30 },
+  { file:'orphans-driver.html', wall:'orphans',  tab:"The Branch Manager's drive", secs:30 },
   /* Ready to settle, whose move is it and who is holding it up were three
      slides here until 17 September 2026. All three read the pending feed, and
      the rebuilt pending screen now carries what they said — what can be
      worked today, and which agent is holding which requirement back. */
-  { file:'index.html',      tab:'Premium dues · the letters', secs:120 },   // thirteen scenes of nine seconds, inside the one stop
+  { file:'index.html', wall:'dues',      tab:'Premium dues · the letters', secs:120 },   // thirteen scenes of nine seconds, inside the one stop
   /* Lapses have their own screen since 17 September 2026: the dues line is
      policies still alive on a paid-to clock, lapses are what was lost on a
      lapse-date clock, and two clocks on one slide is the disagreement the
      dues domain already carried. The link between them is one counter. */
-  { file:'lapses.html',     tab:'Lapses',            secs:24 },
-  { file:'possession.html', tab:'In our possession', secs:22 },
-  { file:'delivery.html',   tab:'With the agent',    secs:22 },
-  { file:'licence.html',    tab:'The licence year',  secs:22 },
-  { file:'book.html',       tab:'Birthdays today',   secs:18 },
+  { file:'lapses.html', wall:'dues',     tab:'Lapses',            secs:24 },
+  { file:'possession.html', wall:'book', tab:'In our possession', secs:22 },
+  { file:'delivery.html', wall:'book',   tab:'With the agent',    secs:22 },
+  { file:'licence.html', wall:'book',    tab:'The licence year',  secs:22 },
+  { file:'book.html', wall:'book',       tab:'Birthdays today',   secs:18 },
   /* And the birthday that is worth money. A term policy with a C in the
      middle of its plan code may be exchanged for permanent cover with no
      medical, and it is priced at the age the client is until the birthday
      arrives. The only screen here that reads Salesforce, not the workbook. */
-  { file:'conversion.html', tab:'Conversions',       secs:24 },
+  { file:'conversion.html', wall:'book', tab:'Conversions',       secs:24 },
   /* And the other half of the book, which is the larger half: whole life,
      the premium paying period, and the riders. No LIFE cover on it ends on a
      date, so it could never share a screen with the conversions — but the
@@ -342,8 +372,38 @@ var SLIDES = [
      this screen exists. The critical illness riding on a whole-life policy
      stops on a date even though the policy it rides on never does, and on
      most of the book nobody has that date in front of them. */
-  { file:'riders.html',     tab:'Riders on a clock', secs:24 }
+  { file:'riders.html', wall:'book',     tab:'Riders on a clock', secs:24 }
 ];
+
+/* THE WALLS, BY NAME (27 November 2026). Ricky: "the slide numbers have gone ... somebody could have easily clicked towards
+   the slide ... what wall is it in the label ... on this side coming down ... click on that wall and pause it"; and "I only
+   want to stream that wall today, that and the premium due wall". Every stop belongs to a wall; the side list, down the left,
+   shows each wall and its numbered stops. A stop clicked is shown and held (paused); a wall clicked is the only one that
+   streams. ?walls=pending,dues does the same from a link, and the choice is kept on this screen until it is changed. */
+var WALLS = [
+  { k:'day',        name:'The day' },
+  { k:'pending',    name:'Pending wall' },
+  { k:'dues',       name:'Premium due wall' },
+  { k:'production', name:'Issued & clawbacks' },
+  { k:'orphans',    name:'Orphan campaign' },
+  { k:'book',       name:'The book' }
+];
+var WALL_NAME = {}; WALLS.forEach(function (w) { WALL_NAME[w.k] = w.name; });
+var ONLY = (function () {
+  var raw = Q0('walls'); if (raw == null) { try { raw = localStorage.getItem('rrb_walls'); } catch (e) {} }
+  var o = {}, n = 0; String(raw || '').split(',').forEach(function (k) { k = k.trim(); if (WALL_NAME[k]) { o[k] = 1; n++; } });
+  return n ? o : null;
+})();
+function Q0(k) { var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search); return m ? decodeURIComponent(m[1]) : null; }
+function inSet(i) { return !ONLY || !!ONLY[SLIDES[i].wall]; }
+function setOnly(list) {
+  var o = {}, n = 0; (list || []).forEach(function (k) { if (WALL_NAME[k]) { o[k] = 1; n++; } });
+  ONLY = n ? o : null;
+  try { if (ONLY) localStorage.setItem('rrb_walls', Object.keys(ONLY).join(',')); else localStorage.removeItem('rrb_walls'); } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + (ONLY ? '?walls=' + Object.keys(ONLY).join(',') : '')); } catch (e) {}
+  paintSide();
+  if (at > -1 && !inSet(at)) { show(nextLive(at)); rest(); }
+}
 
 /* The query, read by hand: a television browser from 2016 has no URLSearchParams. */
 var Q = { get: function (k) {
@@ -467,7 +527,7 @@ SLIDES.forEach(function (s, i) {
   b.className = 'dot';
   b.type = 'button';
   b.textContent = String(i + 1);
-  b.title = s.tab;
+  b.title = (i + 1) + ' \u00b7 ' + (WALL_NAME[s.wall] || '') + ' \u00b7 ' + s.tab;
   b.onclick = function () { show(i); rest(); };
   s.dot = b;
   dots.appendChild(b);
@@ -532,9 +592,10 @@ function nextLive(from) {
   var j, k;
   /* One frame means nothing is loaded ahead of time, so there is nothing to
      prefer — the next story is simply the next one. */
-  if (LONE) return (from + 1) % SLIDES.length;
-  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (SLIDES[j].ready) return j; }
-  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (!SLIDES[j].dead) return j; }
+  if (LONE) { for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (inSet(j)) return j; } return (from + 1) % SLIDES.length; }
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (inSet(j) && SLIDES[j].ready) return j; }
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (inSet(j) && !SLIDES[j].dead) return j; }
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (inSet(j)) return j; }
   return (from + 1) % SLIDES.length;
 }
 
@@ -563,8 +624,9 @@ function show(i) {
   holdFor = (FIXED || SLIDES[i].secs) * 1000;
   if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
   started = turnedAt = Date.now();
-  pos.textContent = (i + 1) + ' of ' + SLIDES.length;
+  pos.textContent = (WALL_NAME[SLIDES[i].wall] || '') + ' \u00b7 ' + (i + 1) + ' of ' + SLIDES.length;
   tab.textContent = SLIDES[i].tab;
+  paintSide();
 }
 
 function step() { show(nextLive(at)); }
@@ -661,7 +723,7 @@ function keys(e) {
   var k = e.key;
   if (k === ' ') { e.preventDefault(); setPaused(!paused); }
   else if (k === 'ArrowRight') { step(); rest(); wake(); }
-  else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); }
+  else if (k === 'ArrowLeft')  { show(prevLive(at)); rest(); wake(); }
   else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
   else if (k === 'n' || k === 'N') { narrate(); }
   /* Number keys are compared as NUMBERS, not as text. Past nine stories
@@ -677,7 +739,8 @@ document.addEventListener('keydown', keys);
 function narrate() { if (at > -1) { tell(at, { rrb:'narrate' }); rest(); wake(); } }
 pp.onclick = function () { setPaused(!paused); };
 document.getElementById('next').onclick = function () { step(); rest(); wake(); };
-document.getElementById('prev').onclick = function () { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); };
+document.getElementById('prev').onclick = function () { show(prevLive(at)); rest(); wake(); };
+function prevLive(from) { for (var k = 1; k <= SLIDES.length; k++) { var j = (from - k + SLIDES.length * 2) % SLIDES.length; if (inSet(j)) return j; } return (from - 1 + SLIDES.length) % SLIDES.length; }
 nar.onclick = narrate;
 
 /* THE LINE DOES NOT FADE ANY MORE. It used to, because it was laid over the
@@ -760,7 +823,35 @@ function versionCheck() {
 versionCheck();
 setInterval(versionCheck, 30 * 60 * 1000);
 
-show(0);
+/* The side list. Painted on every turn so the stop on screen is marked. */
+var side = document.getElementById('side'), sideList = document.getElementById('sideList');
+function paintSide() {
+  if (!sideList) return;
+  sideList.innerHTML = WALLS.map(function (w) {
+    var stops = []; SLIDES.forEach(function (s, i) { if (s.wall === w.k) stops.push(i); });
+    if (!stops.length) return '';
+    var off = ONLY && !ONLY[w.k];
+    return '<div class="w' + (off ? ' off' : '') + '"><button type="button" class="wn" data-wall="' + w.k + '">' + w.name +
+      '<i>' + (ONLY && ONLY[w.k] ? 'streaming' : 'stream only this') + '</i></button>' +
+      stops.map(function (i) { return '<button type="button" class="st' + (i === at ? ' on' : '') + '" data-i="' + i + '"><b>' + (i + 1) + '</b>' + SLIDES[i].tab + '</button>'; }).join('') + '</div>';
+  }).join('');
+  SLIDES.forEach(function (s, i) { if (s.dot) s.dot.classList[inSet(i) ? 'remove' : 'add']('out'); });
+}
+sideList.addEventListener('click', function (e) {
+  var t = e.target.closest ? e.target.closest('button') : null; if (!t) return;
+  if (t.getAttribute('data-i') != null) { show(Number(t.getAttribute('data-i'))); setPaused(true); }
+  else if (t.getAttribute('data-wall')) { setOnly([t.getAttribute('data-wall')]); }
+});
+Array.prototype.forEach.call(side.querySelectorAll('[data-only]'), function (b) {
+  b.onclick = function () { var v = b.getAttribute('data-only'); setOnly(v ? v.split(',') : []); };
+});
+function toggleSide(v) { side.classList[(v == null ? !side.classList.contains('open') : v) ? 'add' : 'remove']('open'); }
+document.getElementById('wallsBtn').onclick = function () { toggleSide(); };
+document.getElementById('sideX').onclick = function () { toggleSide(false); };
+document.addEventListener('keydown', function (e) { if (e.key === 'w' || e.key === 'W') toggleSide(); else if (e.key === 'Escape') toggleSide(false); });
+paintSide();
+
+show(ONLY ? nextLive(SLIDES.length - 1) : 0);
 tick();
 setInterval(tick, 200);
 </script>

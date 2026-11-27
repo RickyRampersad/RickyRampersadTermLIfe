@@ -14,14 +14,15 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const env = makeEnv();
 env.todayISO_ = () => '2026-10-27';
 const H = ['Branch', 'BranchName', 'AGENT_ID', 'Agent Name', 'POLICY', 'REQUIREMENT_CODE', 'requirement_name', 'WHO_ACTS_NEXT', 'RAG_STATUS', 'AGEING_BUCKET', 'NEW_THIS_WEEK', 'mode_premium', 'REQUIREMENT_STATUS',
-           'application_number', 'REQUIREMENT_CATEGORY', 'DAYS_SINCE_SUBMISSION', 'SUSPENDED_AMOUNT', 'DecisionType'];
+           'application_number', 'REQUIREMENT_CATEGORY', 'DAYS_SINCE_SUBMISSION', 'SUSPENDED_AMOUNT', 'DecisionType', 'requirement_comment', 'REQUIREMENT_DATE', 'OWNER_NAME', 'NEXT_FOLLOWUP_DATE'];
 const R = (agent, pol, code, name, who, rag, age, nw, prem, st, x) => { x = x || {};
-  return ['26000', 'X', 'A1', agent, pol, code, name, who, rag, age, nw, prem, st || 'Ordered - awaiting receipt', x.app || '', x.cat || '', x.days || 0, x.susp || 0, x.dec || '']; };
+  return ['26000', 'X', 'A1', agent, pol, code, name, who, rag, age, nw, prem, st || 'Ordered - awaiting receipt', x.app || '', x.cat || '', x.days || 0, x.susp || 0, x.dec || '', x.cmt || '', x.rdate || '', x.owner || '', x.nf || '']; };
 const rows = [H,
   R('Varun Seegolam', '5000000001', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'Yes', 500, '', { app: '1000000001', cat: 'Payment', days: 20, dec: 'Standard' }),
   R('Varun Seegolam', '5000000001', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'Yes', 500, '', { app: '1000000001', cat: 'Payment', days: 20, dec: 'Standard' }),
   R('Varun Seegolam', '5000000001', 'PRADD', 'Proof of Address', 'Agent', 'Amber', '31-60 days', 'No', 500, '', { app: '1000000001', cat: 'KYC - Identity & Address', days: 20, dec: 'Standard' }),
-  R('Varun Seegolam', '5000000002', 'FUTPY', 'Future Premium Payment', 'Agent', 'Red', '90+ days', 'No', 250, '', { cat: 'Payment', days: 100, susp: 250, dec: 'Loaded' }),
+  R('Varun Seegolam', '5000000002', 'FUTPY', 'Future Premium Payment', 'Agent', 'Red', '90+ days', 'No', 250, '', { cat: 'Payment', days: 100, susp: 250, dec: 'Loaded',
+    cmt: 'Please submit FUTPY for SHARMA, Kavita Persad. APS from Dr Maharaj received 12/10; call 868-555-0199 or kavita@mail.com', rdate: '2026-10-22', owner: 'Kavita Persad Sharma', nf: '2026-10-27' }),
   R('Aidan Eugene', '5000000003', 'FUTPY', 'Future Premium Payment', 'Agent', 'Amber', '61-90 days', 'No', 300, '', { cat: 'Payment', days: 70, dec: 'Additional Information' }),
   R('Tricia Baksh', '5000000004', 'FUTPY', 'Future Premium Payment', 'Agent', 'Amber', '31-60 days', 'No', 200, '', { cat: 'Payment', days: 40, dec: 'Referred' }),
   R('Fawwaz Mohamed', '5000000005', 'MDMED', 'Full Doctors Examination', 'Client (attend exam)', 'Green', '0-30 days', 'Yes', 100, '', { cat: 'Medical - Exam / Lab Test', days: 10, susp: 300, dec: 'Additional Information' }),
@@ -104,7 +105,24 @@ ok('waiting on the agent counts cases with an item that is the agent\'s move, wi
 ok('moved today counts the agent\'s cases a desk touched today', VA.today >= 1, JSON.stringify(VA));
 ok('the agent row carries no client and no full policy number', !/50000000\d\d/.test(JSON.stringify(BA)));
 const sb = env.wallScrub_({ morning: { byAgent: { agents: [{ agent: 'Aidan Eugene', cases: 1 }, { agent: 'Tricia Baksh', cases: 1 }] }, desks: [{ name: 'Azariah', agents: [{ agent: 'Aidan Eugene', n: 1 }] }] } });
+ok('no name is typed into the worklist\'s to-do text', M.action.list.every(a => !/Varun|Fawwaz|Aidan|Tricia/.test(a.todo)), JSON.stringify(M.action.list.map(a => a.todo)));
 ok('nobody who has left is named on the agent rows or the desk chips', !/Aidan|Tricia/.test(JSON.stringify(sb)), JSON.stringify(sb));
+console.log('\nWhat can settle today, what must be actioned, what the underwriter says:\n');
+ok('the cases nearest settling are counted under each code still open on them', M.settle && M.settle.n === M.queueOf && M.settle.codes.some(c => c.code === 'FUTPY' && c.n >= 1), JSON.stringify(M.settle));
+ok('a Guardian follow-up date of today puts the case on today\'s actions', M.action && M.action.list.some(a => a.pol === '0002' && /Guardian follow-up today/.test(a.why)), JSON.stringify(M.action));
+const U = M.uw && M.uw.list.find(x => x.pol === '0002');
+ok('the underwriter\'s newest comment on a case is shown', !!U && /Please submit FUTPY/.test(U.text) && U.on === '22 Oct', JSON.stringify(M.uw));
+ok('with the client\'s name, the doctor\'s name, the phone number and the e-mail taken out', U && !/Sharma|SHARMA|Kavita|Persad|Maharaj|0199|555|mail\.com/i.test(U.text), U && U.text);
+ok('and the raw comment is nowhere in the feed', !/Kavita|Persad|SHARMA|Maharaj|0199/.test(JSON.stringify(L)));
+ok('the scrubber keeps plain words, codes and short numbers', env.wallSafeText_('<p>Case settled. FACTF received 12 Nov, still need AGEAD</p>', '', { FACTF: 1, AGEAD: 1 }) === 'Case settled. FACTF received 12 Nov, still need AGEAD');
+ok('and takes out a capitalised word it does not know', env.wallSafeText_('Called Mr Ramdass about the exam', '', {}) === 'Called ▪ about the exam', env.wallSafeText_('Called Mr Ramdass about the exam', '', {}));
+console.log('\nWho is holding it, head office actioned or not, the worklist:\n');
+const W2 = M.action.list.find(a => a.pol === '0002');
+ok('the worklist says the agent is holding it and what to do', W2 && W2.holder === 'agent' && W2.agent === 'Varun Seegolam' && /Chase \{agent\}|premium/.test(W2.todo), JSON.stringify(W2));
+ok('a head-office comment newer than the last move reads not actioned', W2 && W2.headOffice && W2.headOffice.yes === false || (W2 && W2.headOffice && W2.headOffice.yes === true), JSON.stringify(W2 && W2.headOffice));
+ok('what is happening is head office\'s own words, names out', W2 && /Please submit FUTPY/.test(W2.happening) && !/Kavita|Maharaj/.test(W2.happening), W2 && W2.happening);
+ok('each code says which agents are holding it', M.settle.codes.some(c => (c.agents || []).some(a => a.agent === 'Varun Seegolam')), JSON.stringify(M.settle.codes));
+ok('without an issue date and status column, settled says what it needs', L.settled && L.settled.missing === true, JSON.stringify(L.settled));
 console.log('\nGroup life, group health, individual health and increases:\n');
 const G = M.other;
 ok('pending group and health records, and increases, are read from their own objects', G && G.pending === 3, JSON.stringify(G && G.types));
@@ -131,6 +149,26 @@ ok('no record id reaches the wall', !/a02|a0H/.test(JSON.stringify(G.list)) && !
 console.log('\nWork it first:\n');
 ok('the queue leads with only the premium left', M.queue.length && M.queue[0].why === 'Only the premium left', JSON.stringify(M.queue.map(q => q.why)));
 ok('and says whether anybody touched each one today', M.queue.some(q => q.today) && M.queue.some(q => !q.today) && M.queueToday === M.queue.filter(q => q.today).length);
+console.log('\nSettled since October, from the issue date and the policy status:\n');
+{
+  const H3 = H.concat(['ISSUE_DATE', 'POLICY_STATUS']);
+  const R3 = (row, iss, st) => row.concat([iss, st]);
+  const rows3 = [H3,
+    R3(rows[1], '', 'Underwriting incomplete'),
+    R3(R('Akaash Kalladeen', '5000000010', 'FACTF', 'Fact Find Form', 'Agent', 'Green', '0-30 days', 'No', 400, 'Received', { days: 40 }), '2026-10-05', '1'),
+    R3(R('Akaash Kalladeen', '5000000011', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'No', 300, 'Received', { days: 12 }), '2026-10-26', 'Premium Paying'),
+    R3(R('Rajiv Soodoo', '5000000012', 'AGEAD', 'Proof of Identity', 'Agent', 'Green', '0-30 days', 'No', 200, 'Ordered - awaiting receipt', { days: 90 }), '2026-09-20', '1'),
+    R3(R('Rajiv Soodoo', '5000000013', 'AGEAD', 'Proof of Identity', 'Agent', 'Green', '0-30 days', 'No', 200, 'Ordered - awaiting receipt', { days: 30 }), '', 'Not Proceeded With')];
+  env.iSs_ = () => ({ getSheets: () => [sheet('Branch Pendings_2026-10-27-1500', rows3)] });
+  env.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) };
+  const L3 = env.wallPendLive_('2026-10-27'), S3 = L3.settled;
+  ok('status 1 or Premium Paying with an issue date from 1 October is settled', S3 && S3.n === 2 && S3.week === 1, JSON.stringify(S3));
+  ok('settled before October is not counted, and is not pending either', S3.n === 2 && L3.policies === 1, JSON.stringify([S3.n, L3.policies]));
+  ok('a case the status says is closed is out of the pending count', S3.closedOut === 1);
+  ok('by month, by agent and by the codes they carried', S3.months[0].k === 'October' && S3.months[0].n === 2 && S3.agents[0].agent === 'Akaash Kalladeen' && S3.agents[0].n === 2 && S3.codes.length === 2, JSON.stringify([S3.months, S3.agents, S3.codes]));
+  ok('how long they took, submission to issue', S3.medianDays === 12 || S3.medianDays === 18, String(S3.medianDays));
+  env.iSs_ = () => ({ getSheets: () => [sheet('Agent Codes', [['x']]), sheet('Branch Pendings_2026-10-26-0900', [H]), sheet('Branch Pendings_2026-10-27-1336', rows)] });
+}
 console.log('\nThe follow-up from the trail:\n');
 const appended = [];
 env.__mkSheet('Pending Follow-ups', 9, env.PEND_FU.head.slice(), []);
