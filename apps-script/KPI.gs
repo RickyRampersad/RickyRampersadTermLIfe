@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27z6';
+var SCRIPT_VERSION = '2026-11-27z7';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18440,7 +18440,7 @@ function wallBrief_(day, P, MV, S, chase, numOf) {
  *  follow-up gone, Guardian about to close it). Each row: why it is a focus, days outstanding, the last thing done in Salesforce
  *  (by whom, how long ago) and Guardian's own last activity, the owner (the desk whose open Pendings task it is, or nobody),
  *  the next action, and whether it was touched today. Beside it, each owner's focus cases and how many are done today. */
-var WALL_FOCUS = { N: 15, QUIET: 5 };
+var WALL_FOCUS = { N: 15, QUIET: 5, PER_AGENT: 5, AGENTS: 12 };
 function wallFocus_(day, P, chase, todayPols, ids, sinceHO, si, todoOf) {
   var deskOf = function (uid) { return uid && ids[uid] ? String(nameFor_(ids[uid])).split(' ')[0] : ''; };
   var users = sfkUsers_() || {}, rick = users.ricky && String(users.ricky.id);
@@ -18471,9 +18471,18 @@ function wallFocus_(day, P, chase, todayPols, ids, sinceHO, si, todoOf) {
       owner: owner, next: todoOf ? todoOf(p, it) : '', today: !!(todoPols(k)), quiet: quiet == null || quiet >= WALL_FOCUS.QUIET };
     function todoPols(x) { return todayPols && todayPols[x]; }
   }).sort(function (a, b) { return b._s - a._s; });
+  /* FOR THE AGENTS (27 Nov 2026, night). Ricky: "a proper structure so the agent will see what's actioned first". Every case
+     with a reason to move, grouped by agent, in the branch's own order: each agent sees their cases numbered as the branch
+     works them, what is being done, whether it moved today, the last Chatter, and which need something from them. */
+  var ag = {};
+  rows.forEach(function (r, i) { var a = ag[r.agent] = ag[r.agent] || { agent: r.agent, n: 0, today: 0, needYou: 0, quiet: 0, best: i, cases: [] };
+    a.n++; if (r.today) a.today++; if (r.quiet) a.quiet++; var you = /\{agent\}/.test(r.next) && /^Chase/.test(r.next); if (you) a.needYou++;
+    if (a.cases.length < WALL_FOCUS.PER_AGENT) a.cases.push({ order: a.cases.length + 1, rank: i + 1, pol: r.pol, code: r.code, why: r.why, today: r.today, last: r.last, you: you, next: r.next }); });
+  var forAgents = Object.keys(ag).map(function (k) { return ag[k]; }).sort(function (a, b) { return a.best - b.best; }).slice(0, WALL_FOCUS.AGENTS)
+    .map(function (a) { delete a.best; return a; });
   var top = rows.slice(0, WALL_FOCUS.N).map(function (r, i) { delete r._s; r.rank = i + 1; return r; });
   var own = {}; top.forEach(function (r) { var o = own[r.owner] = own[r.owner] || { name: r.owner, n: 0, done: 0, quiet: 0 }; o.n++; if (r.today) o.done++; if (r.quiet) o.quiet++; });
-  return { n: top.length, of: rows.length, done: top.filter(function (r) { return r.today; }).length, quiet: top.filter(function (r) { return r.quiet; }).length,
+  return { agents: forAgents, n: top.length, of: rows.length, done: top.filter(function (r) { return r.today; }).length, quiet: top.filter(function (r) { return r.quiet; }).length,
     owners: Object.keys(own).map(function (k) { return own[k]; }).sort(function (a, b) { return (a.name === 'Nobody') - (b.name === 'Nobody') || b.n - a.n; }), list: top };
 }
 
