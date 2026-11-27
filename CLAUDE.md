@@ -4418,7 +4418,7 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
       Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
       (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
-  - **Your group, the digital way: the employers' film, `/digitalvid/`** (`/digitalvideo/`, `/groupdigital/` and the first address `/groupmgt/employers/` forward to it, 27 November 2026: "have rickyrampersadbranch /digitalvid") (first cut 27 November 2026, "a video to send
+  - **Your group, the digital way: the employers' film, `/digitalvid/`** (`/groupclientmanagementvid/` and `/groupvid/` (asked for as "Group Client Management Vid or something like that"), `/digitalvideo/`, `/groupdigital/` and the first address `/groupmgt/employers/` forward to it, 27 November 2026: "have rickyrampersadbranch /digitalvid"; `/vid/` itself is the orphan film) (first cut 27 November 2026, "a video to send
     off to the employers ... the renewal process, what is done monthly, how we send their billings ... the Easy Connect
     portal ... the enrollment ... how they rate us ... traditionally in Trinidad it is a manual process ... we are fully
     digital ... our WhatsApp"; re-cut the same evening for the launch of the group initiative). 3 min 11 s, 18 scenes, wide
