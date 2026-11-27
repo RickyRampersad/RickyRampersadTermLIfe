@@ -66,7 +66,7 @@ const clip = page => page.evaluate(() => navigator.clipboard.readText());
       ok('the group’s links are open to see, not folded away', await page.$eval('#lnk details.lkg', d => d.open));
       const gl = await page.$$eval('#lnk details.lkg .lku', els => els.map(e => e.value));
       ok('six group links, each a full address', gl.length === 6 && gl.every(u => /^https:\/\/rickyrampersadbranch\.com\//.test(u)), gl.join(' '));
-      ok('the films are among them', ['/groupmgt/employers/', '/healthenrollment/', '/terminations/', '/pensionpresentationourprocess/'].every(p => gl.some(u => u.endsWith(p))));
+      ok('the films are among them', ['/digitalvid/', '/healthenrollment/', '/terminations/', '/pensionpresentationourprocess/'].every(p => gl.some(u => u.endsWith(p))));
       ok('the walkthrough cut on the old layout is not offered until it is re-cut', !gl.some(u => u.endsWith('/groupmgt/yourpage/')));
       await page.click('#lnk details.lkg [data-copy="lg2"]');
       ok('Copy link puts the health enrolment film on the clipboard', (await clip(page)) === 'https://rickyrampersadbranch.com/healthenrollment/');
