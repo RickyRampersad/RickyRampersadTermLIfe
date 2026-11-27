@@ -2023,5 +2023,50 @@
   "music": "bed-term1.wav",
   "sfx": "sfx-term1.wav",
   "ass": "captions-term1.ass"
+ },
+ "gcme1": {
+  "durs": [
+   10.9,
+   10.1,
+   11.6,
+   10.2,
+   10.1,
+   9.1,
+   8.8,
+   9.3,
+   10.6,
+   10.2,
+   11.5,
+   12.1,
+   10.1,
+   8.5,
+   10.0
+  ],
+  "dur": 153.1,
+  "vox": "vogcme1",
+  "start": 0,
+  "musicgain": 0.45,
+  "duck": 0.35,
+  "dark": [],
+  "ticks": [],
+  "hits": [
+   43.46,
+   77.65,
+   132.34,
+   147.59
+  ],
+  "w": 1920,
+  "h": 1080,
+  "pic": 924,
+  "capmode": "strip",
+  "capsize": 44,
+  "capwrap": 62,
+  "capbg": "0A3350",
+  "cap": "cap-gcme1",
+  "out": "../../groupclientmanagement/a-year-with-us.mp4",
+  "mix": "gcme1-mix.wav",
+  "music": "bed-gcme1.wav",
+  "sfx": "sfx-gcme1.wav",
+  "ass": "captions-gcme1.ass"
  }
 }

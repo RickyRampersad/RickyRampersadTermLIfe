@@ -4418,6 +4418,32 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
       Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
       (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
+  - **A year with your group, for employers: `/groupmgt/employers/`** (27 November 2026: "a video to send off to the
+    employers ... what we do to manage the groups ... the renewal process, what is done monthly, how we send their
+    billings ... the Easy Connect portal ... the enrollment ... what the employer sees on their tasks weekly ... how they
+    rate us ... traditionally in Trinidad it is a manual process ... we are fully digital ... our WhatsApp", then "dont
+    have time do what you can"). `groupclientmanagement/a-year-with-us.mp4` (wide), poster `a-year-with-us.jpg`, built by
+    `build-gcmfilm.py employers` (key `gcme1`, 15 lines in `gcme1-lines.json`, screens in `tools/film/gcmshots-emp/`).
+    - **The first film in the branch teal.** `teal()` repaints the builder's corporate blue for this film only (and the
+      gold highlight goes to light teal); the mark is `gcm-mark-teal.png`. The other group films keep their blue until
+      re-cut.
+    - **What it shows:** the old way (paper, calls, e-mail chains); one system built in the branch; joining (the
+      employee's own link, HR approves, GIO001 filled); the Monday 10:30 report; pending at the top; answers and stars;
+      the 25th (bills checked) and the 26th (the statement); your people and who is coming up; leavers (EB0010, chased
+      every three working days); Guardian's easiConnect for employees; renewal; the work behind it (the new staff Home);
+      HELP 868 on WhatsApp; the close. Screens: the redesigned group page and staff Home on the invented branch.
+    - **easiConnect** is Guardian Life's own health portal (`easiconnect.myguardiangroup.com`). The film shows only its
+      public sign-in page and says what employees use it for (their claims, their cover, a request); nobody here has a
+      member's view of it, so nothing inside is drawn. If the branch sends screenshots of a sample member, re-cut scene 11.
+    - **Renewal steps come from the branch's own tasks** (ask for updated staff data, Guardian's renewal terms and the
+      renewal letter in good time, conversion for anyone leaving the plan), with no day counts, because none is
+      recorded. Add the timings when the branch states them.
+    - **Two lines were kept careful on purpose:** "built in our branch", not "the only digital branch"; and "why come
+      through our branch?" answered by what the branch does, never by knocking Guardian. It is employer-facing marketing,
+      so Guardian's written approval is still owed before it is posted, as for Xpress Life.
+    - Voice: Andrew Expressive, checked. "five stars" came back "five stores", "and to send a request" came back "a center
+      request", "how long each one has waited" came back "is weighted": all re-worded. Line 3 came back cut off at 2.5 s
+      and was voiced again unchanged. "Easy Connect" is spoken as two words; the screen shows easiConnect.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
