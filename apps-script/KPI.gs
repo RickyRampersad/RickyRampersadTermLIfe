@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27y';
+var SCRIPT_VERSION = '2026-11-27z';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17885,6 +17885,7 @@ function wallPendWarm_() {
   finally { lock.releaseLock(); }
 }
 function wallPendBuild_(day) {
+  var T0 = Date.now(), ms = {}, lap = function (k) { ms[k] = Date.now() - T0; };
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
   var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX);
@@ -18003,16 +18004,21 @@ function wallPendBuild_(day) {
   out.first.agents = Object.keys(firstBy).map(function (k) { return firstBy[k]; }).sort(function (a, b) { return (b.n - a.n) || (b.prem - a.prem); });
   out.first.policies = Object.keys(firstPol).length;
   out.first.prem = Math.round(out.first.agents.reduce(function (s2, x) { return s2 + x.prem; }, 0));
+  lap('report');
   try { out.today = wallPendToday_(day, agentOf, numOf); } catch (e) { out.today = { error: String(e && e.message || e) }; }
   var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
-  wallPendPolicies_(out, P, chase);
+  lap('chase'); wallPendPolicies_(out, P, chase);
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
   // The report's own headings, so a column Guardian or the branch adds is seen on the feed (27 Nov 2026). Headings only, no row.
   out.cols = h.filter(Boolean);
+  lap('deep');
   try { out.brief = wallBrief_(day, P, out._mv, settledPol, chase, numOf); } catch (e) { out.brief = { error: String(e && e.message || e) }; }
   delete out._mv;
+  lap('brief');
   try { out.morning = wallPendMorning_(day, P, numOf, chase); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
+  lap('morning');
   try { out.follow = pendFollowCount_(day); } catch (e) {}
+  lap('total'); out.ms = ms;   // how long each part of the build took, cumulative milliseconds
   return out;
 }
 /* ── Today on the pendings (27 November 2026) ──
@@ -18473,11 +18479,17 @@ function pendFuRows_() {
   var head = headerOf_(sh);
   return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().map(function (r, i) { var o = { _row: i + 2 }; head.forEach(function (h, c) { if (h) o[h] = r[c]; }); return o; });
 }
+/* Counted once per pair of days and the branch's closed days read once per run (27 Nov 2026, night): branchClosed_ reads a
+   Script Property, and called for every day of every requirement on the report it made one build of the pending feed take
+   longer than the six minutes Apps Script allows. */
+var _wdClosed = null, _wdMemo = {};
 function pendFuWorkdaysSince_(iso, day) {
-  var d = String(iso || '').slice(0, 10), n = 0, x = d;
+  var d = String(iso || '').slice(0, 10), n = 0, x = d, mk = d + '|' + day;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return 0;
-  for (var i = 0; i < 40 && x < day; i++) { x = shiftDays_(x, 1); var w = new Date(x + 'T12:00:00Z').getUTCDay(); if (w > 0 && w < 6 && !(typeof branchClosed_ === 'function' && branchClosed_(x))) n++; }
-  return n;
+  if (_wdMemo[mk] != null) return _wdMemo[mk];
+  if (_wdClosed == null) { _wdClosed = {}; try { String(PropertiesService.getScriptProperties().getProperty('BRANCH_CLOSED') || '').split(/[\s,]+/).forEach(function (k) { if (k) _wdClosed[k] = 1; }); } catch (e) {} }
+  for (var i = 0; i < 40 && x < day; i++) { x = shiftDays_(x, 1); var w = new Date(x + 'T12:00:00Z').getUTCDay(); if (w > 0 && w < 6 && !_wdClosed[x]) n++; }
+  return (_wdMemo[mk] = n);
 }
 /** Drafts the follow-ups that are due. Returns { drafted, waiting }. */
 function pendFollowScan_(day) {
