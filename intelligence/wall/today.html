@@ -184,6 +184,15 @@
   .wk b{font:800 1.3rem var(--fd);margin-bottom:.3rem} .wk span{font:700 .85rem var(--fb);color:var(--faint);margin-top:.35rem}
   .mo{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid rgba(31,36,48,.06);font:800 1.2rem var(--fd)} .mo b{font-size:1.7rem;color:var(--green)}
   .sc{display:flex;gap:.6rem;align-items:center;padding:.35rem 0;font:600 1rem var(--fb);color:var(--dim)} .sc b{margin-left:auto;font:800 1.15rem var(--fd);color:var(--ink)}
+  /* the morning brief (27 Nov 2026, night) */
+  .steps{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);gap:.7rem;margin-top:.7rem;flex:1;min-height:0}
+  .stp{border:1px solid var(--line);border-radius:1rem;padding:.6rem .8rem;min-height:0;overflow:hidden;background:rgba(31,36,48,.025)}
+  .stp.hot{border-color:rgba(185,58,50,.45);background:#FDF1EF} .stp.none{opacity:.55}
+  .stp .h{display:flex;align-items:baseline;gap:.55rem} .stp .h i{font-style:normal;font:800 .95rem var(--fd);color:#fff;background:var(--gold);border-radius:.45rem;padding:.05rem .45rem}
+  .stp .h b{font:800 1.05rem var(--fd);flex:1;min-width:0} .stp .h span{font:800 1.6rem var(--fd);font-variant-numeric:tabular-nums}
+  .stp.hot .h span{color:var(--red)} .stp .td2{font:600 .85rem/1.3 var(--fb);color:var(--dim);margin:.15rem 0 .3rem}
+  .stp .r{display:flex;gap:.45rem;align-items:baseline;font:600 .88rem var(--fb);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:.1rem 0}
+  .stp .r b{color:var(--ink);font:800 .9rem var(--fd)} .stp .r code{font-size:.72rem;margin-left:0}
   /* accountability (27 Nov 2026, evening) */
   .own{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.7rem;margin-top:.7rem}
   .ow{border:1px solid var(--line);border-radius:1rem;padding:.7rem .85rem;background:rgba(31,36,48,.03)}
@@ -227,6 +236,7 @@
     .qr .a{grid-column:1/-1;white-space:normal} .qr .y{grid-column:1/-1} .qr .wm,.qr .dd{display:none}
     .stream{overflow:visible}
     .pr{grid-template-columns:auto minmax(0,1fr) auto} .pr .a,.pr .d{display:none}
+    .steps{grid-template-columns:1fr}
     .wr{grid-template-columns:1fr} .wr .do{text-align:left} .wk{height:8rem;gap:.4rem}
     .ch,.xh{display:none} .cr{grid-template-columns:auto minmax(0,1fr) auto} .cr .barw,.cr .wm{display:none} .xr{grid-template-columns:auto minmax(0,1fr) auto} .xr .nm,.xr .wm{display:none}
     .ah{display:none} .ar{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:.25rem} .ar .a{grid-column:1/-1} .ar .ck{grid-column:1/-1}
@@ -239,11 +249,27 @@
 <header>
   <div class="plate"><b>PENDING</b><span>wall</span></div>
   <div><h1 id="title">Today on the Pendings</h1><div class="sub" id="sub">From Salesforce, today only &middot; agents' first names and codes, no client</div></div>
-  <div class="tabs"><span id="t0" class="on">Settle today</span><span id="t1">Accountability</span><span id="t2">Work now</span><span id="t3">Staff</span><span id="t4">By agent</span><span id="t5">Work it first</span><span id="t6">Settled</span></div>
+  <div class="tabs"><span id="t0" class="on">Morning brief</span><span id="t1">Settle today</span><span id="t2">Accountability</span><span id="t3">Work now</span><span id="t4">Staff</span><span id="t5">By agent</span><span id="t6">Work it first</span><span id="t7">Settled</span></div>
   <div class="right"><div class="qrt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" role="img" aria-label="QR code for this page" class="segno"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#1f2430" d="M2 2.5h7m2 0h7m1 0h3m3 0h1m2 0h7m-33 1h1m5 0h1m2 0h3m2 0h3m1 0h1m1 0h2m1 0h2m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m5 0h1m1 0h1m5 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h2m4 0h2m6 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m4 0h6m1 0h1m4 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h3m1 0h3m1 0h3m3 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h3m1 0h2m1 0h1m2 0h3m-23 1h1m2 0h1m1 0h2m1 0h2m3 0h4m4 0h1m1 0h1m1 0h1m1 0h1m-28 1h1m1 0h2m1 0h1m3 0h2m2 0h1m3 0h1m2 0h1m3 0h4m3 0h2m-32 1h2m2 0h2m2 0h1m2 0h3m4 0h1m1 0h2m4 0h2m1 0h1m1 0h1m-33 1h2m5 0h4m1 0h4m4 0h4m1 0h2m1 0h2m-29 1h1m2 0h4m1 0h2m3 0h4m3 0h1m1 0h4m2 0h1m1 0h1m-32 1h2m3 0h1m1 0h4m1 0h1m4 0h1m1 0h3m2 0h1m1 0h1m1 0h5m-32 1h1m3 0h2m3 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h2m-32 1h2m3 0h1m2 0h2m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m1 0h1m1 0h1m2 0h1m-31 1h3m2 0h2m1 0h1m1 0h1m1 0h1m3 0h1m3 0h4m1 0h1m1 0h1m2 0h1m-31 1h2m2 0h1m4 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m1 0h1m-30 1h3m1 0h1m1 0h1m9 0h1m1 0h2m8 0h1m1 0h1m-33 1h1m2 0h2m2 0h2m2 0h2m1 0h1m1 0h4m1 0h1m3 0h1m1 0h1m3 0h1m-32 1h4m2 0h1m1 0h1m1 0h3m8 0h1m1 0h3m5 0h2m-32 1h2m2 0h1m5 0h1m1 0h1m2 0h3m5 0h3m3 0h3m-33 1h2m2 0h1m1 0h1m1 0h1m8 0h4m1 0h1m2 0h3m4 0h1m-32 1h1m1 0h1m1 0h1m1 0h2m1 0h2m3 0h1m3 0h1m1 0h2m1 0h2m3 0h1m2 0h1m-33 1h1m1 0h1m1 0h1m1 0h1m1 0h1m4 0h5m1 0h1m1 0h1m2 0h6m1 0h1m-24 1h1m4 0h1m5 0h3m1 0h2m3 0h2m2 0h1m-33 1h7m5 0h2m2 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h4m-32 1h1m5 0h1m1 0h2m1 0h4m1 0h7m1 0h1m3 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m2 0h3m1 0h3m1 0h6m1 0h6m-30 1h1m1 0h3m1 0h1m1 0h2m3 0h2m1 0h1m4 0h1m1 0h1m2 0h1m1 0h2m-30 1h1m1 0h3m1 0h1m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h1m5 0h1m1 0h1m1 0h1m-33 1h1m5 0h1m3 0h4m3 0h2m1 0h6m-26 1h7m1 0h3m2 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h2m1 0h1"/></svg><div><b>On your phone</b>Scan, or open <a href="https://rickyrampersadbranch.com/intelligence/wall/today.html">rickyrampersadbranch.com/<wbr>intelligence/wall/today.html</a></div></div><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
 </header>
 <main>
   <section class="view" id="v0">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">Moving this week</div>
+        <div class="big" id="bvN">0</div><div class="of" id="bvOf">items received from agents and clients in the last seven days</div>
+        <div class="stat"><div class="green" id="bvT"><b>0</b><span>received today</span></div><div class="green" id="bvA"><b>0</b><span>cases all in this week</span></div>
+          <div class="green" id="bvS"><b>0</b><span>policies settled this week</span></div><div id="bvQ"><b>&ndash;</b><span>median days, signed to submitted</span></div></div></div>
+      <div class="card" style="--d:.1s;flex:1;min-height:0;overflow:hidden"><div class="kick">On the wall &middot; agents whose cases moved</div>
+        <div class="cap">Items delivered in the last seven days, and policies settled this week. Deliver, and your name is here.</div>
+        <div id="bvWall" style="margin-top:.6rem;display:flex;flex-wrap:wrap;gap:.45rem"></div>
+        <div class="kick" style="margin-top:1rem">Fastest to submit after the client signs</div>
+        <div id="bvSpeed" style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.45rem"></div></div>
+    </div>
+    <div class="card" style="--d:.06s;display:flex;flex-direction:column;min-height:0"><div class="kick">This morning, in this order &middot; the support desk's brief</div>
+      <div class="cap">Work it top to bottom. Each step says what to do, how many cases, and the first of them. The written guide: <a href="guide.html" style="color:var(--teal);font-weight:700">rickyrampersadbranch.com/intelligence/wall/guide.html</a></div>
+      <div class="steps" id="bSteps"></div></div>
+  </section>
+  <section class="view out" id="v1">
     <div class="col">
       <div class="card hero" style="--d:0s;flex:1"><div class="kick">Can settle today</div>
         <div class="big" id="stN">0</div><div class="of" id="stOf">policies one step from issue&hellip;</div>
@@ -256,7 +282,7 @@
       <div class="ch"><div>Code</div><div>Requirement</div><div>Cases</div><div></div><div>Held by</div><div>Touched today</div></div>
       <div id="stCodes" style="flex:1;min-height:0;overflow:hidden"></div></div>
   </section>
-  <section class="view out" id="v1">
+  <section class="view out" id="v2">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Past their deadline</div>
         <div class="big bad" id="kN">0</div><div class="of" id="kOf">&hellip;</div>
@@ -275,7 +301,7 @@
         <div id="kPast" style="flex:1;min-height:0;overflow:hidden"></div></div>
     </div>
   </section>
-  <section class="view out" id="v2">
+  <section class="view out" id="v3">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">For the desks to work now</div>
         <div class="big" id="acN">0</div><div class="of" id="acOf">&hellip;</div>
@@ -289,7 +315,7 @@
       <div class="cap">What is happening on each case, who is holding it, what was last done and by whom, and the next thing to do.</div>
       <div id="acList" style="flex:1;min-height:0;overflow:hidden;margin-top:.5rem"></div></div>
   </section>
-  <section class="view out" id="v3">
+  <section class="view out" id="v4">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">The pendings this morning</div>
         <div class="big" id="mN">0</div><div class="of" id="mOf">Reading Salesforce&hellip;</div>
@@ -306,7 +332,7 @@
         <div class="stream" id="stream"></div></div>
     </div>
   </section>
-  <section class="view out" id="v4">
+  <section class="view out" id="v5">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Agents whose cases moved today</div>
         <div class="big" id="aN">0</div><div class="of" id="aOf">&hellip;</div>
@@ -318,7 +344,7 @@
       <div class="ah"><div>Agent</div><div>Cases</div><div>Waiting on agent &middot; codes</div><div>Near settling</div><div>Never tasked</div><div>Moved today</div><div>Last moved</div></div>
       <div id="agents" style="flex:1;min-height:0;overflow:hidden"></div></div>
   </section>
-  <section class="view out" id="v5">
+  <section class="view out" id="v6">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Nearest to settling</div>
         <div class="big" id="qN">0</div><div class="of" id="qOf">&hellip;</div>
@@ -335,7 +361,7 @@
       <div class="qh"><div>Policy</div><div>Agent</div><div>Why first &middot; codes left</div><div>Whose move</div><div>Days</div><div>Today</div></div>
       <div id="queue" style="flex:1;min-height:0;overflow:hidden"></div></div>
   </section>
-  <section class="view out" id="v6">
+  <section class="view out" id="v7">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Settled since 1 October</div>
         <div class="big" id="seN">0</div><div class="of" id="seOf">&hellip;</div>
@@ -376,6 +402,23 @@ function paint(){
     $("#live").classList.remove("on"); $("#liveTxt").textContent = "no data"; return;
   }
   $("#sub").innerHTML = "Salesforce as at <b>"+esc(M.at)+"</b> &middot; Guardian's report of <b>"+esc(String(L.asOf||"").replace(/,\s*\d{1,2}:\d{2}\s*[ap]m$/i,""))+"</b> &middot; first names and codes, no client";
+  // Morning brief
+  var BR = L.brief || {};
+  if (BR.error) { $("#bSteps").innerHTML = '<div class="empty bad">'+esc(BR.error)+'</div>'; }
+  else if (BR.steps) {
+    var MVv = BR.move || {};
+    count($("#bvN"), MVv.receivedWeek); stat("#bvT", fmt(MVv.receivedToday)); stat("#bvA", fmt(MVv.allInWeek)); stat("#bvS", fmt(MVv.settledWeek));
+    var sp = (MVv.speed||[]).map(function(x){ return x.days; }).sort(function(a,b){ return a-b; }); stat("#bvQ", sp.length ? fmt(sp[Math.floor(sp.length/2)]) : "–");
+    $("#bvWall").innerHTML = (MVv.onTheWall||[]).length ? MVv.onTheWall.map(function(a){ return '<span class="chip" style="font-size:1rem">'+esc(who(a.agent))+(a.settled?' &middot; '+a.settled+' settled':'')+(a.items?' &middot; '+a.items+' in':'')+'</span>'; }).join("")
+      : '<div class="empty">Nothing received this week yet.</div>';
+    $("#bvSpeed").innerHTML = (MVv.speed||[]).slice(0,6).map(function(a){ return '<span class="chip">'+esc(who(a.agent))+' '+fmt(a.days)+'d</span>'; }).join("");
+    var HOT = { save:1, settle:1, ho:1 };
+    $("#bSteps").innerHTML = BR.steps.map(function(st,i){
+      return '<div class="stp'+(st.n ? (HOT[st.k]?' hot':'') : ' none')+'"><div class="h"><i>'+(i+1)+'</i><b>'+esc(st.title)+'</b><span>'+fmt(st.n)+'</span></div>'
+        + '<div class="td2">'+esc(st.todo)+'</div>'
+        + (st.list||[]).slice(0,3).map(function(x){ return '<div class="r">'+(x.pol?'&hellip;'+esc(x.pol)+' ':'')+'<b>'+esc(who(x.agent))+'</b>'+(x.code?String(x.code).split(' ').filter(Boolean).slice(0,3).map(codeTag).join(""):'')+' '+esc(x.detail)+'</div>'; }).join("")
+        + '</div>'; }).join("");
+  }
   // Settle today
   var ST = M.settle || {}, SC = ST.codes || [], mx = SC.reduce(function(m,c){ return Math.max(m, c.n); }, 1);
   count($("#stN"), ST.n);
@@ -517,7 +560,7 @@ function paint(){
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
   fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks")); fitRows($("#stCodes")); fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#acList")); fitRows($("#uwList"));
   // the ticker
-  var bits = [(M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
+  var bits = [(L.brief && L.brief.steps ? L.brief.steps.filter(function(x){ return x.n; }).slice(0,3).map(function(x){ return "<b>"+fmt(x.n)+"</b> "+esc(x.title.split(":")[0].toLowerCase()); }).join(" &middot; ") : ""), (M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
     "<b>"+inN+" of "+M.of+"</b> staff signed in", (C.of ? "<b>"+fmt(C.movedToday)+" of "+fmt(C.of)+"</b> agents' cases moved today" : ""), (C.quietWeek ? "<b>"+fmt(C.quietWeek)+"</b> agents with nothing moved in a week" : ""), M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
     "<b>"+fmt(M.queueOf)+"</b> cases one step from settling, <b>"+fmt(M.queueToday)+"</b> touched today",
     F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : "",
@@ -534,7 +577,7 @@ function fitRows(box){
   if (was) { v.classList.add("out"); v.style.visibility=""; }
 }
 var view = 0;
-function turn(){ view = (view + 1) % 7; [0,1,2,3,4,5,6].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
+function turn(){ view = (view + 1) % 8; [0,1,2,3,4,5,6,7].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
   setTimeout(function(){ ["#queue","#stream","#agents","#blocks","#stCodes","#kPast","#kStick","#acList","#uwList"].forEach(function(id){ fitRows($(id)); }); }, 950);
   Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
 if(!window.matchMedia("(max-width:900px)").matches) setInterval(turn, 15000);
