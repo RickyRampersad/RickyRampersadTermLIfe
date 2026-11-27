@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27x';
+var SCRIPT_VERSION = '2026-11-27y';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2872,6 +2872,8 @@ function keepWarm() {
   try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
   // The wall copies no clock rebuilt: increases and group hourly, the premium dues copy when its midnight build missed (28 Oct 2026).
   try { wallFeedsTick_(kw0); } catch (e) {}
+  // The pending wall's feed, built ahead so no screen waits for it (27 Nov 2026).
+  try { var pw = wallPendWarm_(); if (pw) runlog_(pw); } catch (e) { try { runlog_('pending feed build failed: ' + (e && e.message)); } catch (e2) {} }
   // The day's opportunities (Opportunities.gs, 24 Nov 2026): built once, from 4:30, before the agents' morning e-mails.
   try { var ob = bigGet_(OPP.KEY, null), oh = new Date().getHours() * 60 + new Date().getMinutes();
     if (oh >= 270 && (!ob || ob.day !== iIso_(iToday_())) && Date.now() - kw0 < 120000) oppBuild_(); } catch (e) { try { runlog_('opportunities build failed: ' + (e && e.message)); } catch (e2) {} }
@@ -17796,7 +17798,7 @@ function wallIssuedSf_(day, unitOf, unitLabel) {
  *  the Salesforce Pendings tasks on those same policies (open, overdue, untouched a week, today, never raised), matched by
  *  the policy or application number in the subject. `chase`: the same for the branch. Ordered by the call to make first:
  *  cash, then medicals, then documents. */
-var WALL_PEND = { PREFIX: 'Branch Pendings', TTL: 300, TOP: 12, AGES: ['0-30 days', '31-60 days', '61-90 days', '90+ days'],
+var WALL_PEND = { PREFIX: 'Branch Pendings', TTL: 900, REBUILD_MIN: 8, TOP: 12, AGES: ['0-30 days', '31-60 days', '61-90 days', '90+ days'],
   BANDS: [['0-30', 30], ['31-60', 60], ['61-90', 90], ['91-180', 180], ['180+', 1e9]], TOPCATS: 4, IDS: 40, CODES: 60, CODE_AGENTS: 4,
   STATES: [{ key: 'settle', abbr: 'AP', label: 'Approved · settle it', work: true, re: /^(standard|loaded|terms)/i, note: 'Underwriting has approved; only the items left stand between it and issue.' },
            { key: 'info', abbr: 'AI', label: 'More info asked', work: true, re: /additional/i, note: 'Underwriting has asked for more: a document, a form, a report.' },
@@ -17856,9 +17858,33 @@ function sheetExport_(p) {
     return v instanceof Date ? Utilities.formatDate(v, tz, v.getHours() || v.getMinutes() ? "yyyy-MM-dd'T'HH:mm" : 'yyyy-MM-dd') : v; }); });
   return { ok: true, kind: String(p.kind || 'pend'), tab: tabs[0], others: tabs.slice(1, 6), rows: rows.length - 1, data: rows };
 }
-function wallPendLive_(day) {
+/* BUILT AHEAD, SERVED AT ONCE (27 November 2026). With the morning brief, the accountability and the settled business on it,
+   this feed reads Guardian's report and a dozen Salesforce queries, and on the evening it went live a cold build took more than
+   100 seconds: every five minutes, the first screen to ask waited for it, and the wall read "Reading Salesforce". Now the
+   ten-minute keepWarm builds it (wallPendWarm_) and keeps the last finished copy; a request is answered from that copy at once
+   and never builds, except when there is no copy for today at all. `builtAt` says when it was read; the page shows it. */
+var WALL_PEND_LAST = 'wall_pend_last';
+function wallPendLive_(day, build) {
   var cache = CacheService.getScriptCache(), key = 'wall_pend_' + day, hit = cache.get(key);
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  if (!build) { var last = null; try { last = bigGet_(WALL_PEND_LAST, null); } catch (e) {} if (last && last.day === day) return last; }
+  var out0 = wallPendBuild_(day);
+  if (out0 && !out0.error) { out0.day = day; out0.builtAt = Date.now();
+    try { cache.put(key, JSON.stringify(out0), WALL_PEND.TTL); } catch (e) {}
+    try { bigPut_(WALL_PEND_LAST, out0); } catch (e) {} }
+  return out0;
+}
+/** keepWarm's part: rebuild the pending feed when the kept copy is older than WALL_PEND.REBUILD_MIN, one build at a time. */
+function wallPendWarm_() {
+  var day = todayISO_(), h = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'H'));
+  if (h < 5 || h > 21) return '';
+  var last = null; try { last = bigGet_(WALL_PEND_LAST, null); } catch (e) {}
+  if (last && last.day === day && Date.now() - (last.builtAt || 0) < WALL_PEND.REBUILD_MIN * 60000) return '';
+  var lock = LockService.getScriptLock(); if (!lock.tryLock(1000)) return '';
+  try { try { CacheService.getScriptCache().remove('wall_pend_' + day); } catch (e) {} var t = Date.now(); wallPendLive_(day, true); return 'pending feed built in ' + Math.round((Date.now() - t) / 1000) + 's'; }
+  finally { lock.releaseLock(); }
+}
+function wallPendBuild_(day) {
   var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
   if (!ss) return { error: 'The Branch Portfolio would not open.' };
   var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX);
@@ -17987,7 +18013,6 @@ function wallPendLive_(day) {
   delete out._mv;
   try { out.morning = wallPendMorning_(day, P, numOf, chase); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
   try { out.follow = pendFollowCount_(day); } catch (e) {}
-  try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
 }
 /* ── Today on the pendings (27 November 2026) ──
