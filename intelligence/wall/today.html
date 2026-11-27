@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<!-- THE PENDING WALL · TODAY ON THE PENDINGS (27 November 2026).
+     Ricky, 1:40pm: "a powerful enhanced dashboard ... only stream from today ... what is the first thing that is worked on our
+     pendings and the activity driven by Salesforce to get our cases settled, the codes are important ... so when agents and
+     staff look at the board they know this morning it is being actioned ... not to tell them what they already know but
+     approve the documents and ensure it is actioned". That day Salesforce showed one Pendings task touched by 1:36pm.
+     Two views, turning every sixteen seconds, from intel.pending's `morning` (wallPendMorning_ in KPI.gs), today only:
+       This morning   each desk's first touch on a pending case (when, whose, the code it is held on), its cases and touches,
+                      a desk with nothing yet in red; and the stream of today's touches from Salesforce, newest first
+       Work it first  the cases nearest settlement (only the premium left, approved by underwriting, one item left), with
+                      the codes left, whose move it is, its age, and whether anybody touched it today; and the follow-ups
+                      from the e-mail trail waiting for the Branch Manager's approval
+     Agents' first names, codes and the last four digits of a policy only, never a client. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branch Pending · Today</title>
+<meta name="description" content="Today on the branch's pending cases, from Salesforce: who started, what was touched first, and the cases to settle next.">
+<meta name="theme-color" content="#0E1116">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<style>
+  :root{
+    --bg:#0E1116; --panel:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --ink:#F4F1EA; --dim:#B4B0A8; --faint:#837E77;
+    --gold:#E3B85A; --amber:#EF9A4B; --teal:#4FC1B0; --green:#78D198; --coral:#EF8A6B; --red:#E8625A; --violet:#AB94E8;
+    --fd:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif; --fb:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  html{font-size:min(calc(100vw / 120), calc(100vh / 67.5))}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+  body{font-family:var(--fb);display:flex;flex-direction:column;position:relative}
+  .glow{position:fixed;border-radius:50%;filter:blur(7rem);opacity:.30;pointer-events:none;z-index:0}
+  .g1{width:44rem;height:44rem;left:-14rem;top:-18rem;background:#E3B85A;animation:drift 24s ease-in-out infinite alternate}
+  .g2{width:40rem;height:40rem;right:-12rem;bottom:-20rem;background:#4FC1B0;opacity:.18;animation:drift 30s ease-in-out infinite alternate-reverse}
+  .g3{width:28rem;height:28rem;left:40%;top:30%;background:#EF8A6B;opacity:.12;animation:drift 36s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(8rem,4rem) scale(1.12)}}
+
+  header{position:relative;z-index:2;display:flex;align-items:center;gap:1.1rem;padding:1.5rem 2.2rem .5rem}
+  header .plate{flex:none;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:.55rem .95rem;border-radius:.8rem;
+    background:linear-gradient(135deg,#F3CE6E,#D99B2E);color:#1B1A22;box-shadow:0 .5rem 1.4rem rgba(217,155,46,.35)}
+  header .plate b{font:900 1.05rem var(--fd);letter-spacing:.12em;line-height:1.1}
+  header .plate span{font:700 .85rem var(--fd);letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+  header h1{font:800 2rem/1.05 var(--fd);letter-spacing:-.02em}
+  header .sub{font-size:1rem;color:var(--dim);margin-top:.2rem}
+  header .sub b{color:var(--ink)}
+  .right{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+  .btn{font:800 1rem var(--fd);color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:.8rem;padding:.6rem 1rem;cursor:pointer}
+  .btn.on{background:var(--gold);color:#16171B}
+  .live{display:flex;align-items:center;gap:.5rem;font:700 .95rem var(--fd);color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+  .live i{width:.75rem;height:.75rem;border-radius:50%;background:var(--faint)}
+  .live.on i{background:var(--green);animation:ping 1.8s infinite}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(120,209,152,.7)}70%{box-shadow:0 0 0 .8rem rgba(120,209,152,0)}100%{box-shadow:0 0 0 0 rgba(120,209,152,0)}}
+  .clock{font:800 1.9rem var(--fd);font-variant-numeric:tabular-nums}
+
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:1.5rem;padding:1.1rem 1.35rem;min-height:0;position:relative;overflow:hidden;
+        opacity:0;transform:translateY(1.4rem);animation:rise .9s var(--ease) forwards;animation-delay:var(--d,0s)}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .kick{font:800 .9rem var(--fd);letter-spacing:.15em;text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:.95rem;color:var(--dim);margin-top:.3rem;line-height:1.4}
+  .cap b{color:var(--ink)}
+  .ticker{position:relative;z-index:2;overflow:hidden;border-top:1px solid var(--line);background:rgba(0,0,0,.25);height:3rem;display:flex;align-items:center}
+  .ticker .in{display:flex;gap:4rem;white-space:nowrap;animation:tick 70s linear infinite;padding-left:100%}
+  .ticker span{font:700 1.1rem var(--fd);color:var(--dim)} .ticker span b{color:var(--gold)}
+  @keyframes tick{to{transform:translateX(-100%)}}
+  main{position:relative;z-index:1;flex:1;min-height:0;padding:.9rem 2.2rem 1rem}
+  .view{position:absolute;inset:.9rem 2.2rem 1rem;display:grid;grid-template-columns:30rem minmax(0,1fr);gap:1.3rem;transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .view.out{opacity:0;transform:translateY(1rem);pointer-events:none}
+  .col{display:flex;flex-direction:column;gap:.9rem;min-height:0}
+  .tabs{display:flex;gap:.5rem;margin-left:1.4rem}
+  .tabs span{font:800 .9rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:.35rem .8rem;border-radius:.6rem;border:1px solid var(--line)}
+  .tabs span.on{color:#16171B;background:var(--gold);border-color:var(--gold)}
+  .hero{display:flex;flex-direction:column}
+  .hero .big{font:800 5.4rem/1 var(--fd);letter-spacing:-.04em;margin-top:.3rem;font-variant-numeric:tabular-nums}
+  .hero .big.bad{color:var(--red)}
+  .hero .of{font:600 1.05rem/1.45 var(--fb);color:var(--dim);margin-top:.35rem}
+  .hero .of b{color:var(--ink)}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:.9rem}
+  .stat div{background:rgba(255,255,255,.05);border-radius:1rem;padding:.6rem .8rem}
+  .stat b{display:block;font:800 2rem/1 var(--fd);font-variant-numeric:tabular-nums}
+  .stat span{font:600 .9rem var(--fb);color:var(--dim)}
+  .stat .red b{color:var(--red)} .stat .gold b{color:var(--gold)} .stat .green b{color:var(--green)}
+  /* the desks */
+  .desks{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.8rem;margin-top:.7rem}
+  .dk{border-radius:1.1rem;padding:.8rem .95rem;background:rgba(255,255,255,.05);border:1px solid var(--line);min-width:0}
+  .dk.none{border-color:rgba(232,98,90,.55);background:rgba(232,98,90,.09)}
+  .dk.go{border-color:rgba(120,209,152,.45)}
+  .dk .n{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+  .dk .n b{font:800 1.35rem var(--fd)}
+  .dk .n span{font:800 .85rem var(--fd);letter-spacing:.08em;text-transform:uppercase;color:var(--green)}
+  .dk.none .n span{color:var(--red)}
+  .dk .f{font:600 .95rem/1.35 var(--fb);color:var(--dim);margin-top:.3rem;min-height:2.6rem}
+  .dk .f b{color:var(--ink)}
+  .dk .c{display:flex;gap:.9rem;margin-top:.4rem;font:600 .9rem var(--fb);color:var(--faint)}
+  .dk .c b{font:800 1.1rem var(--fd);color:var(--ink);margin-right:.2rem}
+  code{font:700 .82rem var(--fb);letter-spacing:.06em;color:var(--gold);padding:.06rem .35rem;border:1px solid rgba(227,184,90,.4);border-radius:.35rem;margin-left:.25rem}
+  /* the stream */
+  .stream{flex:1;min-height:0;overflow:hidden;margin-top:.5rem}
+  .ev{display:grid;grid-template-columns:5.6rem 7.5rem minmax(0,1fr) 7.5rem;gap:.7rem;align-items:center;padding:.48rem 0;border-bottom:1px solid rgba(255,255,255,.06);
+      opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  @keyframes slide{to{opacity:1;transform:none}}
+  .ev .t{font:800 1.05rem var(--fd);font-variant-numeric:tabular-nums;color:var(--dim)}
+  .ev .d{font:800 1.08rem var(--fd)}
+  .ev .w{font:600 1rem var(--fb);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ev .w b{color:var(--ink)}
+  .tag{justify-self:end;font:800 .82rem var(--fd);letter-spacing:.06em;text-transform:uppercase;padding:.22rem .55rem;border-radius:.5rem}
+  .tag.closed{background:rgba(120,209,152,.16);color:var(--green)} .tag.note{background:rgba(79,193,176,.16);color:var(--teal)}
+  .tag.moved{background:rgba(255,255,255,.08);color:var(--dim)} .tag.email{background:rgba(171,148,232,.16);color:var(--violet)}
+  .empty{font:600 1.15rem/1.5 var(--fb);color:var(--dim);margin-top:1rem}
+  .empty.bad{color:var(--red)}
+  /* work it first */
+  .qh,.qr{display:grid;grid-template-columns:5rem 8rem minmax(0,1fr) 11rem 4.5rem 7rem;gap:.7rem;align-items:center}
+  .qh{margin-top:.8rem;font:800 .85rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding-bottom:.4rem;border-bottom:1px solid var(--line)}
+  .qr{padding:.52rem 0;border-bottom:1px solid rgba(255,255,255,.06);opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .qr .p{font:800 1.1rem var(--fd);font-variant-numeric:tabular-nums;color:var(--dim)}
+  .qr .a{font:800 1.12rem var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .qr .y{font:700 1rem var(--fb);min-width:0}
+  .qr .y small{display:block;font:600 .88rem var(--fb);color:var(--faint);margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .qr .wm{font:600 .95rem/1.25 var(--fb);color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qr .dd{font:800 1.15rem var(--fd);text-align:right;font-variant-numeric:tabular-nums}
+  .qr .dd.red{color:var(--red)}
+  .qr .td{justify-self:end}
+  .why0{color:var(--gold)} .why1{color:var(--green)} .why2{color:var(--teal)}
+  .fu{margin-top:auto}
+  @media (max-width:900px){
+    html{font-size:11px} html,body{height:auto;overflow:auto}
+    header{flex-wrap:wrap;padding:1.2rem 1.4rem .6rem} .right{margin-left:0;width:100%;justify-content:space-between}
+    .tabs{display:none}
+    main{padding:1rem 1.4rem}
+    .view{position:static;grid-template-columns:1fr;margin-bottom:1.3rem} .view.out{opacity:1;transform:none;pointer-events:auto}
+    .glow{display:none} .qh{display:none}
+    .ev{grid-template-columns:4.8rem minmax(0,1fr) auto} .ev .d{display:none}
+    .qr{grid-template-columns:4rem minmax(0,1fr) auto} .qr .wm,.qr .dd{display:none}
+    .stream{overflow:visible}
+  }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.ev,.qr{opacity:1;transform:none} }
+</style>
+</head>
+<body>
+<i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i>
+<header>
+  <div class="plate"><b>PENDING</b><span>wall</span></div>
+  <div><h1 id="title">Today on the Pendings</h1><div class="sub" id="sub">From Salesforce, today only &middot; agents' first names and codes, no client</div></div>
+  <div class="tabs"><span id="t0" class="on">This morning</span><span id="t1">Work it first</span></div>
+  <div class="right"><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
+</header>
+<main>
+  <section class="view" id="v0">
+    <div class="col">
+      <div class="card hero" style="--d:0s;flex:1"><div class="kick">Pending cases touched today</div>
+        <div class="big" id="mN">0</div><div class="of" id="mOf">Reading Salesforce&hellip;</div>
+        <div class="stat"><div id="sStart"><b>0</b><span>desks started</span></div><div id="sFirst"><b>&mdash;</b><span>first touch</span></div>
+          <div class="green" id="sClosed"><b>0</b><span>tasks closed</span></div><div id="sMail"><b>0</b><span>e-mails logged</span></div></div>
+        <div class="cap" style="margin-top:auto;padding-top:1rem">A touch is a note on the case's Pendings task, its status moved, the task closed, or an e-mail logged on it, in Salesforce, today. Nothing here is typed in by hand.</div></div>
+    </div>
+    <div class="col">
+      <div class="card" style="--d:.06s"><div class="kick">The first thing each desk worked</div>
+        <div class="cap">Its first touch on a pending case today: when, whose case, the code it is held on. Red is a desk with nothing yet.</div>
+        <div class="desks" id="desks"></div></div>
+      <div class="card" style="--d:.12s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">The stream &middot; today, newest first</div>
+        <div class="stream" id="stream"></div></div>
+    </div>
+  </section>
+  <section class="view out" id="v1">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">Nearest to settling</div>
+        <div class="big" id="qN">0</div><div class="of" id="qOf">&hellip;</div>
+        <div class="stat"><div class="green" id="qToday"><b>0</b><span>of them touched today</span></div><div class="red" id="qNot"><b>0</b><span>not touched today</span></div></div></div>
+      <div class="card fu" style="--d:.12s"><div class="kick">Follow-ups from the trail</div>
+        <div class="cap" id="fuCap">Where an e-mail went out on a pending case and nothing has moved in three working days, the follow-up is drafted on the same thread for the Branch Manager to approve.</div>
+        <div class="stat"><div class="gold" id="fuWait"><b>0</b><span>waiting approval</span></div><div class="green" id="fuSent"><b>0</b><span>sent today</span></div></div></div>
+    </div>
+    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">Work it first &middot; approve the documents, settle the case</div>
+      <div class="cap">Only the premium left, then approved by underwriting with items left, then one item from settlement. The codes are Ingenium's.</div>
+      <div class="qh"><div>Policy</div><div>Agent</div><div>Why first &middot; codes left</div><div>Whose move</div><div>Days</div><div>Today</div></div>
+      <div id="queue" style="flex:1;min-height:0;overflow:hidden"></div></div>
+  </section>
+</main>
+<div class="ticker"><div class="in" id="tk"></div></div>
+
+<script>
+var PEND_URL = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
+var D = null, $ = function (s) { return document.querySelector(s); };
+function who(a){ return /^orphans\b/i.test(String(a||"")) ? "Orphan" : String(a||"").split(" ")[0]; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function fmt(n){ return Math.round(Number(n)||0).toLocaleString("en-US"); }
+function clock(){ var t=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Port_of_Spain"})); $("#clock").textContent=("0"+t.getHours()).slice(-2)+":"+("0"+t.getMinutes()).slice(-2); }
+clock(); setInterval(clock, 15000);
+function count(el, to){ if(!el) return; to=Math.max(0,Math.round(Number(to)||0)); var from=Number(el.getAttribute("data-v")||0), t0=performance.now(); el.setAttribute("data-v",to);
+  (function step(t){ var k=Math.min(1,(t-t0)/1400), e=1-Math.pow(1-k,3); el.textContent=Math.round(from+(to-from)*e).toLocaleString("en-US"); if(k<1) requestAnimationFrame(step); })(t0); }
+var WHAT = { closed:"closed", note:"note", moved:"moved", email:"e-mail" };
+function codeTag(c){ return c ? "<code>"+esc(c)+"</code>" : ""; }
+function stat(id, v, lab){ var el=$(id); el.querySelector("b").textContent = v; if(lab) el.querySelector("span").textContent = lab; }
+
+function paint(){
+  var L = D && D.live, M = L && L.morning;
+  if(!L || L.error || !M || M.error){
+    var why = (M && M.error) || (L && L.error) || (D && D.error) || "Reading Salesforce…";
+    $("#mOf").textContent = why; $("#stream").innerHTML = '<div class="empty">'+esc(why)+'</div>'; return;
+  }
+  $("#sub").innerHTML = "From Salesforce, today only, as at <b>"+esc(M.at)+"</b> &middot; against Guardian's report of <b>"+esc(L.asOf)+"</b> &middot; agents' first names and codes, no client";
+  // This morning
+  count($("#mN"), M.cases); $("#mN").classList.toggle("bad", !M.cases);
+  $("#mOf").innerHTML = M.cases ? "of <b>"+fmt(L.policies)+"</b> on the report &middot; <b>"+fmt(M.touches)+"</b> touches in all"
+    : "of <b>"+fmt(L.policies)+"</b> on the report. <b style=\"color:var(--red)\">Nothing on a pending case has moved in Salesforce yet today.</b>";
+  stat("#sStart", M.started+" of "+M.of); $("#sStart").className = M.started < M.of ? "red" : "green";
+  stat("#sFirst", M.firstAt || "none yet"); stat("#sClosed", fmt(M.closed)); stat("#sMail", fmt(M.emails));
+  $("#desks").innerHTML = (M.desks||[]).map(function(d){
+    var f = d.first;
+    return '<div class="dk '+(d.touches?'go':'none')+'"><div class="n"><b>'+esc(d.name)+'</b><span>'+(d.touches ? 'since '+esc(f.at) : 'nothing yet')+'</span></div>'
+      + '<div class="f">'+(f ? 'First: <b>'+esc(who(f.agent))+'</b>\u2019s case &hellip;'+esc(f.pol)+codeTag(f.code)+' &middot; '+esc(WHAT[f.what]||f.what)
+          : 'No pending case touched in Salesforce today.')+'</div>'
+      + '<div class="c"><span><b>'+fmt(d.cases)+'</b>cases</span><span><b>'+fmt(d.notes)+'</b>notes</span><span><b>'+fmt(d.closed)+'</b>closed</span>'+'</div></div>';
+  }).join("");
+  var S = M.stream || [];
+  $("#stream").innerHTML = S.length ? S.map(function(e,i){
+    return '<div class="ev" style="--d:'+(i*.05).toFixed(2)+'s"><div class="t">'+esc(e.at)+'</div><div class="d">'+esc(e.desk)+'</div>'
+      + '<div class="w"><b>'+esc(who(e.agent))+'</b> &hellip;'+esc(e.pol)+codeTag(e.code)+(e.kind?' &middot; '+esc(e.kind):'')+'</div>'
+      + '<span class="tag '+esc(e.what)+'">'+esc(WHAT[e.what]||e.what)+'</span></div>'; }).join("")
+    : '<div class="empty bad">Nothing yet today. The first note, status or close on a pending case in Salesforce lands here within ten minutes.</div>';
+  // Work it first
+  var Q = M.queue || [];
+  count($("#qN"), M.queueOf);
+  $("#qOf").innerHTML = "cases with only the premium, an underwriting approval or one item between them and a policy";
+  stat("#qToday", fmt(M.queueToday)); stat("#qNot", fmt(Math.max(0,(M.queueOf||0)-(M.queueToday||0))));
+  var F = L.follow || {}; stat("#fuWait", fmt(F.waiting)); stat("#fuSent", fmt(F.sentToday));
+  var wn = ["Only the premium left","Approved \u00b7 settle it","One item left"];
+  $("#queue").innerHTML = Q.length ? Q.map(function(q,i){
+    var w = wn.indexOf(q.why);
+    return '<div class="qr" style="--d:'+(i*.05).toFixed(2)+'s"><div class="p">&hellip;'+esc(q.pol)+'</div><div class="a">'+esc(who(q.agent))+'</div>'
+      + '<div class="y"><span class="why'+w+'">'+esc(q.why)+'</span>'+(q.codes||[]).map(codeTag).join("")+'<small>'+fmt(q.left)+(q.left===1?' item':' items')+' left</small></div>'
+      + '<div class="wm">'+esc(q.who)+'</div><div class="dd'+(q.red?' red':'')+'">'+fmt(q.days)+'</div>'
+      + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:rgba(232,98,90,.14);color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
+    : '<div class="empty">Nothing is one step from settling on the report.</div>';
+  // the ticker
+  var bits = [M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
+    "<b>"+M.started+" of "+M.of+"</b> desks started", M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
+    "<b>"+fmt(M.queueOf)+"</b> cases one step from settling, <b>"+fmt(M.queueToday)+"</b> touched today",
+    F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : ""].filter(Boolean);
+  $("#tk").innerHTML = bits.concat(bits).map(function(b){ return "<span>"+b+"</span>"; }).join("");
+}
+var view = 0;
+function turn(){ view = 1 - view; [0,1].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
+  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
+if(!window.matchMedia("(max-width:900px)").matches) setInterval(turn, 16000);
+function feed(url, body, tries){
+  tries = tries === undefined ? 3 : tries;
+  return fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .catch(function(err){ if(tries<=1) throw err; return new Promise(function(go){ setTimeout(go,4000); }).then(function(){ return feed(url,body,tries-1); }); });
+}
+function load(){
+  feed(PEND_URL,{action:"intel.pending"})
+    .then(function(j){ if(!j||!j.ok||!j.data) throw new Error("bad feed"); D=j.data; paint(); $("#live").classList.add("on"); $("#liveTxt").textContent="live"; })
+    .catch(function(){ if(!D){ D={live:{error:"The tracker did not answer. Trying again shortly."}}; paint(); } $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; });
+}
+load(); setInterval(load, 5*60*1000);   // the feed keeps five minutes; the stream is today's, so it is read as often
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
