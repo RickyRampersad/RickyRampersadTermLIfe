@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27v';
+var SCRIPT_VERSION = '2026-11-27w';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17878,7 +17878,8 @@ function wallPendLive_(day) {
      (or "Premium Paying") issued on or after WALL_SETTLED.FROM is settled business, not pending: it is counted on its own and
      left out of every pending figure, and so is a case the status says is closed (not proceeded with, declined, not taken). */
   var colOf = function (re, not) { for (var i = 0; i < h.length; i++) if (re.test(h[i]) && !(not && not.test(h[i]))) return i; return -1; };
-  c.issue = colOf(/issue.?date/i); c.pst = colOf(/^(policy.?)?status(.?(code|desc|description))?$/i, /requirement/i);
+  // No issue date on the report (27 Nov 2026): the date the status became 1, policy_status_date, is the issue date.
+  c.issue = colOf(/issue.?date/i); if (c.issue < 0) c.issue = colOf(/^policy.?status.?date$/i); c.pst = colOf(/^(policy.?)?status(.?(code|desc|description))?$/i, /requirement/i);
   if (c.pst < 0) c.pst = colOf(/policy.?status/i, /requirement/i);
   var settledPol = {}, closedPol = {};
   // Any column that could carry a person's name, so the underwriter's words can be shown without it (see wallSafeText_).
