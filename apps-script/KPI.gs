@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27z3';
+var SCRIPT_VERSION = '2026-11-27z5';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17934,6 +17934,7 @@ function wallPendBuild_(day) {
   c.ordd = ix('ordered_date'); c.s2s = ix('DAYS_SIGNED_TO_SUBMIT'); c.pri = ix('CASE_PRIORITY'); c.prk = ix('PRIORITY_RANK'); c.nfa = ix('needed_for_approval_flag');
   c.fov = ix('FOLLOWUP_OVERDUE'); c.lfu = ix('last_followup_date'); c.subm = ix('APPLICATION_SUBMIT_DATE');
   c.owed = ix('amount_owed'); c.cwa = ix('CASH_WITH_APPLICATION'); c.ann = ix('annual_premium_amount');
+  c.lact = ix('LAST_ACTIVITY_DATE'); c.dsla = ix('DAYS_SINCE_LAST_ACTIVITY'); c.oldR = ix('OLDEST_REQT_DAYS_ON_POLICY');
   // Any column that could carry a person's name, so the underwriter's words can be shown without it (see wallSafeText_).
   var nameCols = h.map(function (x, i) { return /(client|owner|insured|assured|holder|payor|payer|applicant|surname|first.?name|last.?name|full.?name|life\b)/i.test(x) && !/agent|requirement|branch|underwriter|associate/i.test(x) ? i : -1; }).filter(function (i) { return i > -1; });
   var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?\D{0,3}(\d{1,2}):?(\d{2})/i.exec(tab.getName());
@@ -17989,6 +17990,8 @@ function wallPendBuild_(day) {
     if (cell(r, c.pri)) p.pri = cell(r, c.pri); if (yes(c.nfa)) { p.forApproval = (p.forApproval || 0) + 1; }
     if (yes(c.fov)) p.fov = true; var lfu = c.lfu < 0 ? '' : dOf0(r[c.lfu]); if (/^\d{4}/.test(lfu) && lfu > (p.lfu || '')) p.lfu = lfu;
     var sub = c.subm < 0 ? '' : dOf0(r[c.subm]); if (/^\d{4}/.test(sub)) p.sub = sub;
+    var lact = c.lact < 0 ? '' : dOf0(r[c.lact]); if (/^\d{4}/.test(lact) && lact > (p.lact || '')) p.lact = lact;
+    var dsla = num(c.dsla); if (dsla != null && dsla >= 0 && (p.dsla == null || dsla < p.dsla)) p.dsla = dsla; var oldR = num(c.oldR); if (oldR != null && oldR >= 0) p.oldR = Math.max(p.oldR || 0, oldR);
     var owed = num(c.owed); if (owed != null) p.owed = Math.max(p.owed || 0, owed); var cwa = num(c.cwa); if (cwa != null) p.cwa = Math.max(p.cwa || 0, cwa);
     var ann = num(c.ann); if (ann != null) p.ann = Math.max(p.ann || 0, ann); p.mprem = Math.max(p.mprem || 0, Number(cell(r, c.prem)) || 0);
     var nfd = c.nf < 0 ? '' : dOf(r[c.nf]); if (/^\d{4}-\d{2}-\d{2}$/.test(nfd) && (!p.nf || nfd < p.nf)) p.nf = nfd;
@@ -18043,10 +18046,13 @@ function wallPendBuild_(day) {
   out.cols = h.filter(Boolean);
   lap('deep');
   try { out.settleIntel = wallSettleIntel_(day, P, numOf); } catch (e) { out.settleIntel = { error: String(e && e.message || e) }; }
+  var siAll = out.settleIntel;
   try { out.brief = wallBrief_(day, P, out._mv, settledPol, chase, numOf); } catch (e) { out.brief = { error: String(e && e.message || e) }; }
   delete out._mv;
   lap('brief');
-  try { out.morning = wallPendMorning_(day, P, numOf, chase); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
+  try { out.morning = wallPendMorning_(day, P, numOf, chase, siAll); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
+  // The full lists served the focus; the feed keeps the first few of each.
+  try { (out.settleIntel.groups || []).forEach(function (g) { delete g.all; }); } catch (e) {}
   lap('morning');
   try { out.follow = pendFollowCount_(day); } catch (e) {}
   lap('total'); out.ms = ms;   // how long each part of the build took, cumulative milliseconds
@@ -18064,7 +18070,7 @@ function wallPendBuild_(day) {
  *    then the first premium alone, each with its codes, who moves it, its age and whether anybody touched it today.
  *  Agents' first names, codes and the last four digits of a policy only, never a client. wallScrub_ folds anyone who has left. */
 var WALL_MORN = { STREAM: 14, QUEUE: 12, CODES: 10, ACT: 14, UW: 8, UW_DAYS: 14 };
-function wallPendMorning_(day, P, numOf, chase) {
+function wallPendMorning_(day, P, numOf, chase, settleIntel) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
   /* The staff desks only. The Branch Manager's Salesforce user is also the one the system's own runs write as (on the day this
      was built it changed a run of group tasks within four seconds at 11:03am), so counting it would put automation on the
@@ -18075,8 +18081,9 @@ function wallPendMorning_(day, P, numOf, chase) {
   var CODESET = {}; Object.keys(P).forEach(function (k) { P[k].items.forEach(function (it) { if (it.code) CODESET[it.code] = 1; }); });
   var polsOf = function (subject) { var seen = {}, out = []; (String(subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) { var p = numOf[x]; if (p && !seen[p]) { seen[p] = 1; out.push(p); } }); return out; };
   var add = function (at, uid, kind, subject, text) { var sid = ids[uid]; if (!sid) return; polsOf(subject).forEach(function (p) { ev.push({ at: String(at || ''), sid: sid, kind: kind, pol: p, text: text || '' }); }); };
-  sfkQuery_("SELECT Id, Subject, IsClosed, LastModifiedDate, LastModifiedById FROM Task WHERE Task_Type__c = 'Pendings' AND LastModifiedDate >= " + from +
-    ' AND LastModifiedDate < ' + to + ' LIMIT 1000').forEach(function (t) { add(t.LastModifiedDate, t.LastModifiedById, t.IsClosed ? 'closed' : 'moved', t.Subject); });
+  // Opened today, and the Chatter on the open ones; a task closed or a status moved is not shown (Ricky, 27 Nov 2026, night).
+  sfkQuery_("SELECT Id, Subject, CreatedDate, CreatedById FROM Task WHERE Task_Type__c = 'Pendings' AND CreatedDate >= " + from +
+    ' AND CreatedDate < ' + to + ' LIMIT 1000').forEach(function (t) { add(t.CreatedDate, t.CreatedById, 'opened', t.Subject); });
   var allNotes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
     " AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000").filter(function (f) { return ids[f.CreatedById]; });
   var notes = allNotes.filter(function (f) { return /^00T/.test(String(f.ParentId)); });
@@ -18090,6 +18097,8 @@ function wallPendMorning_(day, P, numOf, chase) {
   try { other = wallPendOther_(day, ids, from, to, allNotes, whatOf); O = other.recs; other.ev.forEach(function (e) { ev.push(e); }); } catch (e) { other = { error: String(e && e.message || e) }; }
   try { sfkQuery_('SELECT Subject, MessageDate, CreatedById FROM EmailMessage WHERE MessageDate >= ' + from + ' AND MessageDate < ' + to + ' LIMIT 500')
     .forEach(function (m) { add(m.MessageDate, m.CreatedById, 'email', m.Subject); }); } catch (e) {}
+  // Nothing closed and no bare status change on the wall: what was opened, the Chatter, the e-mails (27 Nov 2026, night).
+  ev = ev.filter(function (e) { return e.kind !== 'closed' && e.kind !== 'moved'; });
   // A status moved and a note on the same task in the same minute is one touch, the note.
   ev.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
   var minKey = function (e) { return e.sid + '|' + e.pol + '|' + e.at.slice(0, 16); }, worded = {};
@@ -18113,7 +18122,7 @@ function wallPendMorning_(day, P, numOf, chase) {
     mine.forEach(function (e) { pols[e.pol] = 1; var o = O[e.pol], a = first(o ? o.ag : P[e.pol] ? P[e.pol].ag : ''); if (a) (ags[a] = ags[a] || {})[e.pol] = 1; });
     var lastMs = mine.length ? msOf(mine[mine.length - 1].at) : 0;
     return { name: String(nameFor_(s)).split(' ')[0], first: mine.length ? row(mine[0]) : null, last: mine.length ? at(mine[mine.length - 1].at) : '',
-             touches: mine.length, cases: Object.keys(pols).length, closed: mine.filter(function (e) { return e.kind === 'closed'; }).length,
+             touches: mine.length, cases: Object.keys(pols).length, opened: mine.filter(function (e) { return e.kind === 'opened'; }).length,
              notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length,
              signedIn: tm.at || '', late: tm.late || 0, absent: !!tm.absent, dayClosed: tm.closed == null ? null : tm.closed, dayTarget: tm.target == null ? null : tm.target,
              quietMins: lastMs ? Math.max(0, Math.round((nowMs - lastMs) / 60000)) : null,
@@ -18155,7 +18164,8 @@ function wallPendMorning_(day, P, numOf, chase) {
   var whoOf = function (uid) { if (!uid) return ''; if (ids[uid]) return String(nameFor_(ids[uid])).split(' ')[0]; return 'the system'; };
   var dayOfIso = function (iso) { var d = iso ? new Date(String(iso) + (String(iso).length <= 19 ? 'Z' : '')) : null; return d && !isNaN(d) ? Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd') : ''; };
   var shortDay = function (d) { return d ? (d === day ? 'today' : d === shiftDays_(day, -1) ? 'yesterday' : Number(d.slice(8, 10)) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(d.slice(5, 7)) - 1]) : ''; };
-  var moveOf = function (k) { var c = (chase || {})[k]; if (!c || !c.last) return null; var d = dayOfIso(c.last); return { on: d, when: shortDay(d), by: whoOf(c.lastBy) }; };
+  // The last activity on a case is its last Chatter post on an open Pendings task (27 Nov 2026, night), not a status change.
+  var moveOf = function (k) { var c = (chase || {})[k]; if (!c || !c.post) return null; var d = dayOfIso(c.post.at); return { on: d, when: shortDay(d), by: whoOf(c.post.by) }; };
   var sinceHO = function (k) { var n = P[k].uwNote, m = moveOf(k); if (!n || !n.at) return null; if (m && m.on >= n.at) return { yes: true, by: m.by, when: m.when };
     return { yes: false, days: Math.max(0, daysBetween_(n.at, day) || 0), when: shortDay(n.at) }; };
   // {agent} is filled in on the page from the row's agent field, which wallScrub_ folds for anyone who has left; a name typed
@@ -18201,10 +18211,11 @@ function wallPendMorning_(day, P, numOf, chase) {
       return { pol: String(k).slice(-4), agent: first(p.ag), actioned: sinceHO(k), code: n.code, on: Number(n.at.slice(8, 10)) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(n.at.slice(5, 7)) - 1], text: wallSafeText_(n.raw, n.names, CODESET), today: !!today[k] }; })
     .filter(function (x) { return x.text; });
   var acc = null; try { acc = wallAccount_(day, P, chase, today, ids, sinceHO); } catch (e) { acc = { error: String(e && e.message || e) }; }
+  var focus = null; try { focus = wallFocus_(day, P, chase, today, ids, sinceHO, settleIntel, todoOf); } catch (e) { focus = { error: String(e && e.message || e) }; }
   var byAgent = null; try { byAgent = wallAgentPend_(day, P, today, queue, chase); } catch (e) { byAgent = { error: String(e && e.message || e) }; }
-  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, acc: acc, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
+  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, acc: acc, focus: focus, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
            firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
-           closed: ev.filter(function (e) { return e.kind === 'closed'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
+           opened: ev.filter(function (e) { return e.kind === 'opened'; }).length, notes: ev.filter(function (e) { return e.kind === 'note'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
            stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
            queue: queue.slice(0, WALL_MORN.QUEUE).map(function (q) { var o = {}; Object.keys(q).forEach(function (k) { if (k !== '_pol') o[k] = q[k]; }); return o; }), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length,
            other: other && !other.error ? other.out : other };
@@ -18335,7 +18346,7 @@ function wallSettleIntel_(day, P, numOf) {
   var meta = { money: 'Money already held', docs: 'Documents already in', review: 'Head office has it', one: 'Approved, one item left', premium: 'Only the premium to collect' };
   var groups = ['money', 'docs', 'review', 'one', 'premium'].map(function (k) {
     var L = G[k].sort(function (a, b) { return b.prem - a.prem || b.days - a.days; });
-    return { k: k, title: meta[k], n: L.length, prem: L.reduce(function (s2, x) { return s2 + (x.prem || 0); }, 0), list: L.slice(0, WALL_SETTLE.SHOW) }; });
+    return { k: k, title: meta[k], n: L.length, prem: L.reduce(function (s2, x) { return s2 + (x.prem || 0); }, 0), list: L.slice(0, WALL_SETTLE.SHOW), all: L }; });
   var n = groups.reduce(function (s2, g) { return s2 + g.n; }, 0), prem = groups.reduce(function (s2, g) { return s2 + g.prem; }, 0);
   var today = groups.filter(function (g) { return g.k === 'money' || g.k === 'docs' || g.k === 'review'; });
   return { n: n, prem: prem, nowN: today.reduce(function (s2, g) { return s2 + g.n; }, 0), nowPrem: today.reduce(function (s2, g) { return s2 + g.prem; }, 0), groups: groups };
@@ -18417,6 +18428,51 @@ function wallBrief_(day, P, MV, S, chase, numOf) {
     speed: speed.slice(0, 12) } };
 }
 
+/* ── Today's focus: the cases, why, how long, what was last done, whose (27 November 2026, night) ──
+ *  Ricky: "have some structure and show intelligence, and have this collated along as: these are the focus today, and what was
+ *  done, given how long outstanding and the last activity etc. It must make an impact and hold the staff accountable."
+ *  One ranked list. A case earns its place by how close it is to a policy (wallSettleIntel_: money held, documents in, head
+ *  office has it, approved with one item, premium only) and by what is overdue on it (head office not answered, Guardian's
+ *  follow-up gone, Guardian about to close it). Each row: why it is a focus, days outstanding, the last thing done in Salesforce
+ *  (by whom, how long ago) and Guardian's own last activity, the owner (the desk whose open Pendings task it is, or nobody),
+ *  the next action, and whether it was touched today. Beside it, each owner's focus cases and how many are done today. */
+var WALL_FOCUS = { N: 15, QUIET: 5 };
+function wallFocus_(day, P, chase, todayPols, ids, sinceHO, si, todoOf) {
+  var deskOf = function (uid) { return uid && ids[uid] ? String(nameFor_(ids[uid])).split(' ')[0] : ''; };
+  var users = sfkUsers_() || {}, rick = users.ricky && String(users.ricky.id);
+  var why = {}, score = {}, W = { money: 100, docs: 90, review: 80, one: 70, premium: 55 };
+  // A case ranks by its strongest reason; the others only break ties. The reason shown is the strongest.
+  var tag = function (k, s, w) { if (!P[k]) return; var o = score[k] = score[k] || { max: 0, sum: 0 }; o.sum += s; (why[k] = why[k] || []).push({ s: s, w: w }); if (s > o.max) o.max = s; };
+  // The settle intelligence names each case by its last four digits; map them back.
+  var by4 = {}; Object.keys(P).forEach(function (k) { (by4[String(k).slice(-4)] = by4[String(k).slice(-4)] || []).push(k); });
+  ((si && si.groups) || []).forEach(function (g) { (g.all || g.list || []).forEach(function (x) { (by4[x.pol] || []).forEach(function (k) { tag(k, W[g.k] || 50, x.how); }); }); });
+  Object.keys(P).forEach(function (k) { var p = P[k], c = (chase || {})[k] || {}, ho = sinceHO ? sinceHO(k) : null;
+    if (p.acr || (p.dac != null && p.dac <= 14)) tag(k, 95, p.dac != null ? 'Guardian closes it in ' + p.dac + ' days' : 'at risk of auto-close');
+    if (ho && !ho.yes) tag(k, 60, 'head office wrote ' + ho.when + ', not answered');
+    if (p.nf && p.nf < day) tag(k, 25, 'Guardian follow-up passed');
+    if (c.overdue) tag(k, 20, 'Salesforce task overdue');
+  });
+  var ago = function (d) { if (!d) return null; var n = daysBetween_(d, day); return n == null ? null : Math.max(0, n); };
+  var rows = Object.keys(score).map(function (k) {
+    var p = P[k], c = (chase || {})[k] || {}, nonPay = p.items.filter(function (x) { return x.code !== 'FUTPY' && x.kind !== 'First premium'; });
+    var it = (p.pay > 0 && p.pay === p.reqs ? p.items[0] : nonPay[0]) || p.items[0] || {};
+    var ws = why[k].sort(function (a, b) { return b.s - a.s; });
+    var lastOn = c.post ? Utilities.formatDate(new Date(String(c.post.at) + 'Z'), CONFIG.TZ, 'yyyy-MM-dd') : '';
+    var lastBy = c.post ? (deskOf(c.post.by) || (c.post.by === rick ? 'the Branch Manager' : 'someone else')) : '';
+    var owner = deskOf(c.owner) || (!c.owner ? 'Nobody' : c.owner === rick ? 'Branch Manager' : 'Someone else');
+    var quiet = ago(lastOn);
+    return { _s: score[k].max + 0.15 * (score[k].sum - score[k].max) + Math.min(10, (p.days || 0) / 30), pol: String(k).slice(-4), agent: String(p.ag || '').trim(), code: it.code || '',
+      why: ws[0].w, also: ws.slice(1).map(function (x) { return x.w; }),
+      days: p.oldR || p.days || 0, last: lastOn ? { by: lastBy, ago: quiet } : null, guardian: p.dsla != null ? p.dsla : ago(p.lact),
+      owner: owner, next: todoOf ? todoOf(p, it) : '', today: !!(todoPols(k)), quiet: quiet == null || quiet >= WALL_FOCUS.QUIET };
+    function todoPols(x) { return todayPols && todayPols[x]; }
+  }).sort(function (a, b) { return b._s - a._s; });
+  var top = rows.slice(0, WALL_FOCUS.N).map(function (r, i) { delete r._s; r.rank = i + 1; return r; });
+  var own = {}; top.forEach(function (r) { var o = own[r.owner] = own[r.owner] || { name: r.owner, n: 0, done: 0, quiet: 0 }; o.n++; if (r.today) o.done++; if (r.quiet) o.quiet++; });
+  return { n: top.length, of: rows.length, done: top.filter(function (r) { return r.today; }).length, quiet: top.filter(function (r) { return r.quiet; }).length,
+    owners: Object.keys(own).map(function (k) { return own[k]; }).sort(function (a, b) { return (a.name === 'Nobody') - (b.name === 'Nobody') || b.n - a.n; }), list: top };
+}
+
 /* ── Accountability: deadlines, owners, and the agent who is sticking (27 November 2026, evening) ──
  *  Ricky: "does the wall hold accountability as to the timelines and who is doing what"; then "more robust ... to reflect staff
  *  accountability and what's being actioned for whom, and group where possible, and show up if the agent is sticking".
@@ -18425,12 +18481,12 @@ function wallBrief_(day, P, MV, S, chase, numOf) {
  *  of being asked for, Guardian's follow-up on its date, the Salesforce task by its due date. A miss on the branch's side is the
  *  owner's; an agent's item past its clock is the agent's. Grouped by owner (with the agents whose cases each desk holds) and by
  *  agent. Each desk's last thirty days: Pendings tasks closed. Agents' full names here (the scrub folds anyone who has left). */
-var WALL_ACC = { HO: 1, AGENT: 3, PAST: 14, STICK: 10, DAYS30: 30 };
+var WALL_ACC = { HO: 1, AGENT: 3, CHATTER: 3, PAST: 14, STICK: 10, DAYS30: 30 };
 function wallAccount_(day, P, chase, todayPols, ids, sinceHO) {
   var users = sfkUsers_() || {}, deskOf = function (uid) { return uid && ids[uid] ? String(nameFor_(ids[uid])).split(' ')[0] : ''; };
   var wd = function (iso) { return iso ? pendFuWorkdaysSince_(iso, day) : 0; };
   var owners = {}, past = [], stick = {}, tot = { cases: 0, past: 0, onStaff: 0, onAgents: 0, nobody: 0, hoWaiting: 0 };
-  var own = function (n) { return owners[n] = owners[n] || { name: n, cases: 0, past: 0, hoWaiting: 0, today: 0, closed30: 0, ag: {} }; };
+  var own = function (n) { return owners[n] = owners[n] || { name: n, cases: 0, past: 0, hoWaiting: 0, today: 0, posts30: 0, ag: {} }; };
   Object.keys(ids).forEach(function (uid) { own(deskOf(uid)); });
   Object.keys(P).forEach(function (k) {
     var p = P[k], c = (chase || {})[k] || {}, o = deskOf(c.owner) || (!c.owner ? 'Nobody' : users.ricky && String(users.ricky.id) === c.owner ? 'Branch Manager' : 'Someone else'), O = own(o), miss = [];
@@ -18441,6 +18497,8 @@ function wallAccount_(day, P, chase, todayPols, ids, sinceHO) {
     if (p.nf && p.nf < day) miss.push({ on: 'staff', what: 'Guardian follow-up date passed', days: wd(p.nf) });
     if (c.overdue) miss.push({ on: 'staff', what: 'Salesforce task overdue', days: 0 });
     if (!c.open && !c.ever) miss.push({ on: 'staff', what: 'No Pendings task at all', days: p.days || 0 });
+    else if (c.open && !c.post) miss.push({ on: 'staff', what: 'No Chatter on it in ' + WALL_CHATTER.DAYS + ' days', days: WALL_CHATTER.DAYS });
+    else if (c.open && c.post && wd(String(c.post.at).slice(0, 10)) > WALL_ACC.CHATTER) miss.push({ on: 'staff', what: 'No Chatter for ' + wd(String(c.post.at).slice(0, 10)) + ' working days', days: wd(String(c.post.at).slice(0, 10)) });
     var seenCode = {}, mine = p.items.filter(function (it) { if (!/\bagent\b/i.test(it.who) || !it.asked) return false; var ik = it.code || it.name; if (seenCode[ik]) return false; seenCode[ik] = 1; return true; });
     mine.forEach(function (it) { var d = wd(it.asked); if (d <= WALL_ACC.AGENT) return;
       var S = stick[ag] = stick[ag] || { agent: ag, items: 0, cases: {}, oldest: 0, codes: {} };
@@ -18456,16 +18514,15 @@ function wallAccount_(day, P, chase, todayPols, ids, sinceHO) {
     miss.sort(function (a, b) { return b.days - a.days; });
     past.push({ pol: String(k).slice(-4), agent: ag, owner: o, what: miss[0].what, on: miss[0].on, days: miss[0].days, more: miss.length - 1, today: !!(todayPols && todayPols[k]) });
   });
-  // Each desk's last thirty days: the Pendings tasks it closed.
-  try { sfkQuery_("SELECT LastModifiedById FROM Task WHERE Task_Type__c = 'Pendings' AND IsClosed = true AND LastModifiedDate = LAST_N_DAYS:" + WALL_ACC.DAYS30 + ' LIMIT 5000')
-    .forEach(function (t) { var d = deskOf(t.LastModifiedById); if (d && owners[d]) owners[d].closed30++; }); } catch (e) {}
+  // Each desk's last thirty days: its Chatter posts on the open Pendings tasks (27 Nov 2026, night: driven by Chatter, not closes).
+  Object.keys(chase || {}).forEach(function (k) { var pc = (chase[k] || {}).posts30 || {}; Object.keys(pc).forEach(function (uid) { var d = deskOf(uid); if (d && owners[d]) owners[d].posts30 += pc[uid]; }); });
   var ownerList = Object.keys(owners).map(function (n) { var O = owners[n];
-    return { name: n, cases: O.cases, past: O.past, hoWaiting: O.hoWaiting, today: O.today, closed30: O.closed30,
+    return { name: n, cases: O.cases, past: O.past, hoWaiting: O.hoWaiting, today: O.today, posts30: O.posts30,
              agents: Object.keys(O.ag).map(function (a) { return O.ag[a]; }).sort(function (a, b) { return (b.past - a.past) || (b.n - a.n); }).slice(0, 8) }; })
-    .filter(function (x) { return x.cases || x.closed30; })
+    .filter(function (x) { return x.cases || x.posts30; })
     .sort(function (a, b) { return (a.name === 'Nobody') - (b.name === 'Nobody') || b.cases - a.cases; });
   past.sort(function (a, b) { return (a.today - b.today) || (b.days - a.days); });
-  return { rules: { ho: WALL_ACC.HO, agent: WALL_ACC.AGENT }, totals: tot, owners: ownerList, past: past.slice(0, WALL_ACC.PAST), pastOf: past.length,
+  return { rules: { ho: WALL_ACC.HO, agent: WALL_ACC.AGENT, chatter: WALL_ACC.CHATTER }, totals: tot, owners: ownerList, past: past.slice(0, WALL_ACC.PAST), pastOf: past.length,
     sticking: Object.keys(stick).map(function (a) { var S = stick[a]; return { agent: a, items: S.items, cases: Object.keys(S.cases).length, oldest: S.oldest,
       codes: Object.keys(S.codes).sort(function (x, y) { return S.codes[y] - S.codes[x]; }).slice(0, 4) }; })
       .sort(function (a, b) { return (b.items - a.items) || (b.oldest - a.oldest); }).slice(0, WALL_ACC.STICK) };
@@ -18552,9 +18609,9 @@ function wallPendOther_(day, ids, from, to, allNotes, whatOf) {
   });
   var ev = [], inRange = function (iso) { var t = String(iso || '').slice(0, 19); return t >= String(from).slice(0, 19) && t < String(to).slice(0, 19); };
   var push = function (at, uid, kind, id) { if (ids[uid] && recs[id]) ev.push({ at: String(at || ''), sid: ids[uid], kind: kind, pol: id }); };
-  list.forEach(function (r) { if (inRange(r._at)) push(r._at, r._by, 'moved', r.id); });
-  sfkQuery_("SELECT WhatId, IsClosed, LastModifiedDate, LastModifiedById FROM Task WHERE LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to +
-    " AND What.Type IN ('Policy_Increases__c','CLIENT_PORTFOLIO__c') LIMIT 2000").forEach(function (t) { push(t.LastModifiedDate, t.LastModifiedById, t.IsClosed ? 'closed' : 'moved', String(t.WhatId || '')); });
+  // Opened today and the Chatter only, as on the rest of the wall (27 Nov 2026, night): a record edited or a task closed is not a touch.
+  sfkQuery_("SELECT WhatId, CreatedDate, CreatedById FROM Task WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
+    " AND What.Type IN ('Policy_Increases__c','CLIENT_PORTFOLIO__c') LIMIT 2000").forEach(function (t) { push(t.CreatedDate, t.CreatedById, 'opened', String(t.WhatId || '')); });
   (allNotes || []).forEach(function (f) { var pid = String(f.ParentId || ''); push(f.CreatedDate, f.CreatedById, 'note', recs[pid] ? pid : (whatOf[pid] || '')); });
   var touched = {}; ev.forEach(function (e) { touched[e.pol] = 1; });
   list.forEach(function (r) { r.today = !!touched[r.id]; if (r.today) byType[r.label].today++; delete r._by; delete r._at; delete r.id; });
@@ -19031,13 +19088,14 @@ function wallClawLive_(day) {
 function wallPendChase_(day, numOf) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
   var from = sfkUtcAt_(day, 0).slice(0, 19), to = sfkUtcAt_(shiftDays_(day, 1), 0).slice(0, 19), weekAgo = sfkUtcAt_(shiftDays_(day, -7), 0).slice(0, 19);
-  var rows = sfkQuery_("SELECT Subject, IsClosed, ActivityDate, CreatedDate, LastModifiedDate, LastModifiedById, OwnerId FROM Task WHERE Task_Type__c = 'Pendings'" +
+  var rows = sfkQuery_("SELECT Id, Subject, IsClosed, ActivityDate, CreatedDate, LastModifiedDate, LastModifiedById, OwnerId FROM Task WHERE Task_Type__c = 'Pendings'" +
     ' AND (IsClosed = false OR CreatedDate = LAST_N_DAYS:400) LIMIT 10000');
-  var by = {};
+  var by = {}, polsOfTask = {};
   rows.forEach(function (t) {
     var seen = {}, made = String(t.CreatedDate || '').slice(0, 19), mod = String(t.LastModifiedDate || '').slice(0, 19);
     (String(t.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) {
       var pol = numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1;
+      if (!t.IsClosed) (polsOfTask[t.Id] = polsOfTask[t.Id] || []).push(pol);
       var b = by[pol] = by[pol] || { ever: 0, open: 0, overdue: 0, quiet: 0, today: 0, last: '' };
       b.ever++; if (mod > b.last) { b.last = mod; b.lastBy = String(t.LastModifiedById || ''); }
       if (!t.IsClosed && mod >= String(b.ownAt || '')) { b.owner = String(t.OwnerId || ''); b.ownAt = mod; }
@@ -19045,8 +19103,21 @@ function wallPendChase_(day, numOf) {
       if ((made >= from && made < to) || (t.IsClosed && mod >= from && mod < to)) b.today++;
     });
   });
+  /* DRIVEN BY CHATTER (27 Nov 2026, night). Ricky: "we don't need to see any Salesforce task closed, but opened and driven by
+     Chatter". The last Chatter post on each case's open Pendings tasks (who, when) is its last activity, and every desk's posts
+     on them in the last WALL_CHATTER.DAYS days are counted (posts30 on any policy's record, keyed by user id). */
+  var tids = Object.keys(polsOfTask), since = sfkUtcAt_(shiftDays_(day, -WALL_CHATTER.DAYS), 0), d30 = sfkUtcAt_(shiftDays_(day, -30), 0).slice(0, 19);
+  for (var i = 0; i < tids.length; i += 150) {
+    try { sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type IN ('TextPost','ContentPost','LinkPost') AND ParentId IN (" +
+        tids.slice(i, i + 150).map(soqlStr_).join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 2000').forEach(function (f) {
+      var at = String(f.CreatedDate || '').slice(0, 19), uid = String(f.CreatedById || '');
+      (polsOfTask[f.ParentId] || []).forEach(function (pol) { var b = by[pol]; if (!b) return;
+        if (!b.post || at > b.post.at) b.post = { at: at, by: uid };
+        if (at >= d30) { b.posts30 = b.posts30 || {}; b.posts30[uid] = (b.posts30[uid] || 0) + 1; } }); }); } catch (e) {}
+  }
   return by;
 }
+var WALL_CHATTER = { DAYS: 60 };
 
 /* ── The Branch Portal and Salesforce, through the workbook (27 Oct 2026, 2026-10-27i) ──
  *  Ricky, 3pm, agreeing one place for chasing notes: Salesforce's Pendings tasks, not the Portal's own Requirements Log
