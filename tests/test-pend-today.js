@@ -84,7 +84,7 @@ env.sfkQuery_ = q => {
   return [];
 };
 
-const L = env.wallPendLive_('2026-10-27'), M = L.morning;
+const L = env.wallPendLive_('2026-10-27', true), M = L.morning;
 console.log('\nThis morning, from Salesforce:\n');
 ok('the cases touched today, on the report only', M && M.cases === 3 && !JSON.stringify(M).includes('9999'), JSON.stringify(M && [M.cases, M.touches]));
 const AZ = M.desks.find(d => d.name === 'Azariah'), SA = M.desks.find(d => d.name === 'Sasha'), KA = M.desks.find(d => d.name === 'Kamla'), EL = M.desks.find(d => d.name === 'Elizabeth');
@@ -155,7 +155,7 @@ ok('the report\'s count of cases stays the report\'s', M.cases === 3);
 ok('another branch\'s record is not shown', !G.list.some(x => /Not Ours/.test(x.agent)));
 const env2 = env; const saveU = env2.iBuildUnits_; env2.iBuildUnits_ = () => ({});
 env2.CacheService.getScriptCache().remove && env2.CacheService.getScriptCache().remove('wall_pend_2026-10-27');
-let L2 = null; try { env2.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) }; L2 = env2.wallPendLive_('2026-10-27'); } catch (e) {}
+let L2 = null; try { env2.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) }; L2 = env2.wallPendLive_('2026-10-27', true); } catch (e) {}
 ok('with no unit list, the group section says so and shows nothing', L2 && L2.morning.other && L2.morning.other.error && !L2.morning.other.list, JSON.stringify(L2 && L2.morning.other));
 env2.iBuildUnits_ = saveU;
 console.log('\nWhoever has left reads Orphans on the wall, in every new part:\n');
@@ -180,10 +180,10 @@ console.log('\nSettled since October, from the issue date and the policy status:
     R3(R('Rajiv Soodoo', '5000000013', 'AGEAD', 'Proof of Identity', 'Agent', 'Green', '0-30 days', 'No', 200, 'Ordered - awaiting receipt', { days: 30 }), '', 'Not Proceeded With')];
   env.iSs_ = () => ({ getSheets: () => [sheet('Branch Pendings_2026-10-27-1500', rows3)] });
   env.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) };
-  const L3 = env.wallPendLive_('2026-10-27'), S3 = L3.settled;
+  const L3 = env.wallPendLive_('2026-10-27', true), S3 = L3.settled;
   const rows4 = rows3.map((r, i) => i === 0 ? H.concat(['policy_status_date', 'policy_status']) : r);
   env.iSs_ = () => ({ getSheets: () => [sheet('Branch Pendings_2026-10-27-1500', rows4)] });
-  const S4 = env.wallPendLive_('2026-10-27').settled;
+  const S4 = env.wallPendLive_('2026-10-27', true).settled;
   ok('with no issue date column, the date the status became 1 is read as the issue date', S4 && S4.n === 2, JSON.stringify(S4 && [S4.n, S4.missing]));
   ok('status 1 or Premium Paying with an issue date from 1 October is settled', S3 && S3.n === 2 && S3.week === 1, JSON.stringify(S3));
   ok('settled before October is not counted, and is not pending either', S3.n === 2 && L3.policies === 1, JSON.stringify([S3.n, L3.policies]));
@@ -192,12 +192,22 @@ console.log('\nSettled since October, from the issue date and the policy status:
   ok('how long they took, submission to issue', S3.medianDays === 12 || S3.medianDays === 18, String(S3.medianDays));
   env.iSs_ = () => ({ getSheets: () => [sheet('Agent Codes', [['x']]), sheet('Branch Pendings_2026-10-26-0900', [H]), sheet('Branch Pendings_2026-10-27-1336', rows)] });
 }
+console.log('\nBuilt ahead, served at once:\n');
+{
+  let built = 0; const real = env.wallPendBuild_;
+  env.wallPendBuild_ = d => { built++; return real(d); };
+  env.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) };
+  const a = env.wallPendLive_('2026-10-27', true), b = env.wallPendLive_('2026-10-27');
+  ok('a screen\'s request is answered from the kept copy, without building', built === 1 && b && b.builtAt === a.builtAt, JSON.stringify([built, a && a.builtAt, b && b.builtAt]));
+  ok('the copy says when it was built', typeof a.builtAt === 'number' && a.day === '2026-10-27');
+  env.wallPendBuild_ = real;
+}
 console.log('\nThe follow-up from the trail:\n');
 const appended = [];
 env.__mkSheet('Pending Follow-ups', 9, env.PEND_FU.head.slice(), []);
 env.CacheService = { getScriptCache: () => { const m = env.__pfuCache = env.__pfuCache || {}; return { get: k => m[k] || null, put: (k, v) => { m[k] = v; }, remove: k => { delete m[k]; } }; } };
 MORNING = false;
-env.wallPendLive_('2026-10-27');
+env.wallPendLive_('2026-10-27', true);
 const r = env.pendFollowScan_('2026-10-27');
 const list = env.pendFollowList_();
 ok('a case whose last e-mail is three working days old with nothing moved is drafted', list.some(x => x.pol === '5000000003'), JSON.stringify(list.map(x => x.pol)));
