@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!-- WHAT'S NEW ON THE PENDING WALL (27 November 2026). Ricky: "publish it on the Ricky Rampersad branch /pending vid".
+     The film is rendered from the live pending feed of 27 Nov: agents' first names and the last four digits of a policy only,
+     the same as the wall itself shows. No client is named. Agents who have left are not in it.
+     Chapters below are the film's own scene starts (SB in the film builder); change the film, change them. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pending Wall Film</title>
+<meta name="description" content="What's new on the Pending Wall: what is on it, what the branch did today, and how your name gets on it.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#F3F1EC">
+<meta property="og:title" content="What's new on the Pending Wall">
+<meta property="og:description" content="If you are sure you submitted everything, your name should be on this wall.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/pending/poster.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{--bg:#F3F1EC;--panel:#fff;--line:rgba(31,36,48,.12);--ink:#1F2430;--dim:#4B5363;--faint:#7A808C;--gold:#87590C;--navy:#07131f;
+    --fd:'Plus Jakarta Sans',system-ui,sans-serif;--fb:Inter,system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--fb);padding:24px 16px 60px}
+  main{max-width:1080px;margin:0 auto}
+  .top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .mark{width:52px;height:52px;flex:none;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+  .kick{font:800 12px var(--fd);letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  h1{font:800 clamp(24px,4vw,34px)/1.12 var(--fd);letter-spacing:-.02em}
+  .sub{color:var(--dim);margin-top:4px}
+  .stage{border-radius:18px;overflow:hidden;background:var(--navy);box-shadow:0 30px 70px -30px rgba(7,19,31,.55)}
+  video{display:block;width:100%;aspect-ratio:16/9;background:var(--navy)}
+  h2{font:800 13px var(--fd);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:28px 0 10px}
+  .chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+  .ch{display:flex;gap:12px;align-items:baseline;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 14px;cursor:pointer;font:600 15px var(--fb);color:var(--ink);text-align:left;width:100%}
+  .ch:hover,.ch.on{border-color:var(--gold);box-shadow:0 0 0 2px rgba(135,89,12,.15)}
+  .ch .t{color:var(--gold);font:800 14px var(--fd);font-variant-numeric:tabular-nums;flex:none}
+  .quote{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-left:5px solid #D99B2E;border-radius:14px;padding:18px 20px;font:800 20px/1.35 var(--fd)}
+  .quote span{display:block;font:500 15px var(--fb);color:var(--dim);margin-top:6px}
+  .links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+  .lnk{display:block;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;text-decoration:none;color:var(--ink)}
+  .lnk:hover{border-color:var(--gold)}
+  .lnk b{display:block;font:800 16px var(--fd);margin-bottom:4px} .lnk span{color:var(--dim);font-size:14px}
+  .note{color:var(--faint);font-size:13px;margin-top:26px}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <div><div class="kick">Ricky Rampersad Branch · Pending Wall</div><h1>What's new on the Pending Wall</h1>
+      <div class="sub">What is on it, what the branch did today, and how your name gets on it. 1 minute 36.</div></div>
+  </div>
+
+  <div class="stage"><video id="v" controls playsinline preload="metadata" poster="poster.jpg" src="pending-wall-whats-new.mp4"></video></div>
+
+  <h2>Jump to</h2>
+  <div class="chapters" id="chapters"></div>
+
+  <div class="quote">If you are sure you submitted everything, your name should be on this wall.
+    <span>Not on it? Open the wall, find your name under Waiting on agents, and send what is missing today.</span></div>
+
+  <h2>Open it</h2>
+  <div class="links">
+    <a class="lnk" href="/intelligence/wall/today.html"><b>The Pending Wall</b><span>Live. Focus today, waiting on agents, what can settle, who owns each case.</span></a>
+    <a class="lnk" href="/intelligence/wall/today.html?view=agents"><b>For agents</b><span>Your cases, what is missing on each, and what to send first.</span></a>
+    <a class="lnk" href="/intelligence/wall/guide.html"><b>The morning guide</b><span>The support desk's seven steps, every working morning.</span></a>
+  </div>
+
+  <p class="note">Figures are from the wall on Friday 27 November 2026. First names and the last four digits of a policy only; no client is named.</p>
+</main>
+<script>
+(function(){
+  var CH=[[0,'The Pending Wall'],[8.8,'How the wall has changed'],[22.8,'Live: done today'],[34.8,'Head office wrote'],[46.0,'Could settle'],[59.1,'On the wall'],[67.4,'Not on the wall yet'],[77.4,'Your name on this wall'],[87.5,'Every morning']];
+  var v=document.getElementById('v'), box=document.getElementById('chapters');
+  function mmss(s){ s=Math.floor(s); return Math.floor(s/60)+':'+('0'+s%60).slice(-2); }
+  box.innerHTML=CH.map(function(c,i){ return '<button class="ch" data-i="'+i+'"><span class="t">'+mmss(c[0])+'</span>'+c[1]+'</button>'; }).join('');
+  box.addEventListener('click',function(e){ var b=e.target.closest('.ch'); if(!b) return; v.currentTime=CH[+b.dataset.i][0]+0.05; v.play(); });
+  v.addEventListener('timeupdate',function(){ var t=v.currentTime,k=0; CH.forEach(function(c,i){ if(t>=c[0]) k=i; });
+    [].forEach.call(box.children,function(b,i){ b.classList.toggle('on',i===k); }); });
+})();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
