@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27r';
+var SCRIPT_VERSION = '2026-11-27s';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17934,7 +17934,9 @@ function wallPendLive_(day) {
   var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
   wallPendPolicies_(out, P, chase);
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
-  try { out.morning = wallPendMorning_(day, P, numOf); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
+  // The report's own headings, so a column Guardian or the branch adds is seen on the feed (27 Nov 2026). Headings only, no row.
+  out.cols = h.filter(Boolean);
+  try { out.morning = wallPendMorning_(day, P, numOf, chase); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
   try { out.follow = pendFollowCount_(day); } catch (e) {}
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
@@ -17951,7 +17953,7 @@ function wallPendLive_(day) {
  *    then the first premium alone, each with its codes, who moves it, its age and whether anybody touched it today.
  *  Agents' first names, codes and the last four digits of a policy only, never a client. wallScrub_ folds anyone who has left. */
 var WALL_MORN = { STREAM: 14, QUEUE: 12 };
-function wallPendMorning_(day, P, numOf) {
+function wallPendMorning_(day, P, numOf, chase) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
   /* The staff desks only. The Branch Manager's Salesforce user is also the one the system's own runs write as (on the day this
      was built it changed a run of group tasks within four seconds at 11:03am), so counting it would put automation on the
@@ -17988,12 +17990,22 @@ function wallPendMorning_(day, P, numOf) {
   var row = function (e) { var h = held(e.pol), o = O[e.pol];
     return { at: at(e.at), desk: String(nameFor_(e.sid)).split(' ')[0], agent: first(o ? o.ag : P[e.pol] ? P[e.pol].ag : ''), code: h.code, kind: h.kind, what: e.kind,
              pol: o ? '' : String(e.pol).slice(-4), grp: o ? o.label : '' }; };
+  /* Who is in, and whose cases each person moved (27 Nov 2026, afternoon). Ricky: "I'm not seeing the agents' first names. It's not doing
+     anything to see how staff is working and what blocks." A desk that is out or not signed in is said so, never shown red
+     for "nothing yet"; a desk that is in says when it signed in, whose cases it moved (agents' full names here, first names on
+     the page), and how long since its last touch. The team row is workdayTeam_'s, the same the Branch Manager's day reads. */
+  var team = {}; try { (workdayTeam_(day) || []).forEach(function (t) { team[t.sid] = t; }); } catch (e) {}
+  var nowMs = Date.now(), msOf = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? 0 : d.getTime(); };
   var desks = order.filter(function (s) { return users[s]; }).map(function (s) {
-    var mine = ev.filter(function (e) { return e.sid === s; }), pols = {};
-    mine.forEach(function (e) { pols[e.pol] = 1; });
+    var mine = ev.filter(function (e) { return e.sid === s; }), pols = {}, ags = {}, tm = team[s] || {};
+    mine.forEach(function (e) { pols[e.pol] = 1; var o = O[e.pol], a = first(o ? o.ag : P[e.pol] ? P[e.pol].ag : ''); if (a) (ags[a] = ags[a] || {})[e.pol] = 1; });
+    var lastMs = mine.length ? msOf(mine[mine.length - 1].at) : 0;
     return { name: String(nameFor_(s)).split(' ')[0], first: mine.length ? row(mine[0]) : null, last: mine.length ? at(mine[mine.length - 1].at) : '',
              touches: mine.length, cases: Object.keys(pols).length, closed: mine.filter(function (e) { return e.kind === 'closed'; }).length,
-             notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length };
+             notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length,
+             signedIn: tm.at || '', late: tm.late || 0, absent: !!tm.absent, dayClosed: tm.closed == null ? null : tm.closed, dayTarget: tm.target == null ? null : tm.target,
+             quietMins: lastMs ? Math.max(0, Math.round((nowMs - lastMs) / 60000)) : null,
+             agents: Object.keys(ags).map(function (a) { return { agent: a, n: Object.keys(ags[a]).length }; }).sort(function (x, y) { return y.n - x.n; }) };
   });
   var today = {}; ev.forEach(function (e) { if (!O[e.pol]) today[e.pol] = 1; });
   var stateOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var s = WALL_PEND.STATES[i]; if (s.re && s.re.test(p.dec)) return s.key; } return 'none'; };
@@ -18003,13 +18015,51 @@ function wallPendMorning_(day, P, numOf) {
       var w = Object.keys(who).sort(function (x, y) { return who[y] - who[x]; })[0] || '';
       return { pol: String(k).slice(-4), agent: first(p.ag), why: ['Only the premium left', 'Approved · settle it', 'One item left'][rank(p)], codes: Object.keys(cs).slice(0, 4), left: p.reqs,
                who: w, days: p.days, red: p.red > 0, today: !!today[k] }; });
-  var started = desks.filter(function (d) { return d.touches; }).length;
-  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length,
+  var started = desks.filter(function (d) { return d.touches; }).length, inNow = desks.filter(function (d) { return d.signedIn && !d.absent; }).length;
+  // What is holding the cases nearest to settling, by whose move it is, and which agents they wait on.
+  var hold = {}; queue.forEach(function (q) { if (q.today) return; var h = hold[q.who || 'Not said'] = hold[q.who || 'Not said'] || { who: q.who || 'Not said', n: 0, ag: {} }; h.n++; if (q.agent) h.ag[q.agent] = (h.ag[q.agent] || 0) + 1; });
+  var blocks = Object.keys(hold).map(function (k) { var h = hold[k]; return { who: h.who, n: h.n, agents: Object.keys(h.ag).map(function (a) { return { agent: a, n: h.ag[a] }; }).sort(function (x, y) { return y.n - x.n; }).slice(0, 6) }; })
+    .sort(function (a, b) { return b.n - a.n; });
+  var byAgent = null; try { byAgent = wallAgentPend_(day, P, today, queue, chase); } catch (e) { byAgent = { error: String(e && e.message || e) }; }
+  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent,
            firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
            closed: ev.filter(function (e) { return e.kind === 'closed'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
            stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
            queue: queue.slice(0, WALL_MORN.QUEUE), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length,
            other: other && !other.error ? other.out : other };
+}
+/* ── Each agent's pendings and when the branch last moved them (27 November 2026, afternoon) ──
+ *  Ricky: "this is the first KPI this morning and the agents' last checks ... make sense out of the data"; then "I am not
+ *  concerned with agents check ins". So this is the branch's side, agent by agent: the cases on the report, how many wait on the
+ *  agent (an item whose move is theirs), how many are one step from settling, how many the branch moved for them today, the
+ *  last time any Pendings task on their cases moved in Salesforce, how many have never had a task, and the Ingenium codes
+ *  holding their cases most. Full names here; wallScrub_ folds anyone who has left into Orphans; the page shows first names.
+ *  Sorted with the agent whose cases have gone longest without a move first. */
+var WALL_BYAGENT = { MAX: 16, CODES: 3 };
+function wallAgentPend_(day, P, todayPols, queue, chase) {
+  var near = {}; (queue || []).forEach(function (q) { if (q.agent) near[q.agent] = (near[q.agent] || 0) + 1; });
+  var st = {};
+  Object.keys(P).forEach(function (pol) {
+    var p = P[pol], a = String(p.ag || '').trim() || 'No agent named', c = (chase || {})[pol] || null;
+    var o = st[a] = st[a] || { agent: a, cases: 0, onYou: 0, near: 0, today: 0, never: 0, last: '', oldest: 0, codes: {} };
+    o.cases++; o.oldest = Math.max(o.oldest, p.days || 0);
+    var mine = p.items.filter(function (it) { return /\bagent\b/i.test(it.who); });
+    if (mine.length) o.onYou++;
+    mine.forEach(function (it) { if (it.code) o.codes[it.code] = (o.codes[it.code] || 0) + 1; });
+    if (todayPols && todayPols[pol]) o.today++;
+    if (chase && (!c || !c.ever)) o.never++;
+    if (c && c.last > o.last) o.last = c.last;
+  });
+  var nowMs = Date.now();
+  var out = Object.keys(st).map(function (k) {
+    var o = st[k], d = o.last ? new Date(o.last + 'Z') : null, l = null;
+    if (d && !isNaN(d)) { var ld = Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd');
+      l = { days: Math.max(0, daysBetween_(ld, day) || 0), when: ld === day ? 'today ' + twelve_(Utilities.formatDate(d, CONFIG.TZ, 'HH:mm')) : ld === shiftDays_(day, -1) ? 'yesterday' : Utilities.formatDate(d, CONFIG.TZ, 'EEE d MMM') }; }
+    return { agent: o.agent, cases: o.cases, onYou: o.onYou, near: near[o.agent] || 0, today: o.today, never: chase ? o.never : null, oldest: o.oldest, last: l,
+             codes: Object.keys(o.codes).sort(function (x, y) { return o.codes[y] - o.codes[x]; }).slice(0, WALL_BYAGENT.CODES).map(function (c) { return { code: c, n: o.codes[c] }; }) };
+  }).sort(function (x, y) { var dx = x.last ? x.last.days : 9999, dy = y.last ? y.last.days : 9999; return (dy - dx) || (y.cases - x.cases); });
+  return { agents: out.slice(0, WALL_BYAGENT.MAX), of: out.length, movedToday: out.filter(function (x) { return x.today; }).length,
+           waiting: out.reduce(function (s2, x) { return s2 + x.onYou; }, 0), quietWeek: out.filter(function (x) { return !x.last || x.last.days >= 7; }).length };
 }
 /* Group life, group health, individual health and increases on the pending wall's today (27 November 2026).
  *  Ricky: "integrate into this the Salesforce, the group health and the group life in terms of the applications that are pending
@@ -18539,8 +18589,8 @@ function wallPendChase_(day, numOf) {
     var seen = {}, made = String(t.CreatedDate || '').slice(0, 19), mod = String(t.LastModifiedDate || '').slice(0, 19);
     (String(t.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) {
       var pol = numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1;
-      var b = by[pol] = by[pol] || { ever: 0, open: 0, overdue: 0, quiet: 0, today: 0 };
-      b.ever++;
+      var b = by[pol] = by[pol] || { ever: 0, open: 0, overdue: 0, quiet: 0, today: 0, last: '' };
+      b.ever++; if (mod > b.last) b.last = mod;
       if (!t.IsClosed) { b.open++; if (t.ActivityDate && String(t.ActivityDate) < day) b.overdue++; if (mod && mod < weekAgo) b.quiet++; }
       if ((made >= from && made < to) || (t.IsClosed && mod >= from && mod < to)) b.today++;
     });

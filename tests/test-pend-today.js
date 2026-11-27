@@ -93,6 +93,18 @@ ok('Elizabeth\'s only touch is the health record she edited at 10:20am', EL.touc
 ok('started, of, and the first touch of the branch', M.started === 4 && M.of === 4 && M.firstAt === '8:40am', JSON.stringify([M.started, M.of, M.firstAt]));
 ok('the stream is newest first', M.stream[0].at === '11:10am' && M.stream[1].at === '10:20am' && M.stream.some(e => e.at === '10:05am' && e.what === 'closed'), JSON.stringify(M.stream.slice(0, 3).map(e => e.at)));
 ok('no client and no full policy number in the morning', !/50000000\d\d/.test(JSON.stringify(M)));
+console.log('\nWhose cases each desk moved, what holds the rest, and each agent:\n');
+ok('each desk says whose cases it moved, by agent', AZ.agents && AZ.agents.some(a => a.agent === 'Varun Seegolam'), JSON.stringify(AZ.agents));
+ok('a desk carries its sign-in fields even when the register has no row', 'signedIn' in AZ && 'absent' in AZ && 'quietMins' in AZ);
+ok('what holds the cases nearest settlement is grouped by whose move it is', Array.isArray(M.blocks) && M.blocks.every(b => b.who && b.n > 0), JSON.stringify(M.blocks));
+const BA = M.byAgent;
+ok('each agent with a pending case gets a row', BA && !BA.error && BA.agents.some(a => a.agent === 'Varun Seegolam') && BA.agents.some(a => a.agent === 'Fawwaz Mohamed'), JSON.stringify(BA && (BA.error || BA.agents.map(a => a.agent))));
+const VA = BA.agents.find(a => a.agent === 'Varun Seegolam');
+ok('waiting on the agent counts cases with an item that is the agent\'s move, with its codes', VA.cases === 2 && VA.onYou === 2 && VA.codes[0].code === 'FUTPY', JSON.stringify(VA));
+ok('moved today counts the agent\'s cases a desk touched today', VA.today >= 1, JSON.stringify(VA));
+ok('the agent row carries no client and no full policy number', !/50000000\d\d/.test(JSON.stringify(BA)));
+const sb = env.wallScrub_({ morning: { byAgent: { agents: [{ agent: 'Aidan Eugene', cases: 1 }, { agent: 'Tricia Baksh', cases: 1 }] }, desks: [{ name: 'Azariah', agents: [{ agent: 'Aidan Eugene', n: 1 }] }] } });
+ok('nobody who has left is named on the agent rows or the desk chips', !/Aidan|Tricia/.test(JSON.stringify(sb)), JSON.stringify(sb));
 console.log('\nGroup life, group health, individual health and increases:\n');
 const G = M.other;
 ok('pending group and health records, and increases, are read from their own objects', G && G.pending === 3, JSON.stringify(G && G.types));
