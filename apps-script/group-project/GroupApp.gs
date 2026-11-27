@@ -33,12 +33,14 @@
  */
 
 var GROUP_APP = {
-  VERSION: '2026-11-26b',
+  VERSION: '2026-11-26c',
   MOVE_TAB: '_move_group',
+  /* the small sheet groupMoveExport makes in the account's Drive, found here by its name (or by MOVE_SHEET_ID) */
+  MOVE_FILE: 'Group move: settings for the new project (groupMoveImport deletes this)',
   /* the group's own timed jobs, and how each is rebuilt here: the project's own installers, never a copy of them */
   JOBS: ['gcmRefreshTick', 'gcmMondaySend', 'gcmDay1030', 'gcmRehearseTick', 'gcmWelcomeTick'],
   /* the move's own marks never travel */
-  SKIP: { GROUP_MOVED_OUT: 1, GROUP_MOVED_IN: 1, MOVE_STOPPED: 1, MOVE_IMPORTED: 1 }
+  SKIP: { GROUP_MOVED_OUT: 1, GROUP_MOVED_IN: 1, MOVE_STOPPED: 1, MOVE_IMPORTED: 1, GROUP_MOVE_FILE: 1, MOVE_SHEET_ID: 1 }
 };
 
 /* ── the web app ───────────────────────────────────────────────── */
@@ -98,18 +100,16 @@ function groupPing_() {
 
 /* ── the move in (run here, in the new project) ─────────────────── */
 
-/** Carries the settings and the timed jobs from the Service Questionnaire project. Needs SQ_SHEET_ID set first, and
- *  groupMoveExport run in the old project: it reads the hidden _move_group tab that wrote, then deletes it. */
+/** Carries the settings and the timed jobs from the Service Questionnaire project. groupMoveExport must have run there
+ *  first. The settings are found, in this order: the sheet MOVE_SHEET_ID names; the settings sheet in this account's
+ *  Drive, by its name; the hidden _move_group tab of the sheet SQ_SHEET_ID names (the first design). */
 function groupMoveImport() {
   var store = PropertiesService.getScriptProperties();
-  if (!String(store.getProperty('SQ_SHEET_ID') || '').trim()) {
-    return groupSay_('Set SQ_SHEET_ID first: Project Settings → Script properties → Add, with the ID the old project\'s groupMoveExport gave you.');
-  }
-  var ss;
-  try { ss = ss_(); } catch (e) { return groupSay_(String(e && e.message || e)); }
-  var sh = ss.getSheetByName(GROUP_APP.MOVE_TAB);
-  var m = groupMoveRead_(sh);
-  if (!m) return groupSay_('There is no "' + GROUP_APP.MOVE_TAB + '" tab in the Service Questionnaire sheet. Run groupMoveExport in the old project first.');
+  var found = groupMoveFind_();
+  if (found && found.err) return groupSay_(found.err);
+  var m = found ? groupMoveRead_(found.sh) : null;
+  if (!m) return groupSay_('The settings from the old project were not found. Run groupMoveExport in the old project first. ' +
+    'If it did run, add the Script property MOVE_SHEET_ID here, with the ID of the sheet its message names, and run groupMoveImport again.');
   if (m.meta.script && m.meta.script === ScriptApp.getScriptId()) return groupSay_('This is the old project. groupMoveImport runs in the new group project.');
 
   /* the clock: every timed job runs by the project's time zone, and a new project takes its maker's account zone */
@@ -123,7 +123,7 @@ function groupMoveImport() {
   }
 
   /* the settings, all of them: what the group side does not read is harmless, and a setting left behind is a silent fault */
-  var keep = { SQ_SHEET_ID: store.getProperty('SQ_SHEET_ID') };
+  var keep = { SQ_SHEET_ID: String(store.getProperty('SQ_SHEET_ID') || '').trim() || m.meta.sheet };
   var props = {};
   Object.keys(m.props).forEach(function (k) { if (!GROUP_APP.SKIP[k]) props[k] = m.props[k]; });
   if (m.meta.teamCode) props.TEAM_CODE = m.meta.teamCode;
@@ -152,7 +152,7 @@ function groupMoveImport() {
 
   var reach = groupReach_();
   store.setProperty('GROUP_MOVED_IN', new Date().toISOString() + ' from ' + (m.meta.from || 'the old project'));
-  try { if (sh) ss.deleteSheet(sh); } catch (e) {}
+  var gone = groupMoveForget_(found);
 
   var lines = [];
   lines.push(Object.keys(props).length + ' settings carried across' + (m.meta.teamCode ? ', the branch code among them' : ' (no branch code was set in the old project: add TEAM_CODE by hand)') + '.');
@@ -160,9 +160,50 @@ function groupMoveImport() {
   if (byHand.length) lines.push('Not rebuilt: ' + byHand.join('; ') + '.');
   lines.push(reach.bad.length ? 'This account cannot open: ' + reach.bad.join('; ') + '. Share each with ' + groupMe_() + ' as an editor, then run groupMoveCheck.'
                               : 'Every sheet and folder the group side names opens (' + reach.ok.join(', ') + ').');
-  lines.push('The "' + GROUP_APP.MOVE_TAB + '" tab, which held the settings, is deleted.');
+  lines.push(gone);
   lines.push('Next: Deploy → New deployment → Web app, Execute as: Me, Who has access: Anyone. Send the new /exec address to be wired into the group pages.');
   return groupSay_(lines.join('\n\n'));
+}
+
+/** Where the old project wrote the settings: { sh, fileId } for the settings sheet, { sh, ss } for the hidden tab. */
+function groupMoveFind_() {
+  var store = PropertiesService.getScriptProperties();
+  var id = String(store.getProperty('MOVE_SHEET_ID') || '').trim();
+  var link = /\/d\/([A-Za-z0-9_-]{20,})/.exec(id);
+  if (link) id = link[1];
+  if (id) {
+    try { var f = SpreadsheetApp.openById(id); return { sh: f.getSheetByName(GROUP_APP.MOVE_TAB) || f.getSheets()[0], fileId: id }; }
+    catch (e) { return { err: 'The sheet in MOVE_SHEET_ID could not be opened (' + String(e && e.message || e).slice(0, 120) + '): check the ID.' }; }
+  }
+  try {
+    var it = DriveApp.getFilesByName(GROUP_APP.MOVE_FILE), best = null;
+    while (it.hasNext()) {
+      var x = it.next();
+      if (x.isTrashed()) continue;
+      if (!best || x.getDateCreated() > best.getDateCreated()) best = x;
+    }
+    if (best) { var b = SpreadsheetApp.openById(best.getId()); return { sh: b.getSheetByName(GROUP_APP.MOVE_TAB) || b.getSheets()[0], fileId: best.getId() }; }
+  } catch (e) {}
+  if (String(store.getProperty('SQ_SHEET_ID') || '').trim()) {
+    try { var ss = ss_(); return { sh: ss.getSheetByName(GROUP_APP.MOVE_TAB), ss: ss }; }
+    catch (e) { return { err: String(e && e.message || e) }; }
+  }
+  return null;
+}
+
+/** The settings held the project's secrets: the sheet is emptied and binned, the tab deleted, MOVE_SHEET_ID removed. */
+function groupMoveForget_(found) {
+  var store = PropertiesService.getScriptProperties();
+  try { store.deleteProperty('MOVE_SHEET_ID'); } catch (e) {}
+  if (found && found.fileId) {
+    try { SpreadsheetApp.openById(found.fileId).getSheets().forEach(function (sh) { try { sh.clear(); } catch (e) {} }); } catch (e) {}
+    try { DriveApp.getFileById(found.fileId).setTrashed(true); return 'The settings sheet, which held the secrets, is emptied and in the bin.'; }
+    catch (e) { return 'The settings sheet is emptied, but could not be put in the bin: delete "' + GROUP_APP.MOVE_FILE + '" from your Drive.'; }
+  }
+  try { if (found && found.ss && found.sh) found.ss.deleteSheet(found.sh); } catch (e) {
+    return 'The "' + GROUP_APP.MOVE_TAB + '" tab could not be deleted: delete it from the Service Questionnaire sheet by hand.';
+  }
+  return 'The "' + GROUP_APP.MOVE_TAB + '" tab, which held the settings, is deleted.';
 }
 
 /** After sharing a sheet or folder with this account: which ones it still cannot open. */

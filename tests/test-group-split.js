@@ -115,7 +115,7 @@ function world(opts) {
   const tabs = opts.tabs || {};
   const newTab = (name) => {
     const t = { name, rows: [], hidden: false, fmt: null,
-      getName: () => name, getLastRow: () => t.rows.length, getLastColumn: () => (t.rows[0] || []).length,
+      getName: () => t.name, getLastRow: () => t.rows.length, getLastColumn: () => (t.rows[0] || []).length,
       clear: () => { t.rows = []; }, hideSheet: () => { t.hidden = true; },
       getRange: (r, c, nr, nc) => ({
         setNumberFormat: (f) => { t.fmt = f; return this; },
@@ -125,11 +125,25 @@ function world(opts) {
     return t;
   };
   const sheet = opts.sheet || { id: 'SQ-SHEET-ID-0123456789abcdefghij', tabs };
+  const fails = opts.fails || {};   // { create: n, insert: n }: Google refusing that many times before it works
   const ss = {
     getId: () => sheet.id, getName: () => 'Service Questionnaires', getSpreadsheetTimeZone: () => 'America/Port_of_Spain',
     getSheetByName: (n) => sheet.tabs[n] || null, getSheets: () => Object.values(sheet.tabs),
-    insertSheet: (n) => (sheet.tabs[n] = newTab(n)), deleteSheet: (t) => { delete sheet.tabs[t.name]; }
+    insertSheet: (n) => { if (fails.insert > 0) { fails.insert--; throw new Error('An unknown error has occurred, please try again later.'); } return (sheet.tabs[n] = newTab(n)); },
+    deleteSheet: (t) => { delete sheet.tabs[t.name]; }
   };
+  /* this account's Drive, shared by every world given the same one (the old and the new project have one owner) */
+  const drive = opts.drive || { files: {}, n: 0 };
+  const fileOf = (id) => drive.files[id] || null;
+  const asSs = (f) => ({ getId: () => f.id, getName: () => f.name, getSheets: () => Object.values(f.tabs), getSheetByName: (n) => f.tabs[n] || null });
+  const makeFile = (name) => {
+    if (fails.create > 0) { fails.create--; throw new Error('An unknown error has occurred, please try again later.'); }
+    const id = 'MOVE-FILE-' + (++drive.n) + '-0123456789abcdefghij';
+    const f = drive.files[id] = { id, name, tabs: {}, trashed: false, created: drive.n };
+    const t = newTab('Sheet1'); t.setName = (n) => { delete f.tabs[t.name]; t.name = n; f.tabs[n] = t; }; f.tabs.Sheet1 = t;
+    return asSs(f);
+  };
+  const asFile = (f) => ({ getId: () => f.id, isTrashed: () => f.trashed, getDateCreated: () => new Date(2026, 10, 26, 0, f.created), setTrashed: (v) => { f.trashed = !!v; } });
   const builder = (fn) => { const b = { timeBased: () => b, everyHours: () => b, onWeekDay: () => b, atHour: () => b, nearMinute: () => b, everyDays: () => b, inTimezone: () => b, at: () => b,
     create: () => { triggers.push({ fn }); return {}; } }; return b; };
   const store = {
@@ -143,13 +157,15 @@ function world(opts) {
     CacheService: { getScriptCache: () => ({ get: k => cacheStore[k] || null, put: (k, v) => { cacheStore[k] = String(v); }, remove: k => { delete cacheStore[k]; }, getAll: () => ({}), putAll: () => {} }) },
     ScriptApp: { getProjectTriggers: () => triggers.map(t => ({ getHandlerFunction: () => t.fn, __t: t })), deleteTrigger: (x) => { const i = triggers.indexOf(x.__t); if (i > -1) triggers.splice(i, 1); },
       newTrigger: (fn) => builder(fn), getScriptId: () => opts.scriptId || 'SCRIPT-OLD', WeekDay: { MONDAY: 'MONDAY' } },
-    SpreadsheetApp: { getActiveSpreadsheet: () => (opts.bound ? ss : null), openById: (id) => { if (id === sheet.id) return ss; if (opts.openIds && opts.openIds.includes(id)) return { getId: () => id, getName: () => 'Group Client Management', getSheetByName: () => null }; throw new Error('not found'); },
-      getUi: () => { throw new Error('no ui'); } },
+    SpreadsheetApp: { getActiveSpreadsheet: () => (opts.bound ? ss : null), openById: (id) => { if (id === sheet.id) return ss; if (fileOf(id)) return asSs(fileOf(id)); if (opts.openIds && opts.openIds.includes(id)) return { getId: () => id, getName: () => 'Group Client Management', getSheetByName: () => null }; throw new Error('not found'); },
+      create: (name) => makeFile(name), flush: () => {}, getUi: () => { throw new Error('no ui'); } },
     Session: { getEffectiveUser: () => ({ getEmail: () => opts.me || 'support@rickyrampersadbranch.com' }), getScriptTimeZone: () => opts.tz || 'America/Port_of_Spain' },
     Utilities: { formatDate: (d, tz, f) => { const x = new Date(d); return f === 'H' ? String(x.getUTCHours()) : f === 'u' ? String(((x.getUTCDay() + 6) % 7) + 1) : x.toISOString().slice(0, 10); },
-      computeDigest: () => [1, 2, 3], DigestAlgorithm: { SHA_256: 1 }, Charset: { UTF_8: 1 }, base64Encode: (b) => Buffer.from(b).toString('base64'), newBlob: () => ({}) },
+      computeDigest: () => [1, 2, 3], sleep: () => {}, DigestAlgorithm: { SHA_256: 1 }, Charset: { UTF_8: 1 }, base64Encode: (b) => Buffer.from(b).toString('base64'), newBlob: () => ({}) },
     ContentService: { createTextOutput: (t) => ({ text: t, setMimeType: function () { return this; } }), MimeType: { JSON: 'json' } },
-    DriveApp: { getFolderById: () => ({ getName: () => 'forms' }) },
+    DriveApp: { getFolderById: () => ({ getName: () => 'forms' }),
+      getFilesByName: (n) => { const l = Object.values(drive.files).filter(f => f.name === n); let i = 0; return { hasNext: () => i < l.length, next: () => asFile(l[i++]) }; },
+      getFileById: (id) => { if (!fileOf(id)) throw new Error('not found'); return asFile(fileOf(id)); } },
     UrlFetchApp: { fetch: () => ({ getResponseCode: () => 503, getContentText: () => '{}' }) },
     LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock: () => {}, releaseLock: () => {} }) },
     MailApp: { sendEmail: () => {} }, GmailApp: {}, HtmlService: {}, Logger: { log: () => {} }
@@ -157,7 +173,7 @@ function world(opts) {
   sb.globalThis = sb;
   vm.createContext(sb);
   for (const f of opts.files) vm.runInContext(src[f], sb, { filename: f });
-  return { sb, props, triggers, sheet, ss };
+  return { sb, props, triggers, sheet, ss, drive };
 }
 
 /* ── 3. both projects load and answer ───────────────────────────── */
@@ -199,39 +215,66 @@ const OLD_PROPS = { GCM_SHEET_ID: 'GCM-SHEET-ID-0123456789abcdefghij', MS_TENANT
   SF_LOGIN_URL: 'https://example.my.salesforce.com', ANTHROPIC_API_KEY: 'sk-test', GCM_HOLD: '{"all":false}', GIR_LIVE: 'Y', GCM_DAY_LAST: '2026-11-26', MOVE_IMPORTED: 'x', transition_live: 'Y' };
 const OLD_JOBS = ['gcmRefreshTick', 'gcmMondaySend', 'gcmDay1030', 'transitionSendTick', 'transitionReceipts', 'gcmRefreshTick'];
 const shared = { id: 'SQ-SHEET-ID-0123456789abcdefghij', tabs: {} };
-const mo = world({ files: OLD.concat(['GroupMoveOut.gs']), bound: true, props: OLD_PROPS, triggers: OLD_JOBS, sheet: shared });
+const drive = { files: {}, n: 0 };
+const moveFiles = () => Object.values(drive.files).filter(f => !f.trashed);
+const moveTab = () => (moveFiles()[0] || { tabs: {} }).tabs._move_group;
+const mo = world({ files: OLD.concat(['GroupMoveOut.gs']), bound: true, props: OLD_PROPS, triggers: OLD_JOBS, sheet: shared, drive, fails: { create: 1 } });
 mo.sb.SVC.TEAM_CODE = 'BRANCH-CODE';
 const said1 = mo.sb.groupMoveStopOld();
 ok('groupMoveStopOld refuses before the export has written the jobs down', /groupMoveExport first/.test(said1) && mo.triggers.length === OLD_JOBS.length);
 const said2 = mo.sb.groupMoveExport();
-const tab = shared.tabs._move_group;
-ok('groupMoveExport writes a hidden _move_group tab, every value as text', !!tab && tab.hidden && tab.fmt === '@' && tab.rows.slice(1).every(r => /^v:/.test(r[2])));
-ok('it carries the branch code and the sheet ID, and names the ID in its message', /SQ-SHEET-ID-0123456789abcdefghij/.test(said2) && tab.rows.some(r => r[0] === 'meta' && r[1] === 'teamCode' && r[2] === 'v:BRANCH-CODE'));
-ok('it writes down the project\'s time zone and names it', tab.rows.some(r => r[0] === 'meta' && r[1] === 'timeZone' && r[2] === 'v:America/Port_of_Spain') && /America\/Port_of_Spain/.test(said2));
-ok('it writes down the group\'s timed jobs once each, and none of the orphan side\'s', JSON.stringify(tab.rows.filter(r => r[0] === 'job').map(r => r[1]).sort()) === JSON.stringify(['gcmDay1030', 'gcmMondaySend', 'gcmRefreshTick']));
+const tab = moveTab();
+ok('groupMoveExport writes the settings to a small sheet of its own in Drive, not into the big workbook', moveFiles().length === 1 && !!tab && !shared.tabs._move_group, said2);
+ok('it tried again when Google refused the first time (the 26 November "unknown error")', /Ready\./.test(said2), said2);
+ok('every value is written as text', !!tab && tab.fmt === '@' && tab.rows.slice(1).every(r => /^v:/.test(r[2])));
+ok('it carries the branch code and the sheet ID', !!tab && tab.rows.some(r => r[0] === 'meta' && r[1] === 'teamCode' && r[2] === 'v:BRANCH-CODE') && tab.rows.some(r => r[0] === 'meta' && r[1] === 'sheet' && r[2] === 'v:' + shared.id));
+ok('it writes down the project\'s time zone and names it', !!tab && tab.rows.some(r => r[0] === 'meta' && r[1] === 'timeZone' && r[2] === 'v:America/Port_of_Spain') && /America\/Port_of_Spain/.test(said2));
+ok('it writes down the group\'s timed jobs once each, and none of the orphan side\'s', !!tab && JSON.stringify(tab.rows.filter(r => r[0] === 'job').map(r => r[1]).sort()) === JSON.stringify(['gcmDay1030', 'gcmMondaySend', 'gcmRefreshTick']));
+mo.sb.groupMoveExport();
+ok('running it again leaves one settings sheet, the earlier one emptied and binned', moveFiles().length === 1 && Object.values(drive.files).filter(f => f.trashed).every(f => Object.values(f.tabs).every(t => !t.rows.length)));
 mo.sb.groupMoveStopOld();
 ok('groupMoveStopOld deletes the group\'s timed jobs and leaves the orphan side\'s running', JSON.stringify(mo.triggers.map(t => t.fn).sort()) === JSON.stringify(['transitionReceipts', 'transitionSendTick']));
 
-const mn = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
-ok('groupMoveImport asks for SQ_SHEET_ID first', /Set SQ_SHEET_ID first/.test(mn.sb.groupMoveImport()) && !!shared.tabs._move_group);
-const mz = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, tz: 'America/New_York', props: { SQ_SHEET_ID: shared.id }, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
+const mz = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, drive, tz: 'America/New_York', openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
 const saidZ = mz.sb.groupMoveImport();
-ok('groupMoveImport stops, changing nothing, when the new project is on another time zone', /Stopped before anything was changed/.test(saidZ) && /appsscript\.json/.test(saidZ) && !('MS_SECRET' in mz.props) && mz.triggers.length === 0 && !!shared.tabs._move_group, saidZ);
+ok('groupMoveImport stops, changing nothing, when the new project is on another time zone', /Stopped before anything was changed/.test(saidZ) && /appsscript\.json/.test(saidZ) && !('MS_SECRET' in mz.props) && mz.triggers.length === 0 && moveFiles().length === 1, saidZ);
 ok('the ping says which time zone the project runs on', JSON.parse(mz.sb.doGet({ parameter: { action: 'ping' } }).text).timeZone === 'America/New_York');
-mn.props.SQ_SHEET_ID = 'SQ-SHEET-ID-0123456789abcdefghij';
+const mn = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, drive, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
 const said3 = mn.sb.groupMoveImport();
-ok('it carries every setting, the secrets included, but not the move\'s own marks', mn.props.MS_SECRET === 's3cret' && mn.props.ANTHROPIC_API_KEY === 'sk-test' && mn.props.GCM_HOLD === '{"all":false}' && !('MOVE_IMPORTED' in mn.props), said3);
-ok('it sets TEAM_CODE from the old project\'s branch code, and keeps its own SQ_SHEET_ID', mn.props.TEAM_CODE === 'BRANCH-CODE' && mn.props.SQ_SHEET_ID === 'SQ-SHEET-ID-0123456789abcdefghij');
+ok('it finds the settings sheet in Drive by itself, with no property to type', /settings carried across/.test(said3), said3);
+ok('it carries every setting, the secrets included, but not the move\'s own marks', mn.props.MS_SECRET === 's3cret' && mn.props.ANTHROPIC_API_KEY === 'sk-test' && mn.props.GCM_HOLD === '{"all":false}' && !('MOVE_IMPORTED' in mn.props) && !('GROUP_MOVE_FILE' in mn.props), said3);
+ok('it sets TEAM_CODE from the branch code, and SQ_SHEET_ID from the sheet the export named', mn.props.TEAM_CODE === 'BRANCH-CODE' && mn.props.SQ_SHEET_ID === shared.id);
 ok('it rebuilds the hourly refresh, the Monday letters and the 10:30 day, once each',
   JSON.stringify(mn.triggers.map(t => t.fn).sort()) === JSON.stringify(['gcmDay1030', 'gcmMondaySend', 'gcmRefreshTick']), mn.triggers.map(t => t.fn).join(','));
-ok('it deletes the tab that held the secrets', !shared.tabs._move_group);
+ok('it empties and bins the sheet that held the secrets', moveFiles().length === 0 && Object.values(drive.files).every(f => Object.values(f.tabs).every(t => !t.rows.length)) && /in the bin/.test(said3));
 ok('it marks the move done and says what to deploy next', !!mn.props.GROUP_MOVED_IN && /New deployment/.test(said3));
 ok('it reports both sheets open', /Every sheet and folder/.test(said3), said3);
-const mo2 = world({ files: OLD.concat(['GroupMoveOut.gs']), bound: true, props: OLD_PROPS, triggers: [], sheet: shared, scriptId: 'SCRIPT-OLD' });
+ok('with nothing exported it says how to point it at the sheet', /MOVE_SHEET_ID/.test(world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, drive }).sb.groupMoveImport()));
+
+const mo2 = world({ files: OLD.concat(['GroupMoveOut.gs']), bound: true, props: OLD_PROPS, triggers: [], sheet: shared, drive, scriptId: 'SCRIPT-OLD' });
 mo2.sb.groupMoveExport();
-ok('groupMoveImport refuses to run in the old project itself', /This is the old project/.test(world({ files: NEW, scriptId: 'SCRIPT-OLD', sheet: shared, props: { SQ_SHEET_ID: shared.id } }).sb.groupMoveImport()));
+ok('groupMoveImport refuses to run in the old project itself', /This is the old project/.test(world({ files: NEW, scriptId: 'SCRIPT-OLD', sheet: shared, drive }).sb.groupMoveImport()));
+const keepId = moveFiles()[0].id;
+const mp = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, drive: { files: { [keepId]: drive.files[keepId] }, n: 99 }, props: { MOVE_SHEET_ID: 'https://docs.google.com/spreadsheets/d/' + keepId + '/edit' }, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
+ok('MOVE_SHEET_ID, as an ID or a whole link, points it at the sheet when the search cannot', /settings carried across/.test(mp.sb.groupMoveImport()) && !('MOVE_SHEET_ID' in mp.props));
+mo2.sb.groupMoveExport();
 mo2.sb.groupMoveCleanUp();
-ok('groupMoveCleanUp deletes the tab if the move stops half way', !shared.tabs._move_group);
+ok('groupMoveCleanUp empties and bins the settings sheet if the move stops half way', moveFiles().length === 0);
+
+/* when Drive refuses the new sheet: the hidden tab, as at first, read through SQ_SHEET_ID */
+const shared2 = { id: 'SQ-SHEET-ID-0123456789abcdefghij', tabs: {} };
+const mf = world({ files: OLD.concat(['GroupMoveOut.gs']), bound: true, props: OLD_PROPS, triggers: OLD_JOBS.slice(), sheet: shared2, fails: { create: 9 } });
+const saidF = mf.sb.groupMoveExport();
+ok('if Drive refuses the sheet, it falls back to the hidden tab and says to set SQ_SHEET_ID', !!shared2.tabs._move_group && shared2.tabs._move_group.hidden && /SQ_SHEET_ID = SQ-SHEET-ID/.test(saidF), saidF);
+const mf2 = world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared2, props: { SQ_SHEET_ID: shared2.id }, openIds: ['GCM-SHEET-ID-0123456789abcdefghij'] });
+const saidF2 = mf2.sb.groupMoveImport();
+ok('and the import reads that tab and deletes it', /settings carried across/.test(saidF2) && !shared2.tabs._move_group && mf2.props.MS_SECRET === 's3cret', saidF2);
+const shared3 = { id: 'SQ-SHEET-ID-0123456789abcdefghij', tabs: {} };
+shared3.tabs._move_group = { name: '_move_group', rows: [], getName: () => '_move_group', getLastRow: () => 0 };   // what a run that failed half way leaves
+const mx = world({ files: OLD.concat(['GroupMoveOut.gs']), bound: true, props: OLD_PROPS, triggers: OLD_JOBS.slice(), sheet: shared3, fails: { create: 9, insert: 9 } });
+const saidX = mx.sb.groupMoveExport();
+ok('when every way fails it says which step, that nothing was changed, and to run it again', /Stopped while writing the hidden tab here/.test(saidX) && /Nothing was changed/.test(saidX) && /unknown error/.test(saidX) && mx.triggers.length === OLD_JOBS.length, saidX);
+ok('and groupMoveStopOld still refuses, an empty tab left by a failed run included, so no job is deleted before the settings are written down', /groupMoveExport first/.test(mx.sb.groupMoveStopOld()) && mx.triggers.length === OLD_JOBS.length);
 
 /* ── 5. the pages ──────────────────────────────────────────────── */
 let rp = { status: 1, out: '' };

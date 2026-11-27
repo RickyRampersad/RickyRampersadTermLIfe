@@ -29,8 +29,10 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
 
 **1. In the old project** (the Service Questionnaire sheet → Extensions → Apps Script)
 - Add a file, `GroupMoveOut.gs`, and paste `apps-script/GroupMoveOut.gs` into it. Save.
-- Run `groupMoveExport`. It writes the settings, the branch code and the group's timed jobs onto a hidden tab,
-  `_move_group`, and its message gives you the sheet's ID. Copy that ID.
+- Run `groupMoveExport`. It writes the settings, the branch code and the group's timed jobs into a small new sheet
+  in your Drive, "Group move: settings for the new project", and its message names the time zone. Not into the
+  Service Questionnaire workbook: that one is so large that adding a tab to it failed on 26 November with Google's
+  "An unknown error has occurred". Each step is tried three times, and a step that still fails says which it was.
 - Run `groupMoveStopOld`. The group's timed jobs stop here; the orphan side's keep running.
 
 **2. Who owns the new project**
@@ -44,17 +46,18 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
 **3. In the new project** (script.google.com → New project, named "Group Client Management")
 - Make five files and paste each in: `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs`, then `GroupShared.gs`
   and `GroupApp.gs` from this folder. File order does not matter.
-- Project Settings → Script properties → Add: `SQ_SHEET_ID` = the ID from step 1.
 - The clock: Project Settings → tick "Show appsscript.json manifest file in editor" → open `appsscript.json` →
   set `"timeZone"` to the zone `groupMoveExport` named (`America/Port_of_Spain`, normally) → Save. A new project
   takes the time zone of the account that made it, and every timed job runs by it. `groupMoveImport` refuses, and
   changes nothing, until the two match.
-- Run `groupMoveImport`, and approve the permissions it asks for the first time. It carries every setting across, the secrets included:
+- Run `groupMoveImport`, and approve the permissions it asks for the first time. It finds the settings sheet in your
+  Drive by itself and sets `SQ_SHEET_ID` from it (only if it says it cannot, add the Script property `MOVE_SHEET_ID`
+  with the ID the export named). It carries every setting across, the secrets included:
   - the Microsoft, Salesforce and Claude keys;
   - the branch code, as `TEAM_CODE`.
 
   It then rebuilds the hourly refresh, the Monday 10:00 letters and the 10:30 group day, checks that every sheet
-  and folder opens, and deletes the `_move_group` tab.
+  and folder opens, and empties and bins the settings sheet.
 - Deploy → New deployment → Web app. Execute as: Me. Who has access: Anyone. Copy the `/exec` address.
 - Open `<the /exec>?action=ping` in a browser:
   - `sheets` should say `ok` twice;
@@ -77,7 +80,8 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
   orphan page, the walls and the forms would lose the backend.
 - Its ping now answers faster. Group actions sent to it answer `Unknown action`.
 
-If the move stops half way, run `groupMoveCleanUp` in the old project. It deletes the tab and the secrets on it.
+If the move stops half way, run `groupMoveCleanUp` in the old project. It empties and bins the settings sheet, and the
+secrets on it.
 To undo step 1, run `gcmSetup` there again, and `gcmGroupDayStart` too if the 10:30 group day was on.
 
 ## After the move
