@@ -75,9 +75,17 @@ env.sfkQuery_ = q => {
     { Id: '00TX', Subject: 'Pending 5000000005 exam', IsClosed: false, ActivityDate: '2026-10-30', LastModifiedDate: '2026-10-21T15:00:00.000+0000', Owner: { Name: 'Desk' } },
     { Id: '00TY', Subject: 'Pending 5000000003 docs', IsClosed: false, ActivityDate: '2026-10-30', LastModifiedDate: '2026-10-10T15:00:00.000+0000', Owner: { Name: 'Desk' } }];
   if (/IsClosed = false OR/.test(q)) return [
-    { Subject: 'Pending - 5000000001 chase FPP', IsClosed: false, ActivityDate: '2026-10-20', CreatedDate: '2026-10-01T12:00:00.000+0000', LastModifiedDate: '2026-10-10T12:00:00.000+0000' },
-    { Subject: 'Follow up 1000000001 / 5000000003', IsClosed: false, ActivityDate: '2026-10-30', CreatedDate: '2026-10-27T15:00:00.000+0000', LastModifiedDate: '2026-10-27T15:00:00.000+0000' },
+    { Id: '00TC1', Subject: 'Pending - 5000000001 chase FPP', IsClosed: false, ActivityDate: '2026-10-20', CreatedDate: '2026-10-01T12:00:00.000+0000', LastModifiedDate: '2026-10-10T12:00:00.000+0000' },
+    { Id: '00TC3', Subject: 'Follow up 1000000001 / 5000000003', IsClosed: false, ActivityDate: '2026-10-30', CreatedDate: '2026-10-27T15:00:00.000+0000', LastModifiedDate: '2026-10-27T15:00:00.000+0000' },
     { Subject: 'Pending 5000000002 received', IsClosed: true, ActivityDate: '2026-10-01', CreatedDate: '2026-09-01T12:00:00.000+0000', LastModifiedDate: '2026-10-27T13:00:00.000+0000' }];
+  // The conversation on the open Pendings tasks (27 Nov 2026, night): Varun wrote on 0001 and nobody answered; on 0003 the agent
+  // wrote from My day and Azariah answered after; ACTION REQUIRED from the system is nobody's answer.
+  if (/CreatedBy\.Name, CreatedDate, Body FROM FeedItem/.test(q)) return [
+    { ParentId: '00TC1', CreatedById: 'U9', CreatedBy: { Name: 'Varun Seegolam' }, CreatedDate: '2026-10-26T14:00:00.000+0000', Body: '<p>Client paying Friday, will drop FPP to branch</p>' },
+    { ParentId: '00TC1', CreatedById: 'U9', CreatedBy: { Name: 'Ricky Rampersad' }, CreatedDate: '2026-10-26T15:00:00.000+0000', Body: 'ACTION REQUIRED · Azariah. Posted Mon 26 Oct.' },
+    { ParentId: '00TC3', CreatedById: 'U9', CreatedBy: { Name: 'Ricky Rampersad' }, CreatedDate: '2026-10-25T14:00:00.000+0000', Body: 'Agent · Aidan Eugene · Sun 25 Oct 10:00am\n\nDocs with client, collecting Monday' },
+    { ParentId: '00TC3', CreatedById: 'U2', CreatedBy: { Name: 'Azariah Griffith' }, CreatedDate: '2026-10-25T18:00:00.000+0000', Body: '<p>Noted, will submit once received</p>' }];
+  if (/CommentBody FROM FeedComment/.test(q)) return [];
   if (/FROM FeedItem/.test(q)) return [{ ParentId: '00TA', CreatedById: 'U1' }, { ParentId: '00TB', CreatedById: 'U1' }, { ParentId: '00TC', CreatedById: 'U2' }, { ParentId: '001X', CreatedById: 'U2' }];
   if (/WHERE Id IN/.test(q)) return [{ Id: '00TA', Subject: 'Pending - 5000000001 chase FPP', Task_Type__c: 'Pendings' }, { Id: '00TB', Subject: 'Pending 5000000003', Task_Type__c: 'Pendings' },
                                      { Id: '00TC', Subject: 'Servicing 5000000005', Task_Type__c: 'Servicing' }];
@@ -153,6 +161,21 @@ ok('no client and no full policy number in it', !/50000000\d\d|Kavita|Sharma/.te
 const VAa = FO.agents.find(a => a.agent === 'Varun Seegolam');
 ok('each agent sees their cases in the order the branch works them', VAa && VAa.cases.length === 2 && VAa.cases[0].order === 1 && VAa.cases[0].rank < VAa.cases[1].rank, JSON.stringify(VAa));
 ok('the agents are listed by their first case on the focus', FO.agents[0].cases[0].rank === 1, JSON.stringify(FO.agents.map(a => [a.agent, a.cases[0].rank])));
+console.log('\nThe conversations:\n');
+const CV = M.conv;
+ok('the conversations are built', CV && !CV.error, JSON.stringify(CV && CV.error));
+ok('an agent\'s post nobody at the branch answered is waiting on us', CV.waitList.some(r => r.pol === '0001' && r.agent === 'Varun Seegolam' && /paying Friday/.test(r.text)), JSON.stringify(CV.waitList));
+ok('the system\'s ACTION REQUIRED is not an answer', CV.waitList.some(r => r.pol === '0001'));
+ok('an agent\'s My day note answered by Azariah is answered, by her', CV.doneList.some(r => r.pol === '0003' && r.by === 'Azariah'), JSON.stringify(CV.doneList));
+ok('how long the branch took to answer, the median', CV.medianHours === 4, String(CV.medianHours));
+ok('each agent\'s last word and how many of theirs wait', CV.agents.some(a => a.agent === 'Varun Seegolam' && a.waiting === 1), JSON.stringify(CV.agents));
+console.log('\nWaiting on the agent:\n');
+const HO2 = M.hold, VH = HO2 && HO2.agents.find(a => a.agent === 'Varun Seegolam');
+ok('every agent with a case whose next move is theirs', HO2 && !HO2.error && VH, JSON.stringify(HO2 && (HO2.error || HO2.agents.map(a => a.agent))));
+ok('the cases that could settle but wait on them, with what is missing and the premium', VH.settleN >= 1 && VH.settle[0].missing.length >= 1 && typeof VH.settle[0].prem === 'number', JSON.stringify(VH.settle));
+ok('all their outstanding items by code, with the oldest', VH.codes.some(c => c.code === 'FUTPY' || c.code === 'PRADD') && VH.items >= 2, JSON.stringify(VH.codes));
+ok('their last word in Chatter and whether we answered', 'lastSaid' in VH && VH.waitingOnUs === 1, JSON.stringify([VH.lastSaid, VH.waitingOnUs]));
+ok('no client and no full policy number', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(HO2)));
 console.log('\nThe morning brief:\n');
 const B = L.brief, step = k => B.steps.find(x => x.k === k);
 ok('seven steps, in the order support works them', B && !B.error && B.steps.map(x => x.k).join(',') === 'save,settle,allin,ho,expiry,never,agents', JSON.stringify(B && (B.error || B.steps.map(x => [x.k, x.n]))));
