@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27r';
+var SCRIPT_VERSION = '2026-11-27u';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17873,13 +17873,31 @@ function wallPendLive_(day) {
             cmt: ix('requirement_comment'), rdate: ix('REQUIREMENT_DATE') > -1 ? ix('REQUIREMENT_DATE') : ix('ordered_date') };
   if (c.pol < 0 || c.code < 0) return { error: tab.getName() + ' has no POLICY or REQUIREMENT_CODE column.' };
   var cell = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+  /* SETTLED SINCE OCTOBER (27 Nov 2026). Ricky: "pending wall can also add settlement from Oct, all this needs is the issue
+     date and status 1 or premium paying". When the report carries an issue date and a policy status, a policy with status 1
+     (or "Premium Paying") issued on or after WALL_SETTLED.FROM is settled business, not pending: it is counted on its own and
+     left out of every pending figure, and so is a case the status says is closed (not proceeded with, declined, not taken). */
+  var colOf = function (re, not) { for (var i = 0; i < h.length; i++) if (re.test(h[i]) && !(not && not.test(h[i]))) return i; return -1; };
+  c.issue = colOf(/issue.?date/i); c.pst = colOf(/^(policy.?)?status(.?(code|desc|description))?$/i, /requirement/i);
+  if (c.pst < 0) c.pst = colOf(/policy.?status/i, /requirement/i);
+  var settledPol = {}, closedPol = {};
+  // Any column that could carry a person's name, so the underwriter's words can be shown without it (see wallSafeText_).
+  var nameCols = h.map(function (x, i) { return /(client|owner|insured|assured|holder|payor|payer|applicant|surname|first.?name|last.?name|full.?name|life\b)/i.test(x) && !/agent|requirement|branch|underwriter|associate/i.test(x) ? i : -1; }).filter(function (i) { return i > -1; });
   var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?\D{0,3}(\d{1,2}):?(\d{2})/i.exec(tab.getName());
   var two = function (x) { return ('0' + x).slice(-2); };
   var out = { tab: tab.getName(), asOf: m ? prettyDate_(m[1] + '-' + two(m[2]) + '-' + two(m[3])).replace(/ \d{4}$/, '') + ', ' + twelve_(two(m[4]) + ':' + m[5]) : tab.getName(),
               reqs: 0, policies: 0, newWeek: 0, rag: { Red: 0, Amber: 0, Green: 0 }, ages: [], byReq: [], who: [], first: { policies: 0, prem: 0, agents: [] }, agents: 0 };
   var pols = {}, ages = {}, reqs = {}, who = {}, agentOf = {}, firstBy = {}, firstPol = {}, agentsSeen = {}, P = {}, numOf = {}, codes = {}, whoPol = {};
+  var issueOf = function (r) { var v = c.issue < 0 ? '' : r[c.issue]; return v instanceof Date ? Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM-dd') : String(v == null ? '' : v).trim().slice(0, 10); };
   vals.slice(1).forEach(function (r) {
     var pol = cell(r, c.pol); if (!pol) return;
+    var pst = cell(r, c.pst), iss = issueOf(r);
+    if (c.pst > -1 && (/^0*1(\.0+)?$/.test(pst) || /premium paying/i.test(pst))) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iss) && iss >= WALL_SETTLED.FROM) { var sp = settledPol[pol] = settledPol[pol] || { ag: cell(r, c.agent) || 'No agent named', at: iss, codes: {}, prem: 0, days: 0 };
+        var cd0 = cell(r, c.code).toUpperCase(); if (cd0) sp.codes[cd0] = cell(r, c.name) || cd0; sp.prem = Math.max(sp.prem, Number(cell(r, c.prem)) || 0); sp.days = Math.max(sp.days, Number(cell(r, c.days)) || 0); }
+      return;
+    }
+    if (c.pst > -1 && WALL_SETTLED.CLOSED.test(pst)) { closedPol[pol] = 1; return; }
     if (/closed|received|waived|complete|cancel/i.test(cell(r, c.st))) return;
     var ag = cell(r, c.agent) || 'No agent named';
     out.reqs++; pols[pol] = 1; agentOf[pol] = ag; agentsSeen[ag] = 1;
@@ -17902,7 +17920,9 @@ function wallPendLive_(day) {
     p.items.push({ kind: kd, who: cell(r, c.who) || 'Not said', last: /^y/i.test(cell(r, c.last)), red: rg === 'Red', code: cell(r, c.code).toUpperCase(), name: cell(r, c.name) || cell(r, c.code) });
     if (!p.uw) p.uw = cell(r, c.uw); if (!p.so) p.so = cell(r, c.so);
     var nfd = c.nf < 0 ? '' : dOf(r[c.nf]); if (/^\d{4}-\d{2}-\d{2}$/.test(nfd) && (!p.nf || nfd < p.nf)) p.nf = nfd;
-    if (cell(r, c.cmt)) { var cd = c.rdate < 0 ? '' : dOf(r[c.rdate]); if (/^\d{4}/.test(cd) && cd > p.cmtAt) p.cmtAt = cd; }
+    if (cell(r, c.cmt)) { var cd = c.rdate < 0 ? '' : dOf(r[c.rdate]); if (/^\d{4}/.test(cd) && cd > p.cmtAt) p.cmtAt = cd;
+      // What the underwriter wrote, newest per policy, with every name on the row noted so it can be taken out (27 Nov 2026).
+      if (!p.uwNote || cd >= p.uwNote.at) p.uwNote = { at: cd, code: cell(r, c.code).toUpperCase(), raw: cell(r, c.cmt), names: nameCols.map(function (i) { return cell(r, i); }).join(' ') }; }
     var a = cell(r, c.age) || 'Not dated'; ages[a] = (ages[a] || 0) + 1;
     var nm = cell(r, c.name) || cell(r, c.code); reqs[nm] = (reqs[nm] || 0) + 1;
     var w = cell(r, c.who) || 'Not said'; who[w] = (who[w] || 0) + 1;
@@ -17918,6 +17938,7 @@ function wallPendLive_(day) {
     }
   });
   out.policies = Object.keys(pols).length; out.agents = Object.keys(agentsSeen).length;
+  try { out.settled = wallSettled_(day, settledPol, c.issue > -1 && c.pst > -1, Object.keys(closedPol).length); } catch (e) { out.settled = { error: String(e && e.message || e) }; }
   out.ages = WALL_PEND.AGES.map(function (k) { return { k: k.replace(' days', ''), n: ages[k] || 0 }; });
   out.byReq = Object.keys(reqs).map(function (k) { return { k: k, n: reqs[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, WALL_PEND.TOP);
   out.who = Object.keys(who).map(function (k) { return { k: k, n: who[k], p: Object.keys(whoPol[k] || {}).length }; }).sort(function (a, b) { return b.n - a.n; });
@@ -17934,7 +17955,9 @@ function wallPendLive_(day) {
   var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
   wallPendPolicies_(out, P, chase);
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
-  try { out.morning = wallPendMorning_(day, P, numOf); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
+  // The report's own headings, so a column Guardian or the branch adds is seen on the feed (27 Nov 2026). Headings only, no row.
+  out.cols = h.filter(Boolean);
+  try { out.morning = wallPendMorning_(day, P, numOf, chase); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
   try { out.follow = pendFollowCount_(day); } catch (e) {}
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
@@ -17950,8 +17973,8 @@ function wallPendLive_(day) {
  *    e-mail logged); and the queue to work first: approved by underwriting with items left, then one item from settlement,
  *    then the first premium alone, each with its codes, who moves it, its age and whether anybody touched it today.
  *  Agents' first names, codes and the last four digits of a policy only, never a client. wallScrub_ folds anyone who has left. */
-var WALL_MORN = { STREAM: 14, QUEUE: 12 };
-function wallPendMorning_(day, P, numOf) {
+var WALL_MORN = { STREAM: 14, QUEUE: 12, CODES: 10, ACT: 14, UW: 8, UW_DAYS: 14 };
+function wallPendMorning_(day, P, numOf, chase) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
   /* The staff desks only. The Branch Manager's Salesforce user is also the one the system's own runs write as (on the day this
      was built it changed a run of group tasks within four seconds at 11:03am), so counting it would put automation on the
@@ -17959,18 +17982,19 @@ function wallPendMorning_(day, P, numOf) {
   var users = sfkUsers_() || {}, ids = {}, order = DAY_MAIL_DESKS.filter(function (s) { return s !== 'pawan'; });
   order.forEach(function (s) { var id = users[s] && users[s].id; if (id) ids[id] = s; });
   var from = sfkUtcAt_(day, 0), to = sfkUtcAt_(shiftDays_(day, 1), 0), ev = [];
+  var CODESET = {}; Object.keys(P).forEach(function (k) { P[k].items.forEach(function (it) { if (it.code) CODESET[it.code] = 1; }); });
   var polsOf = function (subject) { var seen = {}, out = []; (String(subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) { var p = numOf[x]; if (p && !seen[p]) { seen[p] = 1; out.push(p); } }); return out; };
-  var add = function (at, uid, kind, subject) { var sid = ids[uid]; if (!sid) return; polsOf(subject).forEach(function (p) { ev.push({ at: String(at || ''), sid: sid, kind: kind, pol: p }); }); };
+  var add = function (at, uid, kind, subject, text) { var sid = ids[uid]; if (!sid) return; polsOf(subject).forEach(function (p) { ev.push({ at: String(at || ''), sid: sid, kind: kind, pol: p, text: text || '' }); }); };
   sfkQuery_("SELECT Id, Subject, IsClosed, LastModifiedDate, LastModifiedById FROM Task WHERE Task_Type__c = 'Pendings' AND LastModifiedDate >= " + from +
     ' AND LastModifiedDate < ' + to + ' LIMIT 1000').forEach(function (t) { add(t.LastModifiedDate, t.LastModifiedById, t.IsClosed ? 'closed' : 'moved', t.Subject); });
-  var allNotes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
+  var allNotes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate, Body FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
     " AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000").filter(function (f) { return ids[f.CreatedById]; });
   var notes = allNotes.filter(function (f) { return /^00T/.test(String(f.ParentId)); });
   var tl = {}; notes.forEach(function (f) { tl[f.ParentId] = 1; }); tl = Object.keys(tl);
   var subj = {}, whatOf = {};
   for (var i = 0; i < tl.length; i += WALL_PEND.IDS) sfkQuery_('SELECT Id, Subject, Task_Type__c, WhatId FROM Task WHERE Id IN (' + tl.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ')')
     .forEach(function (t) { whatOf[t.Id] = String(t.WhatId || ''); if (String(t.Task_Type__c) === 'Pendings' || polsOf(t.Subject).length) subj[t.Id] = t.Subject; });
-  notes.forEach(function (f) { if (subj[f.ParentId] != null) add(f.CreatedDate, f.CreatedById, 'note', subj[f.ParentId]); });
+  notes.forEach(function (f) { if (subj[f.ParentId] != null) add(f.CreatedDate, f.CreatedById, 'note', subj[f.ParentId], wallSafeText_(f.Body, '', CODESET)); });
   // Group life, group health, individual health and increases (27 Nov 2026): their own Salesforce objects, not on the report.
   var O = {}, other = null;
   try { other = wallPendOther_(day, ids, from, to, allNotes, whatOf); O = other.recs; other.ev.forEach(function (e) { ev.push(e); }); } catch (e) { other = { error: String(e && e.message || e) }; }
@@ -17987,13 +18011,23 @@ function wallPendMorning_(day, P, numOf) {
   var at = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? '' : twelve_(Utilities.formatDate(d, CONFIG.TZ, 'HH:mm')); };
   var row = function (e) { var h = held(e.pol), o = O[e.pol];
     return { at: at(e.at), desk: String(nameFor_(e.sid)).split(' ')[0], agent: first(o ? o.ag : P[e.pol] ? P[e.pol].ag : ''), code: h.code, kind: h.kind, what: e.kind,
-             pol: o ? '' : String(e.pol).slice(-4), grp: o ? o.label : '' }; };
+             pol: o ? '' : String(e.pol).slice(-4), grp: o ? o.label : '', text: e.text || '' }; };
+  /* Who is in, and whose cases each person moved (27 Nov 2026, afternoon). Ricky: "I'm not seeing the agents' first names. It's not doing
+     anything to see how staff is working and what blocks." A desk that is out or not signed in is said so, never shown red
+     for "nothing yet"; a desk that is in says when it signed in, whose cases it moved (agents' full names here, first names on
+     the page), and how long since its last touch. The team row is workdayTeam_'s, the same the Branch Manager's day reads. */
+  var team = {}; try { (workdayTeam_(day) || []).forEach(function (t) { team[t.sid] = t; }); } catch (e) {}
+  var nowMs = Date.now(), msOf = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? 0 : d.getTime(); };
   var desks = order.filter(function (s) { return users[s]; }).map(function (s) {
-    var mine = ev.filter(function (e) { return e.sid === s; }), pols = {};
-    mine.forEach(function (e) { pols[e.pol] = 1; });
+    var mine = ev.filter(function (e) { return e.sid === s; }), pols = {}, ags = {}, tm = team[s] || {};
+    mine.forEach(function (e) { pols[e.pol] = 1; var o = O[e.pol], a = first(o ? o.ag : P[e.pol] ? P[e.pol].ag : ''); if (a) (ags[a] = ags[a] || {})[e.pol] = 1; });
+    var lastMs = mine.length ? msOf(mine[mine.length - 1].at) : 0;
     return { name: String(nameFor_(s)).split(' ')[0], first: mine.length ? row(mine[0]) : null, last: mine.length ? at(mine[mine.length - 1].at) : '',
              touches: mine.length, cases: Object.keys(pols).length, closed: mine.filter(function (e) { return e.kind === 'closed'; }).length,
-             notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length };
+             notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length,
+             signedIn: tm.at || '', late: tm.late || 0, absent: !!tm.absent, dayClosed: tm.closed == null ? null : tm.closed, dayTarget: tm.target == null ? null : tm.target,
+             quietMins: lastMs ? Math.max(0, Math.round((nowMs - lastMs) / 60000)) : null,
+             agents: Object.keys(ags).map(function (a) { return { agent: a, n: Object.keys(ags[a]).length }; }).sort(function (x, y) { return y.n - x.n; }) };
   });
   var today = {}; ev.forEach(function (e) { if (!O[e.pol]) today[e.pol] = 1; });
   var stateOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var s = WALL_PEND.STATES[i]; if (s.re && s.re.test(p.dec)) return s.key; } return 'none'; };
@@ -18001,15 +18035,184 @@ function wallPendMorning_(day, P, numOf) {
   var queue = Object.keys(P).filter(function (k) { return rank(P[k]) < 9; }).sort(function (a, b) { return (rank(P[a]) - rank(P[b])) || (P[a].reqs - P[b].reqs) || (P[b].days - P[a].days); })
     .map(function (k) { var p = P[k], cs = {}, who = {}; p.items.forEach(function (it) { cs[it.code] = 1; who[it.who] = (who[it.who] || 0) + 1; });
       var w = Object.keys(who).sort(function (x, y) { return who[y] - who[x]; })[0] || '';
-      return { pol: String(k).slice(-4), agent: first(p.ag), why: ['Only the premium left', 'Approved · settle it', 'One item left'][rank(p)], codes: Object.keys(cs).slice(0, 4), left: p.reqs,
+      return { _pol: k, pol: String(k).slice(-4), agent: first(p.ag), why: ['Only the premium left', 'Approved · settle it', 'One item left'][rank(p)], codes: Object.keys(cs).slice(0, 4), left: p.reqs,
                who: w, days: p.days, red: p.red > 0, today: !!today[k] }; });
-  var started = desks.filter(function (d) { return d.touches; }).length;
-  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length,
+  var started = desks.filter(function (d) { return d.touches; }).length, inNow = desks.filter(function (d) { return d.signedIn && !d.absent; }).length;
+  // What is holding the cases nearest to settling, by whose move it is, and which agents they wait on.
+  var hold = {}; queue.forEach(function (q) { if (q.today) return; var h = hold[q.who || 'Not said'] = hold[q.who || 'Not said'] || { who: q.who || 'Not said', n: 0, ag: {} }; h.n++; if (q.agent) h.ag[q.agent] = (h.ag[q.agent] || 0) + 1; });
+  var blocks = Object.keys(hold).map(function (k) { var h = hold[k]; return { who: h.who, n: h.n, agents: Object.keys(h.ag).map(function (a) { return { agent: a, n: h.ag[a] }; }).sort(function (x, y) { return y.n - x.n; }).slice(0, 6) }; })
+    .sort(function (a, b) { return b.n - a.n; });
+  /* What can settle today, code by code (27 Nov 2026). Ricky: "how many policies can be settled today with the different codes?"
+     A case nearest settlement (only the premium left, approved by underwriting, or one item left) counted once under every code
+     still open on it, with the requirement's name and whose move it is. */
+  var sc = {};
+  queue.forEach(function (q) { var p = P[q._pol]; if (!p) return; var seen = {};
+    p.items.forEach(function (it) { var k = it.code || it.name; if (!k || seen[k]) return; seen[k] = 1;
+      var o = sc[k] = sc[k] || { code: it.code, name: it.name, n: 0, today: 0, who: {}, ag: {} }; o.n++; if (q.today) o.today++; o.who[it.who] = (o.who[it.who] || 0) + 1;
+      if (/agent/i.test(it.who) && p.ag) o.ag[p.ag] = (o.ag[p.ag] || 0) + 1; }); });
+  var settle = { n: queue.length, today: queue.filter(function (q) { return q.today; }).length,
+    premiumOnly: queue.filter(function (q) { return q.why === 'Only the premium left'; }).length, approved: queue.filter(function (q) { return q.why === 'Approved \u00b7 settle it'; }).length,
+    oneLeft: queue.filter(function (q) { return q.why === 'One item left'; }).length,
+    codes: Object.keys(sc).map(function (k) { var o = sc[k]; return { code: o.code, name: o.name, n: o.n, today: o.today, who: Object.keys(o.who).sort(function (a, b) { return o.who[b] - o.who[a]; })[0] || '' }; })
+      .map(function (x) { var o = sc[x.code] || sc[x.name]; x.agents = Object.keys(o.ag).sort(function (a, b) { return o.ag[b] - o.ag[a]; }).slice(0, 4).map(function (a) { return { agent: a, n: o.ag[a] }; }); return x; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, WALL_MORN.CODES) };
+  /* What has to be actioned today: Guardian's own next follow-up date is today or gone, or a Pendings task on the case is due
+     today or overdue in Salesforce. Nearest settlement first. */
+  var rankOf = {}; queue.forEach(function (q, i) { rankOf[q._pol] = i; });
+  /* Since head office's last word on a case, has the branch moved it? The case's last Pendings task change in Salesforce, by
+     whom (a desk's first name; the Branch Manager's user is the system's runs, so it reads "the system"), against the date of the
+     underwriter's newest comment on the report. */
+  var whoOf = function (uid) { if (!uid) return ''; if (ids[uid]) return String(nameFor_(ids[uid])).split(' ')[0]; return 'the system'; };
+  var dayOfIso = function (iso) { var d = iso ? new Date(String(iso) + (String(iso).length <= 19 ? 'Z' : '')) : null; return d && !isNaN(d) ? Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd') : ''; };
+  var shortDay = function (d) { return d ? (d === day ? 'today' : d === shiftDays_(day, -1) ? 'yesterday' : Number(d.slice(8, 10)) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(d.slice(5, 7)) - 1]) : ''; };
+  var moveOf = function (k) { var c = (chase || {})[k]; if (!c || !c.last) return null; var d = dayOfIso(c.last); return { on: d, when: shortDay(d), by: whoOf(c.lastBy) }; };
+  var sinceHO = function (k) { var n = P[k].uwNote, m = moveOf(k); if (!n || !n.at) return null; if (m && m.on >= n.at) return { yes: true, by: m.by, when: m.when };
+    return { yes: false, days: Math.max(0, daysBetween_(n.at, day) || 0), when: shortDay(n.at) }; };
+  // {agent} is filled in on the page from the row's agent field, which wallScrub_ folds for anyone who has left; a name typed
+  // into this text could not be.
+  var todoOf = function (p, it) { var w = String(it.who || ''), a = p.ag ? '{agent}' : '';
+    if (p.pay > 0 && p.pay === p.reqs) return 'Confirm the premium is paid' + (a ? ', with ' + a : '');
+    if (/client.*exam/i.test(w)) return 'Get the exam booked' + (a ? ' through ' + a : '');
+    if (/doctor|third/i.test(w)) return 'Chase the doctor\u2019s report';
+    if (/review|underwriter|reinsur/i.test(w)) return 'Ask head office for the decision';
+    if (/agent/i.test(w)) return 'Chase ' + (a || 'the agent') + ' for ' + (it.code || it.name);
+    if (/client/i.test(w)) return 'Chase the client' + (a ? ' through ' + a : '');
+    return 'Move it on'; };
+  /* THE DESKS' WORKLIST (27 Nov 2026). Ricky: "when showing the outstanding you must show the agent who is keeping it back and
+     on the head office updates is it being actioned ... what cases can the staff work on, as they cannot be reminding you on
+     what you are supposed to be on top of". A case is on it when head office has written since the branch last moved it, when
+     Guardian's follow-up date is today or gone, when its Salesforce task is due or late, when its next move is the branch's
+     (a review, a doctor, a decision), or when it is one step from settling and nobody has touched it today. Each row says what
+     is happening (head office's words, or where it stands), who is holding it, what was last done and by whom, and what to do. */
+  var stOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var x = WALL_PEND.STATES[i]; if (x.re && x.re.test(p.dec)) return x.label || x.key; } return ''; };
+  var acts = Object.keys(P).map(function (k) { var p = P[k], c = (chase || {})[k] || {}, why = [], ho = sinceHO(k);
+      if (ho && !ho.yes) why.push('Head office wrote ' + ho.when + ', not actioned');
+      if (p.nf && p.nf <= day) why.push(p.nf === day ? 'Guardian follow-up today' : 'Guardian follow-up passed');
+      if (c.due) why.push('task due today'); if (c.overdue) why.push('task overdue');
+      var it = p.items.filter(function (x) { return x.last; })[0] || p.items.filter(function (x) { return x.red; })[0] || p.items[0] || {};
+      if (p.items.some(function (x) { return /review|underwriter|reinsur|doctor|third/i.test(x.who); })) why.push('the branch\u2019s move');
+      if (rankOf[k] != null && !today[k]) why.push('one step from settling');
+      if (!why.length) return null;
+      // Who is holding it: the agent (the page shows the agent field's first name, so wallScrub_ can fold anyone who has left), or who acts next.
+      var holder = /agent/i.test(it.who || '') ? 'agent' : (it.who || '');
+      var n = p.uwNote, m = moveOf(k);
+      return { _k: k, pol: String(k).slice(-4), agent: first(p.ag), holder: holder, code: it.code || '', name: it.name || '', who: it.who || '', why: why.join(' \u00b7 '),
+               happening: n && n.raw ? wallSafeText_(n.raw, n.names, CODESET) : (stOf(p) || (p.reqs + (p.reqs === 1 ? ' item' : ' items') + ' left')),
+               headOffice: ho, last: m ? { by: m.by, when: m.when } : null, todo: (ho && !ho.yes ? 'Answer head office, then: ' : '') + todoOf(p, it), days: p.days, today: !!today[k] }; })
+    .filter(Boolean).sort(function (a, b) { var ra = rankOf[a._k] == null ? 999 : rankOf[a._k], rb = rankOf[b._k] == null ? 999 : rankOf[b._k]; return (ra - rb) || (b.days - a.days); });
+  var action = { n: acts.length, guardian: acts.filter(function (a) { return /Guardian/.test(a.why); }).length, tasks: acts.filter(function (a) { return /task/.test(a.why); }).length,
+    headOffice: acts.filter(function (a) { return a.headOffice && !a.headOffice.yes; }).length, onAgents: acts.filter(function (a) { return /agent/i.test(a.who); }).length,
+    done: acts.filter(function (a) { return a.today; }).length, list: acts.slice(0, WALL_MORN.ACT).map(function (a) { delete a._k; return a; }) };
+  /* What the underwriter says: the newest comment on each case from the report, in the last fortnight, names taken out. */
+  var since = shiftDays_(day, -WALL_MORN.UW_DAYS);
+  var uwSays = Object.keys(P).filter(function (k) { var n = P[k].uwNote; return n && n.at && n.at >= since && n.raw; })
+    .sort(function (a, b) { return P[b].uwNote.at < P[a].uwNote.at ? -1 : P[b].uwNote.at > P[a].uwNote.at ? 1 : 0; })
+    .map(function (k) { var p = P[k], n = p.uwNote;
+      return { pol: String(k).slice(-4), agent: first(p.ag), actioned: sinceHO(k), code: n.code, on: Number(n.at.slice(8, 10)) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(n.at.slice(5, 7)) - 1], text: wallSafeText_(n.raw, n.names, CODESET), today: !!today[k] }; })
+    .filter(function (x) { return x.text; });
+  var byAgent = null; try { byAgent = wallAgentPend_(day, P, today, queue, chase); } catch (e) { byAgent = { error: String(e && e.message || e) }; }
+  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
            firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
            closed: ev.filter(function (e) { return e.kind === 'closed'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
            stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
-           queue: queue.slice(0, WALL_MORN.QUEUE), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length,
+           queue: queue.slice(0, WALL_MORN.QUEUE).map(function (q) { var o = {}; Object.keys(q).forEach(function (k) { if (k !== '_pol') o[k] = q[k]; }); return o; }), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length,
            other: other && !other.error ? other.out : other };
+}
+/* Settled since WALL_SETTLED.FROM, from the pending report's own issue date and policy status (see wallPendLive_). Month by
+ *  month, the last six weeks, this week and today, by agent (full names here, first names on the page), the codes the settled
+ *  cases had carried, the premium, and how long they took (days from submission to issue, where the report gives both). */
+var WALL_SETTLED = { FROM: '2026-10-01', WEEKS: 6, CLOSED: /not proceeded|file closed|declined|not taken|withdrawn|cancel+ed|surrender|^npw$/i };
+function wallSettled_(day, S, hasCols, closedN) {
+  if (!hasCols) return { missing: true, need: 'an issue date column and a policy status column on the pending report' };
+  var ks = Object.keys(S), months = {}, ag = {}, codes = {}, prem = 0, spans = [];
+  var wkStart = function (d) { var t = new Date(d + 'T12:00:00Z'), w = (t.getUTCDay() + 6) % 7; return shiftDays_(d, -w); };
+  var thisWk = wkStart(day), weeks = []; for (var i = WALL_SETTLED.WEEKS - 1; i >= 0; i--) weeks.push({ k: shiftDays_(thisWk, -7 * i), n: 0 });
+  ks.forEach(function (pol) { var x = S[pol], ym = x.at.slice(0, 7);
+    months[ym] = (months[ym] || 0) + 1; ag[x.ag] = (ag[x.ag] || 0) + 1; prem += x.prem;
+    var wk = wkStart(x.at); weeks.forEach(function (w) { if (w.k === wk) w.n++; });
+    Object.keys(x.codes).forEach(function (c) { var o = codes[c] = codes[c] || { code: c, name: x.codes[c], n: 0 }; o.n++; });
+    var since = daysBetween_(x.at, day); if (x.days && since != null && x.days >= since) spans.push(x.days - since); });
+  spans.sort(function (a, b) { return a - b; });
+  var M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return { from: WALL_SETTLED.FROM, n: ks.length, prem: Math.round(prem), closedOut: closedN || 0,
+    today: ks.filter(function (k) { return S[k].at === day; }).length, week: ks.filter(function (k) { return S[k].at >= thisWk; }).length,
+    months: Object.keys(months).sort().map(function (m) { return { k: M[Number(m.slice(5, 7)) - 1], n: months[m] }; }),
+    weeks: weeks.map(function (w) { return { k: Number(w.k.slice(8, 10)) + ' ' + M[Number(w.k.slice(5, 7)) - 1].slice(0, 3), n: w.n }; }),
+    agents: Object.keys(ag).map(function (a) { return { agent: a, n: ag[a] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 12),
+    codes: Object.keys(codes).map(function (c) { return codes[c]; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 8),
+    medianDays: spans.length ? spans[Math.floor(spans.length / 2)] : null };
+}
+
+/* ── Words for the wall, with nobody's name in them (27 November 2026) ──
+ *  Ricky asked for "what the underwriter says" and what was worked on. Those are free text, typed by Guardian's underwriters
+ *  and by the desks, and free text carries clients' names. The wall is public, so a word is shown only when it cannot be a name:
+ *  a word on WALL_WORDS (in any case), a requirement code on the report, any all-lowercase word, a number of four digits or
+ *  fewer. Everything else (a capitalised word not on the list, a long number, an e-mail address) becomes ▪, and any word that
+ *  is in a name column of the same row is taken out whatever its case. HTML is stripped first. */
+var WALL_WORDS = ('a about above after again all also am an and any approved are as at awaiting bank be been before being below blood both but by call called can cannot case cases ' +
+  'client clients complete completed copy correct corrected could day days decision declaration declined did do doctor doctors does done dr due ecg each ekg email emailed error errors exam ' +
+  'examination fact find finds follow followed following for form forms from full future had has have he her his how i id identity if in income incomplete information is it its kindly lab labs ' +
+  'letter medical missing more need needed needs new no not note noted now of off ok on once one only or order ordered other our out outstanding over payment pending per please policy ' +
+  'postponed premium proof provide provided rated re received receipt report reports request requested requirement requirements result results returned review reviewed same see sent send ' +
+  'settle settled settlement she should sign signature signed so standard statement still submit submitted test tests thank thanks that the their them then there these they this those to ' +
+  'today underwriter underwriting until up urine uw was we were what when which who will with without would yes yet you your agent applicant insured address age proof apl aps oft cbc ' +
+  'monday tuesday wednesday thursday friday saturday sunday mon tue wed thu fri sat sun january february march april may june july august september october november december jan feb mar apr ' +
+  'jun jul aug sep sept oct nov dec loading exclusion exclusions counter offer accepted acceptance amend amendment amended reinstatement waiver rider riders benefit sum assured cover term ' +
+  'life health critical illness disability hiv glucose cholesterol pressure history questionnaire attending physician statement paramedical nurse visit fasting cleared clear pay paid unpaid ' +
+  'cheque deposit debit credit card draft mandate initial first second third final').split(' ');
+var WALL_WORD_SET = null;
+function wallSafeText_(raw, names, codes) {
+  if (!WALL_WORD_SET) { WALL_WORD_SET = {}; WALL_WORDS.forEach(function (w) { if (w) WALL_WORD_SET[w] = 1; }); }
+  var t = String(raw == null ? '' : raw).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&[a-z]+;|&#\d+;/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  var bad = {}; String(names || '').toLowerCase().split(/[^a-z']+/).forEach(function (w) { if (w.length > 1) bad[w] = 1; });
+  var out = t.split(' ').map(function (tok) {
+    if (/@/.test(tok)) return '▪';
+    var core = tok.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, ''); if (!core) return tok;
+    var low = core.toLowerCase(), keep;
+    if (bad[low]) keep = false;
+    else if (/^\d+$/.test(core)) keep = core.length <= 4;
+    else if (/^\d{1,2}[\/.-]\d{1,2}([\/.-]\d{2,4})?$/.test(core)) keep = true;   // a date
+    else if (/\d/.test(core)) keep = !!(codes && codes[core.toUpperCase()]) || core.length <= 4;
+    else if (WALL_WORD_SET[low] || (codes && codes[core.toUpperCase()])) keep = true;
+    else keep = core === low;
+    return keep ? tok : tok.replace(core, '▪');
+  }).join(' ').replace(/▪(\W*▪)+/g, '▪');
+  return out.length > 160 ? out.slice(0, 157).replace(/\s+\S*$/, '') + '…' : out;
+}
+
+/* ── Each agent's pendings and when the branch last moved them (27 November 2026, afternoon) ──
+ *  Ricky: "this is the first KPI this morning and the agents' last checks ... make sense out of the data"; then "I am not
+ *  concerned with agents check ins". So this is the branch's side, agent by agent: the cases on the report, how many wait on the
+ *  agent (an item whose move is theirs), how many are one step from settling, how many the branch moved for them today, the
+ *  last time any Pendings task on their cases moved in Salesforce, how many have never had a task, and the Ingenium codes
+ *  holding their cases most. Full names here; wallScrub_ folds anyone who has left into Orphans; the page shows first names.
+ *  Sorted with the agent whose cases have gone longest without a move first. */
+var WALL_BYAGENT = { MAX: 16, CODES: 3 };
+function wallAgentPend_(day, P, todayPols, queue, chase) {
+  var near = {}; (queue || []).forEach(function (q) { if (q.agent) near[q.agent] = (near[q.agent] || 0) + 1; });
+  var st = {};
+  Object.keys(P).forEach(function (pol) {
+    var p = P[pol], a = String(p.ag || '').trim() || 'No agent named', c = (chase || {})[pol] || null;
+    var o = st[a] = st[a] || { agent: a, cases: 0, onYou: 0, near: 0, today: 0, never: 0, last: '', oldest: 0, codes: {} };
+    o.cases++; o.oldest = Math.max(o.oldest, p.days || 0);
+    var mine = p.items.filter(function (it) { return /\bagent\b/i.test(it.who); });
+    if (mine.length) o.onYou++;
+    mine.forEach(function (it) { if (it.code) o.codes[it.code] = (o.codes[it.code] || 0) + 1; });
+    if (todayPols && todayPols[pol]) o.today++;
+    if (chase && (!c || !c.ever)) o.never++;
+    if (c && c.last > o.last) o.last = c.last;
+  });
+  var nowMs = Date.now();
+  var out = Object.keys(st).map(function (k) {
+    var o = st[k], d = o.last ? new Date(o.last + 'Z') : null, l = null;
+    if (d && !isNaN(d)) { var ld = Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd');
+      l = { days: Math.max(0, daysBetween_(ld, day) || 0), when: ld === day ? 'today ' + twelve_(Utilities.formatDate(d, CONFIG.TZ, 'HH:mm')) : ld === shiftDays_(day, -1) ? 'yesterday' : Utilities.formatDate(d, CONFIG.TZ, 'EEE d MMM') }; }
+    return { agent: o.agent, cases: o.cases, onYou: o.onYou, near: near[o.agent] || 0, today: o.today, never: chase ? o.never : null, oldest: o.oldest, last: l,
+             codes: Object.keys(o.codes).sort(function (x, y) { return o.codes[y] - o.codes[x]; }).slice(0, WALL_BYAGENT.CODES).map(function (c) { return { code: c, n: o.codes[c] }; }) };
+  }).sort(function (x, y) { var dx = x.last ? x.last.days : 9999, dy = y.last ? y.last.days : 9999; return (dy - dx) || (y.cases - x.cases); });
+  return { agents: out.slice(0, WALL_BYAGENT.MAX), of: out.length, movedToday: out.filter(function (x) { return x.today; }).length,
+           waiting: out.reduce(function (s2, x) { return s2 + x.onYou; }, 0), quietWeek: out.filter(function (x) { return !x.last || x.last.days >= 7; }).length };
 }
 /* Group life, group health, individual health and increases on the pending wall's today (27 November 2026).
  *  Ricky: "integrate into this the Salesforce, the group health and the group life in terms of the applications that are pending
@@ -18532,16 +18735,16 @@ function wallClawLive_(day) {
 function wallPendChase_(day, numOf) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
   var from = sfkUtcAt_(day, 0).slice(0, 19), to = sfkUtcAt_(shiftDays_(day, 1), 0).slice(0, 19), weekAgo = sfkUtcAt_(shiftDays_(day, -7), 0).slice(0, 19);
-  var rows = sfkQuery_("SELECT Subject, IsClosed, ActivityDate, CreatedDate, LastModifiedDate FROM Task WHERE Task_Type__c = 'Pendings'" +
+  var rows = sfkQuery_("SELECT Subject, IsClosed, ActivityDate, CreatedDate, LastModifiedDate, LastModifiedById FROM Task WHERE Task_Type__c = 'Pendings'" +
     ' AND (IsClosed = false OR CreatedDate = LAST_N_DAYS:400) LIMIT 10000');
   var by = {};
   rows.forEach(function (t) {
     var seen = {}, made = String(t.CreatedDate || '').slice(0, 19), mod = String(t.LastModifiedDate || '').slice(0, 19);
     (String(t.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) {
       var pol = numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1;
-      var b = by[pol] = by[pol] || { ever: 0, open: 0, overdue: 0, quiet: 0, today: 0 };
-      b.ever++;
-      if (!t.IsClosed) { b.open++; if (t.ActivityDate && String(t.ActivityDate) < day) b.overdue++; if (mod && mod < weekAgo) b.quiet++; }
+      var b = by[pol] = by[pol] || { ever: 0, open: 0, overdue: 0, quiet: 0, today: 0, last: '' };
+      b.ever++; if (mod > b.last) { b.last = mod; b.lastBy = String(t.LastModifiedById || ''); }
+      if (!t.IsClosed) { b.open++; if (String(t.ActivityDate || '') === day) b.due = (b.due || 0) + 1; if (t.ActivityDate && String(t.ActivityDate) < day) b.overdue++; if (mod && mod < weekAgo) b.quiet++; }
       if ((made >= from && made < to) || (t.IsClosed && mod >= from && mod < to)) b.today++;
     });
   });

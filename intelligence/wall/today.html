@@ -10,6 +10,16 @@
        Work it first  the cases nearest settlement (only the premium left, approved by underwriting, one item left), with
                       the codes left, whose move it is, its age, and whether anybody touched it today; and the follow-ups
                       from the e-mail trail waiting for the Branch Manager's approval
+     Rebuilt the same afternoon. Ricky: "I'm not seeing the agents' first names. It's not doing anything to see how staff is
+     working and what blocks ... this is the first KPI this morning and the agents' last checks. Make sense out of the data."
+     Three views now:
+       Staff this morning  each desk: signed in (or out, or not signed in, never red for a desk that is not here), what it moved
+                           on the pendings and for which agents by first name, how long since its last touch; what is holding
+                           the cases nearest settlement, by whose move and which agents; the stream
+       By agent            each agent with a pending case, first name: cases, how many wait on the agent and the Ingenium codes
+                           holding them, one step from settling, never tasked, moved today, and when the branch last moved
+                           any of them in Salesforce (Ricky: "I am not concerned with agents check ins")
+       Work it first       as before
      Agents' first names, codes and the last four digits of a policy only, never a client. -->
 <html lang="en">
 <head>
@@ -144,6 +154,55 @@
   .gt em.no{color:var(--red)}
   .grp{display:inline-block;font:800 .78rem var(--fd);letter-spacing:.06em;padding:.12rem .45rem;border-radius:.4rem;background:#E6EEF6;color:#2A5C8A}
   .qsub{font:800 .85rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--teal);padding:.55rem 0 .25rem;border-bottom:1px solid var(--line)}
+  /* settle today, action today (27 Nov 2026, evening) */
+  .ch,.cr{display:grid;grid-template-columns:7rem minmax(0,1.3fr) 4.5rem minmax(0,.8fr) minmax(0,1.5fr) 7rem;gap:.8rem;align-items:center}
+  .xh,.xr{display:grid;grid-template-columns:5rem 8rem minmax(0,1.5fr) minmax(0,1.3fr) 10rem 6.5rem;gap:.7rem;align-items:center}
+  .ch,.xh{margin-top:.8rem;font:800 .82rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding-bottom:.4rem;border-bottom:1px solid var(--line)}
+  .cr,.xr,.uw{padding:.55rem 0;border-bottom:1px solid rgba(31,36,48,.06);opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .cr code{font-size:1rem;margin-left:0}
+  .cr .nm,.xr .nm{font:600 1rem var(--fb);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cr .n{font:800 1.6rem var(--fd);font-variant-numeric:tabular-nums;text-align:right}
+  .cr .barw{height:.8rem;border-radius:.4rem;background:rgba(31,36,48,.07);overflow:hidden} .cr .barw i{display:block;height:100%;border-radius:.4rem;background:linear-gradient(90deg,#D99B2E,#87590C)}
+  .cr .wm,.xr .wm{font:600 .95rem var(--fb);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cr .td{font:800 1.15rem var(--fd);text-align:right} .cr .td.no{color:var(--red)} .cr .td.ok{color:var(--green)}
+  .xr .p{font:800 1.05rem var(--fd);color:var(--dim)} .xr .a{font:800 1.08rem var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xr .y{font:700 .95rem var(--fb);color:var(--amber)} .xr .td{justify-self:end}
+  .uw .h{display:flex;gap:.5rem;align-items:baseline;font:800 1rem var(--fd)} .uw .h span{font:600 .85rem var(--fb);color:var(--faint);margin-left:auto}
+  .uw .t{font:500 .98rem/1.4 var(--fb);color:var(--ink);margin-top:.2rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ev .w i{font-style:normal;color:var(--teal)}
+  .wr{padding:.6rem 0;border-bottom:1px solid rgba(31,36,48,.07);display:grid;grid-template-columns:minmax(0,1fr) 17rem;gap:1rem;align-items:center;opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .wr .l1{display:flex;gap:.55rem;align-items:baseline;flex-wrap:wrap;font:800 1.08rem var(--fd)}
+  .wr .l1 .p{color:var(--dim)} .wr .l1 .y{font:700 .9rem var(--fb);color:var(--amber)}
+  .wr .l2{font:500 .95rem/1.35 var(--fb);color:var(--dim);margin-top:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wr .l2 b{color:var(--ink)} .wr .l2 .no{color:var(--red);font-weight:700} .wr .l2 .ok{color:var(--green);font-weight:700}
+  .wr .do{font:800 1rem/1.3 var(--fd);color:var(--ink);text-align:right}
+  .wr .do small{display:block;font:700 .8rem var(--fb);margin-top:.2rem}
+  .hold{font:800 .85rem var(--fd);padding:.12rem .5rem;border-radius:.45rem;background:#FBE7E5;color:var(--red)} .hold.br{background:#E6EEF6;color:#2A5C8A}
+  .wk{display:flex;align-items:flex-end;gap:1rem;height:11rem;margin-top:1rem}
+  .wk div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .wk i{display:block;width:100%;border-radius:.5rem .5rem 0 0;background:linear-gradient(180deg,#3E9C6B,#2C7D4F);min-height:.25rem}
+  .wk b{font:800 1.3rem var(--fd);margin-bottom:.3rem} .wk span{font:700 .85rem var(--fb);color:var(--faint);margin-top:.35rem}
+  .mo{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid rgba(31,36,48,.06);font:800 1.2rem var(--fd)} .mo b{font-size:1.7rem;color:var(--green)}
+  .sc{display:flex;gap:.6rem;align-items:center;padding:.35rem 0;font:600 1rem var(--fb);color:var(--dim)} .sc b{margin-left:auto;font:800 1.15rem var(--fd);color:var(--ink)}
+  /* staff, agents (27 Nov 2026, afternoon) */
+  .desks{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
+  .dk.out{background:rgba(31,36,48,.03);border-style:dashed} .dk.out .n span{color:var(--faint)}
+  .dk.idle{border-color:rgba(185,98,15,.5);background:#FCF3E6} .dk.idle .n span{color:var(--amber)}
+  .dk .in{font:700 .9rem var(--fb);color:var(--dim);margin-top:.15rem}
+  .dk .ag{margin-top:.45rem;display:flex;flex-wrap:wrap;gap:.3rem}
+  .chip{font:700 .85rem var(--fb);padding:.15rem .5rem;border-radius:.5rem;background:#E9F2EE;color:var(--teal);white-space:nowrap}
+  .chip.bad{background:#FBE7E5;color:var(--red)}
+  .bl{padding:.6rem 0;border-bottom:1px solid rgba(31,36,48,.06)}
+  .bl .h{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem}
+  .bl .h b{font:800 1.15rem var(--fd)} .bl .h span{font:800 1.6rem var(--fd);color:var(--red);font-variant-numeric:tabular-nums}
+  .bl .ag{margin-top:.35rem;display:flex;flex-wrap:wrap;gap:.3rem}
+  .ah,.ar{display:grid;grid-template-columns:minmax(0,1.1fr) 5rem minmax(0,1.6fr) 7rem 7rem 7rem minmax(0,1fr);gap:.7rem;align-items:center}
+  .ah{margin-top:.8rem;font:800 .82rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding-bottom:.4rem;border-bottom:1px solid var(--line)}
+  .ar{padding:.5rem 0;border-bottom:1px solid rgba(31,36,48,.06);opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .ar .a{font:800 1.15rem var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .ar .a small{font:600 .85rem var(--fb);color:var(--faint);margin-left:.4rem}
+  .ar .n{font:800 1.2rem var(--fd);font-variant-numeric:tabular-nums} .ar .n.red{color:var(--red)} .ar .n.green{color:var(--green)} .ar .n.gold{color:var(--gold)} .ar .n.dim{color:var(--faint)}
+  .ar .ck{font:600 .95rem/1.3 var(--fb);color:var(--dim);min-width:0} .ar .ck b{color:var(--ink)}
+  .ar .ck.no{color:var(--red);font-weight:700}
   @media (max-width:900px){
     .qrt{display:none}
     html{font-size:11px} html,body{height:auto;overflow:auto}
@@ -156,8 +215,11 @@
     .qr{grid-template-columns:minmax(0,1fr) auto;row-gap:.25rem} .qr .p{grid-column:1/2} .qr .td{grid-column:2/3;grid-row:1/2}
     .qr .a{grid-column:1/-1;white-space:normal} .qr .y{grid-column:1/-1} .qr .wm,.qr .dd{display:none}
     .stream{overflow:visible}
+    .wr{grid-template-columns:1fr} .wr .do{text-align:left} .wk{height:8rem;gap:.4rem}
+    .ch,.xh{display:none} .cr{grid-template-columns:auto minmax(0,1fr) auto} .cr .barw,.cr .wm{display:none} .xr{grid-template-columns:auto minmax(0,1fr) auto} .xr .nm,.xr .wm{display:none}
+    .ah{display:none} .ar{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:.25rem} .ar .a{grid-column:1/-1} .ar .ck{grid-column:1/-1}
   }
-  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.ev,.qr{opacity:1;transform:none} }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.ev,.qr,.ar,.cr,.xr,.uw,.wr{opacity:1;transform:none} }
 </style>
 </head>
 <body>
@@ -165,27 +227,67 @@
 <header>
   <div class="plate"><b>PENDING</b><span>wall</span></div>
   <div><h1 id="title">Today on the Pendings</h1><div class="sub" id="sub">From Salesforce, today only &middot; agents' first names and codes, no client</div></div>
-  <div class="tabs"><span id="t0" class="on">This morning</span><span id="t1">Work it first</span></div>
+  <div class="tabs"><span id="t0" class="on">Settle today</span><span id="t1">Work now</span><span id="t2">Staff</span><span id="t3">By agent</span><span id="t4">Work it first</span><span id="t5">Settled</span></div>
   <div class="right"><div class="qrt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" role="img" aria-label="QR code for this page" class="segno"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#1f2430" d="M2 2.5h7m2 0h7m1 0h3m3 0h1m2 0h7m-33 1h1m5 0h1m2 0h3m2 0h3m1 0h1m1 0h2m1 0h2m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m5 0h1m1 0h1m5 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h2m4 0h2m6 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m4 0h6m1 0h1m4 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h3m1 0h3m1 0h3m3 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h3m1 0h2m1 0h1m2 0h3m-23 1h1m2 0h1m1 0h2m1 0h2m3 0h4m4 0h1m1 0h1m1 0h1m1 0h1m-28 1h1m1 0h2m1 0h1m3 0h2m2 0h1m3 0h1m2 0h1m3 0h4m3 0h2m-32 1h2m2 0h2m2 0h1m2 0h3m4 0h1m1 0h2m4 0h2m1 0h1m1 0h1m-33 1h2m5 0h4m1 0h4m4 0h4m1 0h2m1 0h2m-29 1h1m2 0h4m1 0h2m3 0h4m3 0h1m1 0h4m2 0h1m1 0h1m-32 1h2m3 0h1m1 0h4m1 0h1m4 0h1m1 0h3m2 0h1m1 0h1m1 0h5m-32 1h1m3 0h2m3 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h2m-32 1h2m3 0h1m2 0h2m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m1 0h1m1 0h1m2 0h1m-31 1h3m2 0h2m1 0h1m1 0h1m1 0h1m3 0h1m3 0h4m1 0h1m1 0h1m2 0h1m-31 1h2m2 0h1m4 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m1 0h1m-30 1h3m1 0h1m1 0h1m9 0h1m1 0h2m8 0h1m1 0h1m-33 1h1m2 0h2m2 0h2m2 0h2m1 0h1m1 0h4m1 0h1m3 0h1m1 0h1m3 0h1m-32 1h4m2 0h1m1 0h1m1 0h3m8 0h1m1 0h3m5 0h2m-32 1h2m2 0h1m5 0h1m1 0h1m2 0h3m5 0h3m3 0h3m-33 1h2m2 0h1m1 0h1m1 0h1m8 0h4m1 0h1m2 0h3m4 0h1m-32 1h1m1 0h1m1 0h1m1 0h2m1 0h2m3 0h1m3 0h1m1 0h2m1 0h2m3 0h1m2 0h1m-33 1h1m1 0h1m1 0h1m1 0h1m1 0h1m4 0h5m1 0h1m1 0h1m2 0h6m1 0h1m-24 1h1m4 0h1m5 0h3m1 0h2m3 0h2m2 0h1m-33 1h7m5 0h2m2 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h4m-32 1h1m5 0h1m1 0h2m1 0h4m1 0h7m1 0h1m3 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m2 0h3m1 0h3m1 0h6m1 0h6m-30 1h1m1 0h3m1 0h1m1 0h2m3 0h2m1 0h1m4 0h1m1 0h1m2 0h1m1 0h2m-30 1h1m1 0h3m1 0h1m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h1m5 0h1m1 0h1m1 0h1m-33 1h1m5 0h1m3 0h4m3 0h2m1 0h6m-26 1h7m1 0h3m2 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h2m1 0h1"/></svg><div><b>On your phone</b>Scan, or open <a href="https://rickyrampersadbranch.com/intelligence/wall/today.html">rickyrampersadbranch.com/<wbr>intelligence/wall/today.html</a></div></div><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
 </header>
 <main>
   <section class="view" id="v0">
     <div class="col">
-      <div class="card hero" style="--d:0s;flex:1"><div class="kick">Pending cases touched today</div>
+      <div class="card hero" style="--d:0s;flex:1"><div class="kick">Can settle today</div>
+        <div class="big" id="stN">0</div><div class="of" id="stOf">policies one step from issue&hellip;</div>
+        <div class="stat"><div class="gold" id="stPrem"><b>0</b><span>only the premium left</span></div><div class="green" id="stAppr"><b>0</b><span>approved &middot; settle it</span></div>
+          <div id="stOne"><b>0</b><span>one item left</span></div><div class="red" id="stNot"><b>0</b><span>not touched today</span></div></div>
+        <div class="cap" style="margin-top:auto;padding-top:1rem">From Guardian's pending report, with today's moves from Salesforce. A case is counted once under every code still open on it.</div></div>
+    </div>
+    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">Code by code &middot; what stands between these policies and issue</div>
+      <div class="cap">The Ingenium codes still open on the cases that can settle, how many cases each holds, whose move it is, and how many were touched today.</div>
+      <div class="ch"><div>Code</div><div>Requirement</div><div>Cases</div><div></div><div>Held by</div><div>Touched today</div></div>
+      <div id="stCodes" style="flex:1;min-height:0;overflow:hidden"></div></div>
+  </section>
+  <section class="view out" id="v1">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">For the desks to work now</div>
+        <div class="big" id="acN">0</div><div class="of" id="acOf">&hellip;</div>
+        <div class="stat"><div class="red" id="acH"><b>0</b><span>head office wrote, not actioned</span></div><div class="gold" id="acG"><b>0</b><span>Guardian follow-up due</span></div>
+          <div id="acA"><b>0</b><span>held by the agent</span></div><div class="green" id="acD"><b>0</b><span>touched today</span></div></div></div>
+      <div class="card" style="--d:.1s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">What head office says &middot; actioned?</div>
+        <div class="cap">The underwriter's newest comment on each case, and whether the branch has moved it since. Names, numbers and e-mails are taken out (&#9642;).</div>
+        <div id="uwList" style="flex:1;min-height:0;overflow:hidden"></div></div>
+    </div>
+    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">Work now &middot; nearest to settling first</div>
+      <div class="cap">What is happening on each case, who is holding it, what was last done and by whom, and the next thing to do.</div>
+      <div id="acList" style="flex:1;min-height:0;overflow:hidden;margin-top:.5rem"></div></div>
+  </section>
+  <section class="view out" id="v2">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">The pendings this morning</div>
         <div class="big" id="mN">0</div><div class="of" id="mOf">Reading Salesforce&hellip;</div>
-        <div class="stat"><div id="sStart"><b>0</b><span>desks started</span></div><div id="sFirst"><b>&mdash;</b><span>first touch</span></div>
-          <div class="green" id="sClosed"><b>0</b><span>tasks closed</span></div><div id="sMail"><b>0</b><span>e-mails logged</span></div></div>
-        <div class="cap" style="margin-top:auto;padding-top:1rem">A touch is a note on the case's Pendings task, its status moved, the task closed, or an e-mail logged on it, in Salesforce, today. Nothing here is typed in by hand.</div></div>
+        <div class="stat"><div id="sIn"><b>0</b><span>staff signed in</span></div><div id="sFirst"><b>&mdash;</b><span>first touch</span></div>
+          <div class="green" id="sClosed"><b>0</b><span>tasks closed</span></div><div id="sMail"><b>0</b><span>e-mails logged</span></div></div></div>
+      <div class="card" style="--d:.1s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">What is holding them</div>
+        <div class="cap" id="bCap">The cases one step from settling that nobody has touched today, by whose move it is.</div>
+        <div id="blocks" style="flex:1;min-height:0;overflow:hidden"></div></div>
     </div>
     <div class="col">
-      <div class="card" style="--d:.06s"><div class="kick">The first thing each desk worked</div>
-        <div class="cap">Its first touch on a pending case today: when, whose case, the code it is held on. Red is a desk with nothing yet.</div>
+      <div class="card" style="--d:.06s"><div class="kick">Each desk &middot; in, what it moved, for whom</div>
         <div class="desks" id="desks"></div></div>
       <div class="card" style="--d:.12s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">The stream &middot; today, newest first</div>
         <div class="stream" id="stream"></div></div>
     </div>
   </section>
-  <section class="view out" id="v1">
+  <section class="view out" id="v3">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">Agents whose cases moved today</div>
+        <div class="big" id="aN">0</div><div class="of" id="aOf">&hellip;</div>
+        <div class="stat"><div class="gold" id="aWait"><b>0</b><span>cases waiting on the agent</span></div><div class="red" id="aQuiet"><b>0</b><span>agents with nothing moved in a week</span></div></div></div>
+      <div class="card" style="--d:.1s;flex:1"><div class="kick">How to read it</div>
+        <div class="cap"><b>Last moved</b> is the last time a Pendings task on any of the agent's cases changed in Salesforce. <b>Waiting on agent</b> is a case with an item that is the agent's move, and the codes are the Ingenium codes holding them most. <b>Never tasked</b> is a case with no Pendings task at all. The agent whose cases have gone longest without a move comes first.</div></div>
+    </div>
+    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">Each agent&rsquo;s pendings &middot; when the branch last moved them</div>
+      <div class="ah"><div>Agent</div><div>Cases</div><div>Waiting on agent &middot; codes</div><div>Near settling</div><div>Never tasked</div><div>Moved today</div><div>Last moved</div></div>
+      <div id="agents" style="flex:1;min-height:0;overflow:hidden"></div></div>
+  </section>
+  <section class="view out" id="v4">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Nearest to settling</div>
         <div class="big" id="qN">0</div><div class="of" id="qOf">&hellip;</div>
@@ -201,6 +303,21 @@
       <div class="cap">Only the premium left, then approved by underwriting with items left, then one item from settlement. The codes are Ingenium's.</div>
       <div class="qh"><div>Policy</div><div>Agent</div><div>Why first &middot; codes left</div><div>Whose move</div><div>Days</div><div>Today</div></div>
       <div id="queue" style="flex:1;min-height:0;overflow:hidden"></div></div>
+  </section>
+  <section class="view out" id="v5">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">Settled since 1 October</div>
+        <div class="big" id="seN">0</div><div class="of" id="seOf">&hellip;</div>
+        <div class="stat"><div class="green" id="seWk"><b>0</b><span>this week</span></div><div class="green" id="seTd"><b>0</b><span>today</span></div>
+          <div class="gold" id="sePr"><b>0</b><span>premium settled (TT$)</span></div><div id="seMd"><b>&ndash;</b><span>median days to settle</span></div></div></div>
+      <div class="card" style="--d:.1s;flex:1"><div class="kick">Month by month</div><div id="seMon"></div></div>
+    </div>
+    <div class="col">
+      <div class="card" style="--d:.06s"><div class="kick">Week by week &middot; policies settled</div><div class="wk" id="seWeeks"></div></div>
+      <div class="card" style="--d:.12s;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;min-height:0">
+        <div><div class="kick">Whose cases settled</div><div class="ag" id="seAg" style="margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.45rem"></div></div>
+        <div><div class="kick">The codes they cleared</div><div id="seCodes" style="margin-top:.5rem"></div></div></div>
+    </div>
   </section>
 </main>
 <div class="ticker"><div class="in" id="tk"></div></div>
@@ -227,24 +344,97 @@ function paint(){
     $("#queue").innerHTML = '<div class="empty bad">'+esc(why)+'</div>'; $("#qOf").textContent = why;
     $("#live").classList.remove("on"); $("#liveTxt").textContent = "no data"; return;
   }
-  $("#sub").innerHTML = "From Salesforce, today only, as at <b>"+esc(M.at)+"</b> &middot; against Guardian's report of <b>"+esc(L.asOf)+"</b> &middot; agents' first names and codes, no client";
-  // This morning
+  $("#sub").innerHTML = "From Salesforce, today only, as at <b>"+esc(M.at)+"</b> &middot; against Guardian's report of <b>"+esc(String(L.asOf||"").replace(/,\s*\d{1,2}:\d{2}\s*[ap]m$/i,""))+"</b> &middot; agents' first names and codes, no client";
+  // Settle today
+  var ST = M.settle || {}, SC = ST.codes || [], mx = SC.reduce(function(m,c){ return Math.max(m, c.n); }, 1);
+  count($("#stN"), ST.n);
+  $("#stOf").innerHTML = "policies can settle today: only the premium, an underwriting approval or one item between them and a policy. <b>"+fmt(ST.today)+"</b> touched so far.";
+  stat("#stPrem", fmt(ST.premiumOnly)); stat("#stAppr", fmt(ST.approved)); stat("#stOne", fmt(ST.oneLeft)); stat("#stNot", fmt(Math.max(0,(ST.n||0)-(ST.today||0))));
+  $("#stCodes").innerHTML = SC.length ? SC.map(function(c,i){
+    return '<div class="cr" style="--d:'+(i*.05).toFixed(2)+'s"><div>'+codeTag(c.code)+'</div><div class="nm">'+esc(c.name)+'</div><div class="n">'+fmt(c.n)+'</div>'
+      + '<div class="barw"><i style="width:'+Math.round(100*c.n/mx)+'%"></i></div><div class="wm">'+((c.agents||[]).length ? (c.agents||[]).map(function(a){ return '<span class="chip bad">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join(' ') : esc(c.who))+'</div>'
+      + '<div class="td '+(c.today?'ok':'no')+'">'+fmt(c.today)+' of '+fmt(c.n)+'</div></div>'; }).join("")
+    : '<div class="empty">No case on the report is one step from settling.</div>';
+  // Work now
+  var AC = M.action || {}, AL = AC.list || [], UW = M.uw || {};
+  count($("#acN"), AC.n);
+  $("#acOf").innerHTML = "cases the desks can move now: head office has written, a follow-up or task is due, the next move is ours, or it is one step from settling";
+  stat("#acH", fmt(AC.headOffice)); stat("#acG", fmt(AC.guardian)); stat("#acA", fmt(AC.onAgents)); stat("#acD", fmt(AC.done));
+  var hoTxt = function(h){ return !h ? '' : h.yes ? '<span class="ok">&#10003; actioned'+(h.by?' by '+esc(h.by):'')+' '+esc(h.when)+'</span>' : '<span class="no">Head office wrote '+esc(h.when)+(h.days?' &middot; '+h.days+(h.days===1?' day':' days'):'')+', not actioned</span>'; };
+  $("#acList").innerHTML = AL.length ? AL.map(function(a,i){
+    var hold = a.holder === 'agent' ? '<span class="hold">'+esc(who(a.agent))+' holding</span>' : '<span class="hold br">'+esc(a.holder||'branch')+'</span>';
+    var last = a.headOffice ? hoTxt(a.headOffice) : a.last ? 'Last moved <b>'+esc(a.last.when)+'</b>'+(a.last.by?' by <b>'+esc(a.last.by)+'</b>':'') : '<span class="no">No Pendings task</span>';
+    return '<div class="wr" style="--d:'+(i*.04).toFixed(2)+'s"><div><div class="l1"><span class="p">&hellip;'+esc(a.pol)+'</span>'+(a.holder==='agent'?'':'<span>'+esc(who(a.agent))+'</span>')+hold+codeTag(a.code)+'<span class="y">'+esc(a.why)+'</span></div>'
+      + '<div class="l2">'+last+' &middot; '+esc(a.happening)+'</div></div>'
+      + '<div class="do">'+esc(String(a.todo||"").replace(/\{agent\}/g, /^orphans\b/i.test(String(a.agent||"")) ? "the agent" : who(a.agent)))+'<small>'+(a.today?'<span class="tag closed">touched today</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet today</span>')+'</small></div></div>'; }).join("")
+    : '<div class="empty">Nothing on the pending cases needs the desks right now.</div>';
+  $("#uwList").innerHTML = (UW.list||[]).length ? UW.list.map(function(u,i){
+    return '<div class="uw" style="--d:'+(i*.05).toFixed(2)+'s"><div class="h">&hellip;'+esc(u.pol)+' &middot; '+esc(who(u.agent))+codeTag(u.code)+'<span>'+esc(u.on)+'</span></div>'
+      + '<div class="t">'+esc(u.text)+'</div><div style="font:600 .88rem var(--fb);margin-top:.15rem">'+hoTxt(u.actioned)+'</div></div>'; }).join("")
+    : '<div class="empty">No underwriter comment on the report in the last fourteen days.</div>';
+  // Settled since October
+  var SE = L.settled || {};
+  if (SE.missing || SE.error) {
+    $("#seOf").innerHTML = SE.error ? esc(SE.error) : "The pending report needs <b>"+esc(SE.need)+"</b> for this. Once they are on it, settled policies show here and come out of the pending counts.";
+    ["#seMon","#seWeeks","#seAg","#seCodes"].forEach(function(id){ $(id).innerHTML = ""; });
+  } else {
+    count($("#seN"), SE.n);
+    $("#seOf").innerHTML = "policies settled since 1 October: status 1 or Premium Paying on Guardian's report, by issue date."+(SE.closedOut?" <b>"+fmt(SE.closedOut)+"</b> closed cases taken out of the pending count.":"");
+    stat("#seWk", fmt(SE.week)); stat("#seTd", fmt(SE.today)); stat("#sePr", fmt(SE.prem)); stat("#seMd", SE.medianDays==null?"–":fmt(SE.medianDays));
+    $("#seMon").innerHTML = (SE.months||[]).map(function(m){ return '<div class="mo"><span>'+esc(m.k)+'</span><b>'+fmt(m.n)+'</b></div>'; }).join("");
+    var wm = (SE.weeks||[]).reduce(function(m,w){ return Math.max(m,w.n); },1);
+    $("#seWeeks").innerHTML = (SE.weeks||[]).map(function(w){ return '<div><b>'+fmt(w.n)+'</b><i style="height:'+Math.round(80*w.n/wm)+'%"></i><span>'+esc(w.k)+'</span></div>'; }).join("");
+    $("#seAg").innerHTML = (SE.agents||[]).map(function(a){ return '<span class="chip" style="font-size:1rem">'+esc(who(a.agent))+' &times;'+a.n+'</span>'; }).join("");
+    $("#seCodes").innerHTML = (SE.codes||[]).map(function(c){ return '<div class="sc">'+codeTag(c.code)+esc(c.name)+'<b>'+fmt(c.n)+'</b></div>'; }).join("");
+  }
+  // Staff this morning
   count($("#mN"), M.cases); $("#mN").classList.toggle("bad", !M.cases);
-  $("#mOf").innerHTML = M.cases ? "of <b>"+fmt(L.policies)+"</b> on the report &middot; <b>"+fmt(M.touches)+"</b> touches in all"
-    : "of <b>"+fmt(L.policies)+"</b> on the report. <b style=\"color:var(--red)\">Nothing on a pending case has moved in Salesforce yet today.</b>";
-  stat("#sStart", M.started+" of "+M.of); $("#sStart").className = M.started < M.of ? "red" : "green";
+  $("#mOf").innerHTML = M.cases ? "pending cases moved in Salesforce today, of <b>"+fmt(L.policies)+"</b> on Guardian's report &middot; <b>"+fmt(M.touches)+"</b> touches"
+    : "of <b>"+fmt(L.policies)+"</b> on Guardian's report. <b style=\"color:var(--red)\">Nothing on a pending case has moved in Salesforce yet today.</b>";
+  var inN = M.inNow == null ? M.started : M.inNow;
+  stat("#sIn", inN+" of "+M.of, "staff signed in"); $("#sIn").className = "";
   stat("#sFirst", M.firstAt || "none yet"); stat("#sClosed", fmt(M.closed)); stat("#sMail", fmt(M.emails));
+  var chips = function(list, n){ return (list||[]).slice(0, n||5).map(function(a){ return '<span class="chip">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join(""); };
   $("#desks").innerHTML = (M.desks||[]).map(function(d){
-    var f = d.first;
-    return '<div class="dk '+(d.touches?'go':'none')+'"><div class="n"><b>'+esc(d.name)+'</b><span>'+(d.touches ? 'since '+esc(f.at) : 'nothing yet')+'</span></div>'
-      + '<div class="f">'+(f ? 'First: <b>'+esc(who(f.agent))+'</b>\u2019s '+(f.grp ? '<span class="grp">'+esc(f.grp)+'</span>' : 'case &hellip;'+esc(f.pol)+codeTag(f.code))+' &middot; '+esc(WHAT[f.what]||f.what)
-          : 'No pending case touched in Salesforce today.')+'</div>'
-      + '<div class="c"><span><b>'+fmt(d.cases)+'</b>cases</span><span><b>'+fmt(d.notes)+'</b>notes</span><span><b>'+fmt(d.closed)+'</b>closed</span>'+'</div></div>';
+    var here = d.signedIn && !d.absent, f = d.first, idle = here && d.touches && d.quietMins != null && d.quietMins >= 60;
+    var cls = d.absent || !d.signedIn ? (d.touches ? 'go' : 'out') : idle ? 'idle' : d.touches ? 'go' : 'none';
+    var tag = d.absent ? 'out today' : !d.signedIn ? (d.touches ? 'working' : 'not signed in') : idle ? 'quiet '+(d.quietMins>=120 ? Math.floor(d.quietMins/60)+'h' : d.quietMins+'m') : d.touches ? 'last '+esc(d.last) : 'nothing yet';
+    var line = f ? 'First at <b>'+esc(f.at)+'</b>: <b>'+esc(who(f.agent))+'</b>’s '+(f.grp ? '<span class="grp">'+esc(f.grp)+'</span>' : '&hellip;'+esc(f.pol)+codeTag(f.code))+' &middot; '+esc(WHAT[f.what]||f.what)
+      : d.absent ? 'Out today.' : !d.signedIn ? 'Not signed in on the tracker.' : 'Signed in, no pending case moved in Salesforce yet.';
+    return '<div class="dk '+cls+'"><div class="n"><b>'+esc(d.name)+'</b><span>'+tag+'</span></div>'
+      + '<div class="in">'+(d.signedIn ? 'In at '+esc(d.signedIn)+(d.late ? ' &middot; <span style="color:var(--red)">'+d.late+' min late</span>' : '') : '&nbsp;')
+      + (d.dayTarget ? ' &middot; all tasks '+fmt(d.dayClosed)+'/'+fmt(d.dayTarget) : '')+'</div>'
+      + '<div class="f">'+line+'</div>'
+      + '<div class="c"><span><b>'+fmt(d.cases)+'</b>cases</span><span><b>'+fmt(d.notes)+'</b>notes</span><span><b>'+fmt(d.closed)+'</b>closed</span></div>'
+      + (d.agents && d.agents.length ? '<div class="ag">'+chips(d.agents, 5)+'</div>' : '')+'</div>';
   }).join("");
+  var B = M.blocks || [];
+  $("#blocks").innerHTML = B.length ? B.map(function(b){
+    return '<div class="bl"><div class="h"><b>'+esc(b.who)+'</b><span>'+fmt(b.n)+'</span></div><div class="ag">'
+      + (b.agents||[]).map(function(a){ return '<span class="chip bad">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join("")+'</div></div>'; }).join("")
+    : '<div class="empty">Every case one step from settling has been touched today.</div>';
+  // By agent
+  var C = M.byAgent || {}, AG = C.agents || [];
+  if (C.error) { $("#agents").innerHTML = '<div class="empty bad">'+esc(C.error)+'</div>'; $("#aOf").textContent = C.error; }
+  else {
+    count($("#aN"), C.movedToday||0);
+    $("#aOf").innerHTML = "of <b>"+fmt(C.of)+"</b> agents with a pending case on the report";
+    stat("#aWait", fmt(C.waiting)); stat("#aQuiet", fmt(C.quietWeek));
+    $("#agents").innerHTML = AG.length ? AG.map(function(x,i){
+      var l = x.last, stale = !l || l.days >= 7;
+      return '<div class="ar" style="--d:'+(i*.04).toFixed(2)+'s"><div class="a">'+esc(who(x.agent))+'</div>'
+        + '<div class="n">'+fmt(x.cases)+'</div>'
+        + '<div class="ck"><b style="font:800 1.2rem var(--fd);color:var(--'+(x.onYou?'gold':'faint')+')">'+fmt(x.onYou)+'</b>'+(x.codes||[]).map(function(c){ return codeTag(c.code)+(c.n>1?'<small style="color:var(--faint)">&times;'+c.n+'</small>':''); }).join("")+'</div>'
+        + '<div class="n '+(x.near?'':'dim')+'">'+fmt(x.near)+'</div>'
+        + '<div class="n '+(x.never?'red':'dim')+'">'+(x.never==null?'&ndash;':fmt(x.never))+'</div>'
+        + '<div class="n '+(x.today?'green':'dim')+'">'+fmt(x.today)+'</div>'
+        + '<div class="ck'+(stale?' no':'')+'">'+(l ? esc(l.when)+(l.days>1?' &middot; '+l.days+' days':'') : 'Never')+'</div></div>'; }).join("")
+      : '<div class="empty">No agent with a pending case.</div>';
+  }
   var S = M.stream || [];
   $("#stream").innerHTML = S.length ? S.map(function(e,i){
     return '<div class="ev" style="--d:'+(i*.05).toFixed(2)+'s"><div class="t">'+esc(e.at)+'</div><div class="d">'+esc(e.desk)+'</div>'
-      + '<div class="w"><b>'+esc(who(e.agent))+'</b> '+(e.grp ? '<span class="grp">'+esc(e.grp)+'</span>' : '&hellip;'+esc(e.pol)+codeTag(e.code)+(e.kind?' &middot; '+esc(e.kind):''))+'</div>'
+      + '<div class="w"><b>'+esc(who(e.agent))+'</b> '+(e.grp ? '<span class="grp">'+esc(e.grp)+'</span>' : '&hellip;'+esc(e.pol)+codeTag(e.code)+(e.kind?' &middot; '+esc(e.kind):''))+(e.text?' &middot; <i>&ldquo;'+esc(e.text)+'&rdquo;</i>':'')+'</div>'
       + '<span class="tag '+esc(e.what)+'">'+esc(WHAT[e.what]||e.what)+'</span></div>'; }).join("")
     : '<div class="empty bad">Nothing yet today. The first note, status or close on a pending case in Salesforce lands here within ten minutes.</div>';
   // Work it first
@@ -272,10 +462,10 @@ function paint(){
       + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
     : '<div class="empty">Nothing is one step from settling on the report.</div>')
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
-  fitRows($("#queue")); fitRows($("#stream"));
+  fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks")); fitRows($("#stCodes")); fitRows($("#acList")); fitRows($("#uwList"));
   // the ticker
-  var bits = [M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
-    "<b>"+M.started+" of "+M.of+"</b> desks started", M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
+  var bits = [(M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
+    "<b>"+inN+" of "+M.of+"</b> staff signed in", (C.of ? "<b>"+fmt(C.movedToday)+" of "+fmt(C.of)+"</b> agents' cases moved today" : ""), (C.quietWeek ? "<b>"+fmt(C.quietWeek)+"</b> agents with nothing moved in a week" : ""), M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
     "<b>"+fmt(M.queueOf)+"</b> cases one step from settling, <b>"+fmt(M.queueToday)+"</b> touched today",
     F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : "",
     (M.other && M.other.pending) ? "<b>"+fmt(M.other.pending)+"</b> group, health and increase applications pending, <b>"+fmt(M.other.today)+"</b> touched today" : ""].filter(Boolean);
@@ -291,9 +481,9 @@ function fitRows(box){
   if (was) { v.classList.add("out"); v.style.visibility=""; }
 }
 var view = 0;
-function turn(){ view = 1 - view; [0,1].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
-  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
-if(!window.matchMedia("(max-width:900px)").matches) setInterval(turn, 16000);
+function turn(){ view = (view + 1) % 6; [0,1,2,3,4,5].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
+  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
+if(!window.matchMedia("(max-width:900px)").matches) setInterval(turn, 15000);
 function feed(url, body, tries){
   tries = tries === undefined ? 3 : tries;
   return fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
