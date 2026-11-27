@@ -226,7 +226,7 @@ const $=id=>document.getElementById(id);
 /* An employee's own link (17 November 2026): ?inv=<code>. Their employer sent it from their group page; their part comes
    back to the branch, the employer checks it and completes Section F, and it goes to Guardian Life. Their health answers
    go to Guardian Life, never to the employer. Without ?inv= the page works exactly as it always has. */
-const SVC='https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const SVC='https://script.google.com/macros/s/AKfycbyITAN6ag-eh8ahB1TZOMTcRHT6JeMMxoBja6Btm7VgXTemWjyLDsNFmo80GVnTq9Vc/exec';
 const INVCODE=(new URLSearchParams(location.search).get('inv')||'').trim();
 let INV=null;
 

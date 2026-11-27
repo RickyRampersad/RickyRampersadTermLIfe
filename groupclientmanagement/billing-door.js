@@ -14,7 +14,7 @@
  * panel, the forms, the payment box, the approve and send actions) runs unchanged; it then replaces openBilling and
  * drawBilling with the door's own. Sign-in is the staff page's (the same two localStorage keys). No client data lives
  * here: everything comes from GroupBilling.gs at request time. */
-const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const SVC = 'https://script.google.com/macros/s/AKfycbyITAN6ag-eh8ahB1TZOMTcRHT6JeMMxoBja6Btm7VgXTemWjyLDsNFmo80GVnTq9Vc/exec';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 /* a letter or statement shown here runs nothing; its links open in a tab of their own, and a link to the group's page

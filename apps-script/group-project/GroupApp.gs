@@ -33,7 +33,7 @@
  */
 
 var GROUP_APP = {
-  VERSION: '2026-11-26c',
+  VERSION: '2026-11-27a',
   MOVE_TAB: '_move_group',
   /* the small sheet groupMoveExport makes in the account's Drive, found here by its name (or by MOVE_SHEET_ID) */
   MOVE_FILE: 'Group move: settings for the new project (groupMoveImport deletes this)',
@@ -94,7 +94,9 @@ function groupPing_() {
                 salesforce: has('SF_KEY') && has('SF_SECRET'), ai: has('ANTHROPIC_API_KEY') },
     jobs: jobs,
     timeZone: (function () { try { return Session.getScriptTimeZone() || ''; } catch (e) { return ''; } })(),
-    movedIn: String(p.GROUP_MOVED_IN || '')
+    /* the date alone: the ping needs no sign-in, so an account's address never goes in it (27 November 2026: the first
+       live ping carried the old owner's address after "from") */
+    movedIn: String(p.GROUP_MOVED_IN || '').split(/\s+from\s+/)[0].replace(/\S+@\S+/g, '')
   };
 }
 
@@ -151,7 +153,7 @@ function groupMoveImport() {
   }
 
   var reach = groupReach_();
-  store.setProperty('GROUP_MOVED_IN', new Date().toISOString() + ' from ' + (m.meta.from || 'the old project'));
+  store.setProperty('GROUP_MOVED_IN', new Date().toISOString());
   var gone = groupMoveForget_(found);
 
   var lines = [];

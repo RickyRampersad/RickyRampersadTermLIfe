@@ -247,6 +247,12 @@ ok('it sets TEAM_CODE from the branch code, and SQ_SHEET_ID from the sheet the e
 ok('it rebuilds the hourly refresh, the Monday letters and the 10:30 day, once each',
   JSON.stringify(mn.triggers.map(t => t.fn).sort()) === JSON.stringify(['gcmDay1030', 'gcmMondaySend', 'gcmRefreshTick']), mn.triggers.map(t => t.fn).join(','));
 ok('it empties and bins the sheet that held the secrets', moveFiles().length === 0 && Object.values(drive.files).every(f => Object.values(f.tabs).every(t => !t.rows.length)) && /in the bin/.test(said3));
+ok('the ping never carries an address: only the date of the move', (() => {
+  const pp = JSON.parse(mn.sb.doGet({ parameter: { action: 'ping' } }).text);
+  mn.props.GROUP_MOVED_IN = '2026-11-27T00:27:51.248Z from someone@example.com';
+  const p2 = JSON.parse(mn.sb.doGet({ parameter: { action: 'ping' } }).text);
+  return !/@/.test(JSON.stringify(pp)) && !/@/.test(JSON.stringify(p2)) && /^2026-11-27T/.test(p2.movedIn);
+})());
 ok('it marks the move done and says what to deploy next', !!mn.props.GROUP_MOVED_IN && /New deployment/.test(said3));
 ok('it reports both sheets open', /Every sheet and folder/.test(said3), said3);
 ok('with nothing exported it says how to point it at the sheet', /MOVE_SHEET_ID/.test(world({ files: NEW, scriptId: 'SCRIPT-NEW', sheet: shared, drive }).sb.groupMoveImport()));
@@ -277,10 +283,24 @@ ok('when every way fails it says which step, that nothing was changed, and to ru
 ok('and groupMoveStopOld still refuses, an empty tab left by a failed run included, so no job is deleted before the settings are written down', /groupMoveExport first/.test(mx.sb.groupMoveStopOld()) && mx.triggers.length === OLD_JOBS.length);
 
 /* ── 5. the pages ──────────────────────────────────────────────── */
+/* before the move the pages hold the Service Questionnaire's /exec, and the check counts one on each; after it they
+   hold the group project's own, and the check run with that address finds each already on it */
+const SQ_EXEC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const staffPage = fs.readFileSync(path.join(ROOT, 'groupclientmanagement/index.html'), 'utf8');
+const pageExec = (staffPage.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec/g) || []).filter(u => u !== SQ_EXEC)[0] || '';
+const moved = !!pageExec && !staffPage.includes(SQ_EXEC);
 let rp = { status: 1, out: '' };
-try { rp = { status: 0, out: cp.execFileSync('python3', [path.join(ROOT, 'tools/move/repoint-group.py'), 'https://script.google.com/macros/s/AKfycbNEWGROUPPROJECTADDRESS0123456789/exec', '--check'], { cwd: ROOT, encoding: 'utf8' }) }; }
+try { rp = { status: 0, out: cp.execFileSync('python3', [path.join(ROOT, 'tools/move/repoint-group.py'), moved ? pageExec : 'https://script.google.com/macros/s/AKfycbNEWGROUPPROJECTADDRESS0123456789/exec', '--check'], { cwd: ROOT, encoding: 'utf8' }) }; }
 catch (e) { rp = { status: e.status, out: String(e.stdout || '') }; }
-ok('repoint-group.py finds every group page and no page outside its list', rp.status === 0 && (rp.out.match(/^\s+1\s{2}/gm) || []).length === 10, rp.out.trim().split('\n').slice(-3).join(' | '));
+const pageLines = moved ? (rp.out.match(/already on the new address/g) || []).length : (rp.out.match(/^\s+1\s{2}/gm) || []).length;
+ok('repoint-group.py finds every group page and no page outside its list (' + (moved ? 'pages on the group project' : 'pages not moved yet') + ')',
+  rp.status === 0 && pageLines === 10, rp.out.trim().split('\n').slice(-3).join(' | '));
+if (moved) {
+  const PAGES = ['groupclientmanagement/index.html', 'groupclientmanagement/client.html', 'groupclientmanagement/wall.html', 'groupclientmanagement/training.html',
+    'groupclientmanagement/billing-door.js', 'orphan-transition/training.html', 'benefits/enroll.html', 'renewaldesk/desk.js', 'myrenewal/index.html', 'renewal/index.html'];
+  ok('every group page holds the group project\'s address and none still holds the old one',
+    PAGES.every(f => { const t = fs.readFileSync(path.join(ROOT, f), 'utf8'); return t.includes(pageExec) && !t.includes(SQ_EXEC); }));
+}
 
 console.log('\n' + passes + ' passed, ' + fails + ' failed');
 process.exit(fails ? 1 : 0);
