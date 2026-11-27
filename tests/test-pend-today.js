@@ -170,6 +170,10 @@ console.log('\nSettled since October, from the issue date and the policy status:
   env.iSs_ = () => ({ getSheets: () => [sheet('Branch Pendings_2026-10-27-1500', rows3)] });
   env.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) };
   const L3 = env.wallPendLive_('2026-10-27'), S3 = L3.settled;
+  const rows4 = rows3.map((r, i) => i === 0 ? H.concat(['policy_status_date', 'policy_status']) : r);
+  env.iSs_ = () => ({ getSheets: () => [sheet('Branch Pendings_2026-10-27-1500', rows4)] });
+  const S4 = env.wallPendLive_('2026-10-27').settled;
+  ok('with no issue date column, the date the status became 1 is read as the issue date', S4 && S4.n === 2, JSON.stringify(S4 && [S4.n, S4.missing]));
   ok('status 1 or Premium Paying with an issue date from 1 October is settled', S3 && S3.n === 2 && S3.week === 1, JSON.stringify(S3));
   ok('settled before October is not counted, and is not pending either', S3.n === 2 && L3.policies === 1, JSON.stringify([S3.n, L3.policies]));
   ok('a case the status says is closed is out of the pending count', S3.closedOut === 1);
