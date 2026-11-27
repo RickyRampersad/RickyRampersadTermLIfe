@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27w';
+var SCRIPT_VERSION = '2026-11-27x';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17881,7 +17881,14 @@ function wallPendLive_(day) {
   // No issue date on the report (27 Nov 2026): the date the status became 1, policy_status_date, is the issue date.
   c.issue = colOf(/issue.?date/i); if (c.issue < 0) c.issue = colOf(/^policy.?status.?date$/i); c.pst = colOf(/^(policy.?)?status(.?(code|desc|description))?$/i, /requirement/i);
   if (c.pst < 0) c.pst = colOf(/policy.?status/i, /requirement/i);
-  var settledPol = {}, closedPol = {};
+  var settledPol = {}, closedPol = {}, MV = {};
+  // The report's own clocks and flags, read where they are there (27 Nov 2026): auto-close, awaiting review, expiry, never ordered,
+  // signed-to-submit, head office's priority, items needed for approval. See wallBrief_.
+  var dOf0 = function (v) { return v instanceof Date ? Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM-dd') : String(v == null ? '' : v).trim().slice(0, 10); };
+  c.recd = ix('received_date'); c.dac = ix('DAYS_TO_AUTO_CLOSE'); c.acr = ix('AUTO_CLOSE_RISK_14D'); c.arv = ix('DAYS_RECEIVED_AWAITING_REVIEW');
+  c.arvN = ix('RECEIVED_AWAITING_REVIEW_ON_POLICY'); c.dexp = ix('DAYS_TO_REQUIREMENT_EXPIRY'); c.exp = ix('REQUIREMENT_EXPIRED'); c.nvo = ix('NEVER_ORDERED_ON_POLICY');
+  c.ordd = ix('ordered_date'); c.s2s = ix('DAYS_SIGNED_TO_SUBMIT'); c.pri = ix('CASE_PRIORITY'); c.prk = ix('PRIORITY_RANK'); c.nfa = ix('needed_for_approval_flag');
+  c.fov = ix('FOLLOWUP_OVERDUE'); c.lfu = ix('last_followup_date'); c.subm = ix('APPLICATION_SUBMIT_DATE');
   // Any column that could carry a person's name, so the underwriter's words can be shown without it (see wallSafeText_).
   var nameCols = h.map(function (x, i) { return /(client|owner|insured|assured|holder|payor|payer|applicant|surname|first.?name|last.?name|full.?name|life\b)/i.test(x) && !/agent|requirement|branch|underwriter|associate/i.test(x) ? i : -1; }).filter(function (i) { return i > -1; });
   var m = /(20\d{2})\D{0,3}(\d{1,2})\D{0,3}(\d{1,2})(?:st|nd|rd|th)?\D{0,3}(\d{1,2}):?(\d{2})/i.exec(tab.getName());
@@ -17899,7 +17906,12 @@ function wallPendLive_(day) {
       return;
     }
     if (c.pst > -1 && WALL_SETTLED.CLOSED.test(pst)) { closedPol[pol] = 1; return; }
+    // The movement, before a received or closed row is set aside (27 Nov 2026): what came in, when, on whose case.
+    var recd = c.recd < 0 ? '' : dOf0(r[c.recd]), ag0 = cell(r, c.agent) || 'No agent named';
+    var M0 = MV[pol] = MV[pol] || { ag: ag0, open: 0, recd: [], rows: 0 }; M0.rows++;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(recd)) M0.recd.push({ at: recd, code: cell(r, c.code).toUpperCase() });
     if (/closed|received|waived|complete|cancel/i.test(cell(r, c.st))) return;
+    M0.open++;
     var ag = cell(r, c.agent) || 'No agent named';
     out.reqs++; pols[pol] = 1; agentOf[pol] = ag; agentsSeen[ag] = 1;
     numOf[pol] = pol; var an = cell(r, c.app); if (an) numOf[an] = pol;
@@ -17921,6 +17933,17 @@ function wallPendLive_(day) {
     p.items.push({ kind: kd, who: cell(r, c.who) || 'Not said', last: /^y/i.test(cell(r, c.last)), red: rg === 'Red', code: cell(r, c.code).toUpperCase(), name: cell(r, c.name) || cell(r, c.code),
                   asked: c.rdate < 0 ? '' : dOf(r[c.rdate]) });
     if (!p.uw) p.uw = cell(r, c.uw); if (!p.so) p.so = cell(r, c.so);
+    var num = function (i) { var v = i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); return v === '' || isNaN(Number(v)) ? null : Number(v); };
+    var yes = function (i) { var v = i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); return /^(y|yes|true|1)$/i.test(v) || (Number(v) > 0); };
+    var dac = num(c.dac); if (dac != null && (p.dac == null || dac < p.dac)) p.dac = dac; if (yes(c.acr)) p.acr = true;
+    var arv = num(c.arv); if (arv != null && arv > (p.arv || 0)) p.arv = arv; var arvN = num(c.arvN); if (arvN != null) p.arvN = Math.max(p.arvN || 0, arvN);
+    var dexp = num(c.dexp); if (dexp != null && (p.dexp == null || dexp < p.dexp)) { p.dexp = dexp; p.dexpCode = cell(r, c.code).toUpperCase(); }
+    if (yes(c.exp)) { p.expired = true; p.expCode = cell(r, c.code).toUpperCase(); }
+    if (c.ordd > -1 && !dOf0(r[c.ordd])) { p.notOrdered = (p.notOrdered || 0) + 1; p.noCode = cell(r, c.code).toUpperCase(); }
+    var s2s = num(c.s2s); if (s2s != null) p.s2s = s2s; var prk = num(c.prk); if (prk != null && (p.prk == null || prk < p.prk)) p.prk = prk;
+    if (cell(r, c.pri)) p.pri = cell(r, c.pri); if (yes(c.nfa)) { p.forApproval = (p.forApproval || 0) + 1; }
+    if (yes(c.fov)) p.fov = true; var lfu = c.lfu < 0 ? '' : dOf0(r[c.lfu]); if (/^\d{4}/.test(lfu) && lfu > (p.lfu || '')) p.lfu = lfu;
+    var sub = c.subm < 0 ? '' : dOf0(r[c.subm]); if (/^\d{4}/.test(sub)) p.sub = sub;
     var nfd = c.nf < 0 ? '' : dOf(r[c.nf]); if (/^\d{4}-\d{2}-\d{2}$/.test(nfd) && (!p.nf || nfd < p.nf)) p.nf = nfd;
     if (cell(r, c.cmt)) { var cd = c.rdate < 0 ? '' : dOf(r[c.rdate]); if (/^\d{4}/.test(cd) && cd > p.cmtAt) p.cmtAt = cd;
       // What the underwriter wrote, newest per policy, with every name on the row noted so it can be taken out (27 Nov 2026).
@@ -17940,6 +17963,7 @@ function wallPendLive_(day) {
     }
   });
   out.policies = Object.keys(pols).length; out.agents = Object.keys(agentsSeen).length;
+  out._mv = MV;   // for the morning brief; taken off before the feed is kept
   try { out.settled = wallSettled_(day, settledPol, c.issue > -1 && c.pst > -1, Object.keys(closedPol).length); } catch (e) { out.settled = { error: String(e && e.message || e) }; }
   out.ages = WALL_PEND.AGES.map(function (k) { return { k: k.replace(' days', ''), n: ages[k] || 0 }; });
   out.byReq = Object.keys(reqs).map(function (k) { return { k: k, n: reqs[k] }; }).sort(function (a, b) { return b.n - a.n; }).slice(0, WALL_PEND.TOP);
@@ -17959,6 +17983,8 @@ function wallPendLive_(day) {
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
   // The report's own headings, so a column Guardian or the branch adds is seen on the feed (27 Nov 2026). Headings only, no row.
   out.cols = h.filter(Boolean);
+  try { out.brief = wallBrief_(day, P, out._mv, settledPol, chase, numOf); } catch (e) { out.brief = { error: String(e && e.message || e) }; }
+  delete out._mv;
   try { out.morning = wallPendMorning_(day, P, numOf, chase); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
   try { out.follow = pendFollowCount_(day); } catch (e) {}
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
@@ -18182,6 +18208,79 @@ function wallSafeText_(raw, names, codes) {
     return keep ? tok : tok.replace(core, '▪');
   }).join(' ').replace(/▪(\W*▪)+/g, '▪');
   return out.length > 160 ? out.slice(0, 157).replace(/\s+\S*$/, '') + '…' : out;
+}
+
+/* ── The morning brief: what support works first, every morning (27 November 2026, night) ──
+ *  Ricky: "any other field you believe will help the management team and agent deal with proactively ... to speed-track the
+ *  policies to settle, as well the movements once all is in, and a guide so support can see what to focus on every morning,
+ *  so an agent will ensure they get on that wall". From the report's own clocks and flags (wallPendLive_ reads them where the
+ *  report carries them), seven steps in the order they are worked, each with how many and the first cases:
+ *    1 Save it         Guardian auto-closes the case within 14 days            phone the agent and the client today
+ *    2 Settle it       approved, only the premium or one item left             collect, submit, settle
+ *    3 All in          every item received, head office to review and issue   ask head office for the decision
+ *    4 Answer HO       head office wrote after our last move                   reply on the case
+ *    5 Expiring        a medical or a form expiring within 30 days, or gone   book or redo it before it lapses
+ *    6 Never ordered   a requirement head office has not ordered               ask head office to order it
+ *    7 Chase agents    agent items past three working days                     one call per agent, every item at once
+ *  And the movement: items received in the last seven days and today, cases that went all-in this week, policies settled this
+ *  week, and the agents whose cases moved (the "on the wall" list), with how fast each submits after the client signs. */
+var WALL_BRIEF = { SHOW: 5, AUTO: 14, EXPIRY: 30, AGENT: 3, MOVE_DAYS: 7 };
+function wallBrief_(day, P, MV, S, chase, numOf) {
+  var l4 = function (k) { return String(k).slice(-4); }, wd = function (iso) { return iso ? pendFuWorkdaysSince_(iso, day) : 0; };
+  var stOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var x = WALL_PEND.STATES[i]; if (x.re && x.re.test(p.dec)) return x.key; } return ''; };
+  var row = function (k, detail, code) { var p = P[k] || {}; return { pol: l4(k), agent: String(p.ag || (MV[k] || {}).ag || '').trim(), code: code || '', detail: detail }; };
+  var byPri = function (a, b) { var pa = P[a] || {}, pb = P[b] || {}; return ((pa.prk == null ? 999 : pa.prk) - (pb.prk == null ? 999 : pb.prk)); };
+  var keys = Object.keys(P), steps = [];
+  var add = function (k, title, todo, list) { steps.push({ k: k, title: title, todo: todo, n: list.length, list: list.slice(0, WALL_BRIEF.SHOW) }); };
+  // 1 Save it
+  var save = keys.filter(function (k) { var p = P[k]; return p.acr || (p.dac != null && p.dac <= WALL_BRIEF.AUTO); })
+    .sort(function (a, b) { return (P[a].dac == null ? 99 : P[a].dac) - (P[b].dac == null ? 99 : P[b].dac); })
+    .map(function (k) { var p = P[k]; return row(k, p.dac != null ? (p.dac <= 0 ? 'auto-closes today' : 'auto-closes in ' + p.dac + (p.dac === 1 ? ' day' : ' days')) : 'at risk of auto-close', (p.items[0] || {}).code); });
+  add('save', 'Save it: Guardian closes these within 14 days', 'Phone the agent and the client today. A closed case starts again from nothing.', save);
+  // 2 Settle it
+  var settle = keys.filter(function (k) { var p = P[k]; return (p.pay > 0 && p.pay === p.reqs) || stOf(p) === 'settle' && p.reqs <= 2; }).sort(byPri)
+    .map(function (k) { var p = P[k]; return row(k, p.pay === p.reqs ? 'only the premium left' : 'approved, ' + p.reqs + (p.reqs === 1 ? ' item' : ' items') + ' left', p.items.map(function (i) { return i.code; }).join(' ')); });
+  add('settle', 'Settle it: approved, the last item or the premium', 'Collect the premium or the last form, submit, and settle today.', settle);
+  // 3 All in: nothing open on the report, or everything open is received and waiting on review
+  var allIn = Object.keys(MV).filter(function (k) { return !S[k] && MV[k].rows && !MV[k].open; })
+    .map(function (k) { var last = MV[k].recd.map(function (x) { return x.at; }).sort().pop() || ''; return row(k, last ? 'all in since ' + Number(last.slice(8, 10)) + '/' + Number(last.slice(5, 7)) + ' · ' + wd(last) + ' working days' : 'all in', ''); });
+  keys.forEach(function (k) { var p = P[k]; if ((p.arvN || 0) > 0 && (p.arv || 0) >= 2) allIn.push(row(k, p.arvN + ' received, waiting review ' + p.arv + ' days', '')); });
+  add('allin', 'All in: head office has everything', 'Ask head office for the decision. Every day here is head office’s, not ours, and should be said so.', allIn);
+  // 4 Answer head office
+  var ho = keys.filter(function (k) { var p = P[k], c = (chase || {})[k] || {}; return p.uwNote && p.uwNote.at && (!c.last || String(c.last).slice(0, 10) < p.uwNote.at); })
+    .sort(function (a, b) { return P[a].uwNote.at < P[b].uwNote.at ? -1 : 1; })
+    .map(function (k) { var n = P[k].uwNote; return row(k, 'head office wrote ' + Number(n.at.slice(8, 10)) + '/' + Number(n.at.slice(5, 7)) + ', nothing since', n.code); });
+  add('ho', 'Answer head office', 'Reply on the case and move it the same day head office writes.', ho);
+  // 5 Expiring
+  var exp = keys.filter(function (k) { var p = P[k]; return p.expired || (p.dexp != null && p.dexp <= WALL_BRIEF.EXPIRY); })
+    .sort(function (a, b) { return (P[a].expired ? -999 : P[a].dexp) - (P[b].expired ? -999 : P[b].dexp); })
+    .map(function (k) { var p = P[k]; return row(k, p.expired ? 'expired: redo it' : 'expires in ' + p.dexp + ' days', p.expired ? p.expCode : p.dexpCode); });
+  add('expiry', 'Expiring: medicals and forms running out', 'Book or redo it before it lapses, or the client goes through it twice.', exp);
+  // 6 Never ordered
+  var nvo = keys.filter(function (k) { return P[k].notOrdered; }).sort(function (a, b) { return P[b].days - P[a].days; })
+    .map(function (k) { var p = P[k]; return row(k, p.notOrdered + (p.notOrdered === 1 ? ' item' : ' items') + ' not ordered by head office', p.noCode); });
+  add('never', 'Never ordered by head office', 'Ask head office to order it. Nobody can deliver a requirement that was never asked for.', nvo);
+  // 7 Chase agents: one call per agent, every late item at once
+  var ag = {};
+  keys.forEach(function (k) { var p = P[k]; p.items.forEach(function (it) { if (!/\bagent\b/i.test(it.who) || !it.asked || wd(it.asked) <= WALL_BRIEF.AGENT) return;
+    var a = ag[p.ag] = ag[p.ag] || { agent: p.ag, items: 0, cases: {}, codes: {}, oldest: 0 }; a.items++; a.cases[k] = 1; a.codes[it.code] = 1; a.oldest = Math.max(a.oldest, wd(it.asked)); }); });
+  var agList = Object.keys(ag).map(function (a) { var x = ag[a]; return { pol: '', agent: x.agent, code: Object.keys(x.codes).slice(0, 4).join(' '), detail: x.items + ' items on ' + Object.keys(x.cases).length + ' cases, oldest ' + x.oldest + ' working days' }; })
+    .sort(function (a, b) { return parseInt(b.detail, 10) - parseInt(a.detail, 10); });
+  add('agents', 'Chase the agents, one call each', 'One call per agent with every late item on the list, not one call per item.', agList);
+  // The movement
+  var since = shiftDays_(day, -WALL_BRIEF.MOVE_DAYS), weekStart = shiftDays_(day, -((new Date(day + 'T12:00:00Z').getUTCDay() + 6) % 7));
+  var recWeek = 0, recToday = 0, agMove = {}, allInWeek = 0;
+  Object.keys(MV).forEach(function (k) { var m = MV[k];
+    m.recd.forEach(function (x) { if (x.at >= since) { recWeek++; (agMove[m.ag] = agMove[m.ag] || { agent: m.ag, items: 0, settled: 0 }).items++; } if (x.at === day) recToday++; });
+    var last = m.recd.map(function (x) { return x.at; }).sort().pop() || ''; if (!m.open && !S[k] && last >= weekStart) allInWeek++; });
+  var setWeek = 0; Object.keys(S).forEach(function (k) { if (S[k].at >= weekStart) { setWeek++; (agMove[S[k].ag] = agMove[S[k].ag] || { agent: S[k].ag, items: 0, settled: 0 }).settled++; } });
+  // How fast each agent submits once the client signs: the median of DAYS_SIGNED_TO_SUBMIT over their cases.
+  var s2s = {}; keys.forEach(function (k) { var p = P[k]; if (p.s2s != null) (s2s[p.ag] = s2s[p.ag] || []).push(p.s2s); });
+  var med = function (a) { a = a.slice().sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor(a.length / 2)] : null; };
+  var speed = Object.keys(s2s).map(function (a) { return { agent: a, days: med(s2s[a]), n: s2s[a].length }; }).filter(function (x) { return x.days != null; }).sort(function (a, b) { return a.days - b.days; });
+  return { steps: steps, move: { receivedWeek: recWeek, receivedToday: recToday, allInWeek: allInWeek, settledWeek: setWeek,
+    onTheWall: Object.keys(agMove).map(function (a) { return agMove[a]; }).sort(function (a, b) { return (b.settled * 3 + b.items) - (a.settled * 3 + a.items); }).slice(0, 10),
+    speed: speed.slice(0, 12) } };
 }
 
 /* ── Accountability: deadlines, owners, and the agent who is sticking (27 November 2026, evening) ──

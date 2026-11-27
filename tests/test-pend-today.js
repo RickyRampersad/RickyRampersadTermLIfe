@@ -14,18 +14,20 @@ const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (
 const env = makeEnv();
 env.todayISO_ = () => '2026-10-27';
 const H = ['Branch', 'BranchName', 'AGENT_ID', 'Agent Name', 'POLICY', 'REQUIREMENT_CODE', 'requirement_name', 'WHO_ACTS_NEXT', 'RAG_STATUS', 'AGEING_BUCKET', 'NEW_THIS_WEEK', 'mode_premium', 'REQUIREMENT_STATUS',
-           'application_number', 'REQUIREMENT_CATEGORY', 'DAYS_SINCE_SUBMISSION', 'SUSPENDED_AMOUNT', 'DecisionType', 'requirement_comment', 'REQUIREMENT_DATE', 'OWNER_NAME', 'NEXT_FOLLOWUP_DATE'];
+           'application_number', 'REQUIREMENT_CATEGORY', 'DAYS_SINCE_SUBMISSION', 'SUSPENDED_AMOUNT', 'DecisionType', 'requirement_comment', 'REQUIREMENT_DATE', 'OWNER_NAME', 'NEXT_FOLLOWUP_DATE', 'DAYS_TO_AUTO_CLOSE', 'received_date', 'DAYS_SIGNED_TO_SUBMIT'];
 const R = (agent, pol, code, name, who, rag, age, nw, prem, st, x) => { x = x || {};
-  return ['26000', 'X', 'A1', agent, pol, code, name, who, rag, age, nw, prem, st || 'Ordered - awaiting receipt', x.app || '', x.cat || '', x.days || 0, x.susp || 0, x.dec || '', x.cmt || '', x.rdate || '', x.owner || '', x.nf || '']; };
+  return ['26000', 'X', 'A1', agent, pol, code, name, who, rag, age, nw, prem, st || 'Ordered - awaiting receipt', x.app || '', x.cat || '', x.days || 0, x.susp || 0, x.dec || '', x.cmt || '', x.rdate || '', x.owner || '', x.nf || '', x.dac == null ? '' : x.dac, x.recd || '', x.s2s == null ? '' : x.s2s]; };
 const rows = [H,
   R('Varun Seegolam', '5000000001', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'Yes', 500, '', { app: '1000000001', cat: 'Payment', days: 20, dec: 'Standard' }),
   R('Varun Seegolam', '5000000001', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'Yes', 500, '', { app: '1000000001', cat: 'Payment', days: 20, dec: 'Standard' }),
   R('Varun Seegolam', '5000000001', 'PRADD', 'Proof of Address', 'Agent', 'Amber', '31-60 days', 'No', 500, '', { app: '1000000001', cat: 'KYC - Identity & Address', days: 20, dec: 'Standard', rdate: '2026-10-15', nf: '2026-10-20' }),
   R('Varun Seegolam', '5000000002', 'FUTPY', 'Future Premium Payment', 'Agent', 'Red', '90+ days', 'No', 250, '', { cat: 'Payment', days: 100, susp: 250, dec: 'Loaded',
     cmt: 'Please submit FUTPY for SHARMA, Kavita Persad. APS from Dr Maharaj received 12/10; call 868-555-0199 or kavita@mail.com', rdate: '2026-10-22', owner: 'Kavita Persad Sharma', nf: '2026-10-27' }),
+  R('Rajiv Soodoo', '5000000020', 'FACTF', 'Fact Find Form', 'Agent', 'Green', '0-30 days', 'No', 100, 'Received', { recd: '2026-10-26', days: 30 }),
+  R('Rajiv Soodoo', '5000000020', 'AGEAD', 'Proof of Identity', 'Agent', 'Green', '0-30 days', 'No', 100, 'Received', { recd: '2026-10-27', days: 30 }),
   R('Aidan Eugene', '5000000003', 'FUTPY', 'Future Premium Payment', 'Agent', 'Amber', '61-90 days', 'No', 300, '', { cat: 'Payment', days: 70, dec: 'Additional Information' }),
   R('Tricia Baksh', '5000000004', 'FUTPY', 'Future Premium Payment', 'Agent', 'Amber', '31-60 days', 'No', 200, '', { cat: 'Payment', days: 40, dec: 'Referred' }),
-  R('Fawwaz Mohamed', '5000000005', 'MDMED', 'Full Doctors Examination', 'Client (attend exam)', 'Green', '0-30 days', 'Yes', 100, '', { cat: 'Medical - Exam / Lab Test', days: 10, susp: 300, dec: 'Additional Information' }),
+  R('Fawwaz Mohamed', '5000000005', 'MDMED', 'Full Doctors Examination', 'Client (attend exam)', 'Green', '0-30 days', 'Yes', 100, '', { cat: 'Medical - Exam / Lab Test', days: 10, susp: 300, dec: 'Additional Information', dac: 6, s2s: 2 }),
   R('Fawwaz Mohamed', '5000000005', 'DECLF', 'Declaration Form - Life', 'Client / Agent', 'Green', '0-30 days', 'Yes', 100, 'Received', { cat: 'Forms & Declarations', days: 10, susp: 300, dec: 'Additional Information' })];
 const sheet = (name, v) => ({ getName: () => name, getDataRange: () => ({ getValues: () => v }) });
 env.iSs_ = () => ({ getSheets: () => [sheet('Agent Codes', [['x']]), sheet('Branch Pendings_2026-10-26-0900', [H]), sheet('Branch Pendings_2026-10-27-1336', rows)] });
@@ -131,6 +133,15 @@ ok('each owner groups the agents whose cases it holds', AC2.owners.some(o => o.a
 ok('a Guardian follow-up date already gone is a miss on the staff side', AC2.past.some(p => p.on === 'staff'), JSON.stringify(AC2.past));
 ok('an agent item asked for more than three working days ago shows the agent sticking', AC2.sticking.some(x => x.agent === 'Varun Seegolam' && x.codes.includes('PRADD') && x.oldest > 3), JSON.stringify(AC2.sticking));
 ok('the misses carry no client and no full policy number', !/50000000\d\d/.test(JSON.stringify(AC2)));
+console.log('\nThe morning brief:\n');
+const B = L.brief, step = k => B.steps.find(x => x.k === k);
+ok('seven steps, in the order support works them', B && !B.error && B.steps.map(x => x.k).join(',') === 'save,settle,allin,ho,expiry,never,agents', JSON.stringify(B && (B.error || B.steps.map(x => [x.k, x.n]))));
+ok('a case Guardian closes within 14 days is first, with the days left', step('save').list.some(x => x.pol === '0005' && /6 days/.test(x.detail)), JSON.stringify(step('save')));
+ok('a case with every item received is all in, for head office', step('allin').list.some(x => x.pol === '0020' && x.agent === 'Rajiv Soodoo'), JSON.stringify(step('allin')));
+ok('an all-in case is not on the pending count', !M.queue.some(q => q.pol === '0020'));
+ok('the movement counts items received this week and today, and who moved', B.move.receivedWeek >= 2 && B.move.receivedToday >= 1 && B.move.onTheWall.some(a => a.agent === 'Rajiv Soodoo'), JSON.stringify(B.move));
+ok('how fast each agent submits after the client signs', B.move.speed.some(a => a.agent === 'Fawwaz Mohamed' && a.days === 2), JSON.stringify(B.move.speed));
+ok('the brief carries no client and no full policy number', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(B)));
 console.log('\nGroup life, group health, individual health and increases:\n');
 const G = M.other;
 ok('pending group and health records, and increases, are read from their own objects', G && G.pending === 3, JSON.stringify(G && G.types));

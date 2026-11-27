@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!-- THE PENDING WALL · THE SUPPORT DESK'S MORNING GUIDE (27 November 2026).
+     Ricky: "a guide so support can see what to focus on every morning, so an agent will ensure they get on that wall".
+     The same seven steps, in the same order, as the Morning brief on today.html (wallBrief_ in KPI.gs), and the deadlines the
+     Accountability view holds the branch to (WALL_ACC). Change a step there, change it here. No client, no figures. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pending Morning Guide</title>
+<meta name="description" content="The support desk's morning on the pending cases: seven steps in order, the deadlines, and how an agent gets on the wall.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#F3F1EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{--bg:#F3F1EC;--panel:#fff;--line:rgba(31,36,48,.12);--ink:#1F2430;--dim:#4B5363;--faint:#7A808C;--gold:#87590C;--red:#B93A32;--green:#2C7D4F;
+    --fd:'Plus Jakarta Sans',system-ui,sans-serif;--fb:Inter,system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--fb);padding:28px 16px 60px}
+  main{max-width:860px;margin:0 auto}
+  .top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .plate{display:flex;flex-direction:column;align-items:center;padding:8px 13px;border-radius:11px;background:linear-gradient(135deg,#F3CE6E,#D99B2E);color:#1B1A22}
+  .plate b{font:900 14px var(--fd);letter-spacing:.12em} .plate span{font:700 11px var(--fd);letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+  h1{font:800 28px/1.15 var(--fd);letter-spacing:-.02em}
+  .sub{color:var(--dim);margin-top:3px}
+  h2{font:800 13px var(--fd);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:30px 0 10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:10px}
+  .step{display:grid;grid-template-columns:38px 1fr;gap:12px}
+  .step i{font-style:normal;font:800 18px var(--fd);color:#fff;background:var(--gold);border-radius:9px;height:34px;display:grid;place-items:center}
+  .step.hot i{background:var(--red)}
+  .step b{font:800 17px var(--fd)} .step p{color:var(--dim);margin-top:3px} .step p strong{color:var(--ink)}
+  table{width:100%;border-collapse:collapse} td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top} td:first-child{font-weight:700;width:46%}
+  ul{padding-left:20px} li{margin:5px 0}
+  a{color:#1E7F74;font-weight:700}
+  .note{color:var(--faint);font-size:14px;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="plate"><b>PENDING</b><span>wall</span></div>
+    <div><h1>The morning on the pendings</h1><div class="sub">For the support desk, every working morning, before anything else.</div></div></div>
+
+  <div class="card">Open <a href="https://rickyrampersadbranch.com/intelligence/wall/today.html">the pending wall</a> on your phone or the screen. Its first view, <strong>Morning brief</strong>, is this list with today's numbers and the first cases on each step. Work it from the top. A step with nothing on it is done; go to the next.</div>
+
+  <h2>The seven steps, in order</h2>
+  <div class="card step hot"><i>1</i><div><b>Save it</b><p>Guardian closes these within 14 days. <strong>Phone the agent and the client today.</strong> A case that closes starts again from nothing: a new application, new medicals, a client who has lost patience.</p></div></div>
+  <div class="card step hot"><i>2</i><div><b>Settle it</b><p>Approved by underwriting, with only the premium or the last item left. <strong>Collect the premium or the last form, submit it, settle today.</strong> These are the quickest policies the branch will issue this month.</p></div></div>
+  <div class="card step"><i>3</i><div><b>All in</b><p>Head office has every item. <strong>Ask head office for the decision, on the case, today.</strong> Every day a case sits here is head office's, and the wall says so.</p></div></div>
+  <div class="card step hot"><i>4</i><div><b>Answer head office</b><p>The underwriter wrote after our last move. <strong>Reply on the case and move it the same day.</strong> One working day is the deadline; after that the wall marks it late, against the case's owner.</p></div></div>
+  <div class="card step"><i>5</i><div><b>Expiring</b><p>A medical or a form runs out within 30 days, or already has. <strong>Book or redo it before it lapses</strong>, or the client goes through it twice.</p></div></div>
+  <div class="card step"><i>6</i><div><b>Never ordered</b><p>A requirement head office has not ordered. <strong>Ask head office to order it.</strong> Nobody can deliver a requirement that was never asked for.</p></div></div>
+  <div class="card step"><i>7</i><div><b>Chase the agents, one call each</b><p>Agent items past three working days. <strong>One call per agent with every late item on the list</strong>, not one call per item. Post what they said on the case.</p></div></div>
+
+  <h2>The deadlines the wall holds us to</h2>
+  <div class="card"><table>
+    <tr><td>Head office's update</td><td>actioned within <strong>1 working day</strong></td></tr>
+    <tr><td>An agent's item</td><td>delivered within <strong>3 working days</strong> of being asked for</td></tr>
+    <tr><td>Guardian's follow-up date</td><td>on the date</td></tr>
+    <tr><td>The Salesforce Pendings task</td><td>by its due date</td></tr>
+    <tr><td>Every pending case</td><td>has an owner: an open Pendings task in Salesforce. A case with none is shown under <strong>Nobody</strong>.</td></tr>
+  </table></div>
+
+  <h2>How it counts your work</h2>
+  <div class="card"><ul>
+    <li>A <strong>touch</strong> is a note on the case's Pendings task, its status moved, the task closed, or an e-mail logged on it, in Salesforce. Work that is not in Salesforce is not on the wall.</li>
+    <li>Write the note: who, when, how, what was said. A status alone does not tell the branch what was done.</li>
+    <li>The wall reads Salesforce every few minutes and Guardian's report each time it is loaded.</li>
+  </ul></div>
+
+  <h2>How an agent gets on the wall</h2>
+  <div class="card"><ul>
+    <li><strong>On the wall</strong> lists the agents whose items came in during the last seven days and whose policies settled this week. Deliver, and your name is there.</li>
+    <li><strong>Fastest to submit</strong> lists how many days each agent takes from the client signing to the application reaching head office.</li>
+    <li><strong>Agents sticking</strong>, on the Accountability view, lists items past three working days, with the codes. Clear them and your name comes off.</li>
+  </ul></div>
+
+  <p class="note">First names and the last four digits of a policy only. No client is named anywhere on the wall.</p>
+</main>
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbzL03on4sbwsbXd26RvV3cR_OxzGxf2058IJhMiQsMTA74bslyS_HXsmhCEeiSoho4F/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
