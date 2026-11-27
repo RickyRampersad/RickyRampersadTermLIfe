@@ -99,7 +99,7 @@ video{width:100%;border-radius:14px;display:block;background:#0d3f5e}
 <section class="card">
   <h2>How it works</h2>
   <ol class="steps">
-    <li><b>Join</b><small>by 12 noon, Fri 20 Nov</small><p>Sign in with your agent number (staff: your name) and list three gift ideas.</p></li>
+    <li><b>Join</b><small>by 12 noon, Fri 20 Nov</small><p>Sign in with your agent number (staff: your name) and the team passcode, then list three gift ideas.</p></li>
     <li><b>The draw</b><small>Fri 20 Nov, 2:00 pm</small><p>You are e-mailed your Earthling and their wish list. Keep it secret.</p></li>
     <li><b>Be an Angel</b><small>21 Nov to 10 Dec</small><p>Send your Earthling anonymous notes from this page. Buy a gift up to TT$300.</p></li>
     <li><b>The luncheon</b><small>Fri 11 Dec</small><p>Bring your gift wrapped and labelled with your Earthling's name. Angels are revealed. Venue to be advised.</p></li>
@@ -110,6 +110,7 @@ video{width:100%;border-radius:14px;display:block;background:#0d3f5e}
   <h2>Sign in</h2>
   <p class="sub">Agents: your agent number. Staff: your full name.</p>
   <form id="fIn"><label for="id">Agent number or name</label><input id="id" autocomplete="off" required>
+  <label for="code">Team passcode</label><input id="code" type="password" autocomplete="current-password" required>
   <button class="btn" type="submit">Sign in</button><div class="msg" id="mIn"></div></form>
 </section>
 
@@ -208,7 +209,7 @@ var CONFIG = { API: 'https://script.google.com/macros/s/AKfycbzPUI4gaT9AL3T07tqi
   }
   function load() { if (!T) return; call({ action: 'me' }).then(function (d) { if (d.signin) { T = null; try { localStorage.removeItem('rrb-angels-t'); } catch (e) {} return; } if (d.ok && d.admin) return call({ action: 'admin' }).then(draw); draw(d); }); }
   $('fIn').onsubmit = function (e) { e.preventDefault(); $('mIn').className = 'msg'; $('mIn').textContent = 'Signing in…';
-    call({ action: 'login', id: $('id').value }).then(function (d) { if (!d.ok) { $('mIn').className = 'msg err'; $('mIn').textContent = d.error; return; } $('mIn').textContent = ''; if (d.admin) { T = d.t; try { localStorage.setItem('rrb-angels-t', T); } catch (x) {} return call({ action: 'admin' }).then(draw); } draw(d); }); };
+    call({ action: 'login', id: $('id').value, code: $('code').value }).then(function (d) { if (!d.ok) { $('mIn').className = 'msg err'; $('mIn').textContent = d.error; return; } $('mIn').textContent = ''; if (d.admin) { T = d.t; try { localStorage.setItem('rrb-angels-t', T); } catch (x) {} return call({ action: 'admin' }).then(draw); } draw(d); }); };
   $('fJoin').onsubmit = function (e) { e.preventDefault(); $('mJoin').className = 'msg'; $('mJoin').textContent = 'Saving…';
     var o = { action: 'join' }; ['w1', 'w2', 'w3', 'likes', 'avoid', 'sizes'].forEach(function (k) { o[k] = $(k).value; });
     call(o).then(function (d) { if (!d.ok) { $('mJoin').className = 'msg err'; $('mJoin').textContent = d.error; return; } $('mJoin').className = 'msg ok'; $('mJoin').textContent = 'Saved. Your Angel will see this list after the draw.'; draw(d); }); };

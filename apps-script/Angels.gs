@@ -5,7 +5,7 @@
  * rickyrampersadbranch.com/angels/ and talks to this script's /exec address (CONFIG.API in angels/index.html).
  *
  * How it runs
- *   Sign up      to Fri 20 Nov 2026, 12:00 noon. Sign in with an agent number, or a name for staff, then add a wish list.
+ *   Sign up      to Fri 20 Nov 2026, 12:00 noon. Sign in with an agent number (or a name for staff) plus the team passcode, then add a wish list.
  *   The draw     Fri 20 Nov, 2:00 pm (a trigger, or "Run the draw now" on the page). One random circle: everyone gives to
  *                the next, so nobody draws themselves and no two people draw each other. Each Angel is e-mailed their Earthling.
  *   Angel notes  After the draw an Angel may send their Earthling anonymous notes from the page. The Earthling gets an e-mail
@@ -21,14 +21,16 @@
  *   3. Run setupAngels(): makes the tabs, copies everyone active on the Agent Skill Bank to People, installs the draw trigger.
  *      Check People: set Include to N for anyone who should not take part, add anyone missing.
  *   4. Deploy → New deployment → Web app, Execute as Me, Anyone. Put the /exec address in angels/index.html (CONFIG.API).
- *   5. ?action=ping from a browser answers with the phase and the counts.
+ *   4b. Script properties ANGELS_CODE (the team passcode, shared in the branch group) and ANGELS_ADMIN_CODE (the Branch Manager's own).
+       Until ANGELS_CODE is set nobody can sign in.
+   5. ?action=ping from a browser answers with the phase and the counts.
  *
  * Nothing about a person is ever sent to a browser except: their own wish list, their Earthling's name and wish list after the
  * draw, the notes sent to them, and (after the reveal) their Angel's name.
  */
 
 var ANG = {
-  VERSION: '2026-11-16a',
+  VERSION: '2026-11-26a',
   YEAR: 2026,
   LIMIT: 'TT$300',
   CLOSE: '2026-11-20T12:00:00-04:00',   // sign-up closes
@@ -48,6 +50,9 @@ var ANG = {
   NOTE_MAX: 500,
   NOTES_A_DAY: 6,
   TOKEN_HOURS: 6,
+  MAX_TRIES: 5,      // wrong sign-ins per person before a lock
+  MAX_ALL: 40,       // wrong sign-ins across the whole page before a lock
+  LOCK_MIN: 15,
   ADMIN_ROLES: /branch manager|assistant branch manager|bma/i
 };
 
@@ -238,9 +243,30 @@ function angPing_() {
     close: ANG.CLOSE, draw: ANG.DRAW, lunch: ANG.LUNCH, limit: ANG.LIMIT };
 }
 
+/**
+ * Sign-in needs two things: who you are (an agent number or a name) AND the team passcode (script property ANGELS_CODE).
+ * The Branch Manager's account also needs ANGELS_ADMIN_CODE, because it can run the draw and see every note.
+ * Names are not secrets, so a name alone never opens anything. With no code set, nobody signs in (fail closed).
+ * Wrong tries are counted per person and for the whole page, and lock for ANG.LOCK_MIN minutes.
+ * Every refusal reads the same, so the page never says whether a name exists.
+ */
+function angSame_(a, b) {
+  a = String(a || ''); b = String(b || ''); var d = a.length ^ b.length;
+  for (var i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return d === 0;
+}
+function angTries_(k) { return Number(CacheService.getScriptCache().get('angt_' + k) || 0); }
+function angFail_(k) { var c = CacheService.getScriptCache(); c.put('angt_' + k, String(angTries_(k) + 1), ANG.LOCK_MIN * 60); }
 function angLogin_(p) {
-  var who = angFind_(p.id);
-  if (!who) return { ok: false, error: 'We could not find that agent number or name. Staff: type your full name.' };
+  var typed = String(p.id || '').slice(0, 80), code = String(p.code || '').slice(0, 80);
+  var P = PropertiesService.getScriptProperties(), team = P.getProperty('ANGELS_CODE'), adm = P.getProperty('ANGELS_ADMIN_CODE');
+  if (!team) return { ok: false, error: 'Sign-in is not switched on yet. Speak to the Branch Manager.' };
+  var ident = angKey_(typed) + '|' + angNo_(typed);
+  if (angTries_('all') >= ANG.MAX_ALL || angTries_(ident) >= ANG.MAX_TRIES)
+    return { ok: false, error: 'Too many tries. Wait ' + ANG.LOCK_MIN + ' minutes and try again.' };
+  var who = angFind_(typed), bad = { ok: false, error: 'That did not match. Check your agent number or name and the passcode.' };
+  var need = who && angIsAdmin_(who) ? adm : team;   // the manager's account needs the manager passcode, everyone else the team one
+  if (!who || !need || !angSame_(code, need)) { angFail_('all'); angFail_(ident); angLog_(who ? who.name : (typed ? 'unknown' : ''), 'sign-in refused'); return bad; }
   angLog_(who.name, 'sign-in');
   return angMe_(who, angToken_(who));
 }

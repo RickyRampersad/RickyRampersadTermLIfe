@@ -12673,3 +12673,14 @@ runner first, because `vorecruit` lives only in a deleted session scratchpad.
 ## Opportunities — maturities, cover ending, milestones (24 November 2026)
 
 `apps-script/Opportunities.gs` (tracker project, beside KPI.gs and Intelligence.gs). Maturities and milestone birthdays (40, 50, 60, 65) come from the **Branch Portfolio's in-force tab**, never Salesforce's `Maturity_Date__c` (filled on under one policy in ten, with 1930s dates on premium-paying policies). Riders and cover ending (critical illness, waiver, accident, life) come from Salesforce `CLIENT_PORTFOLIO__c` where the date is filled; a blank is never guessed. Built once a day from 4:30 by `keepWarm` (`oppBuild_`, `opportunitiesBuildNow` in the editor), kept with `bigPut_`. The agent's My day shows "Your opportunities today" (`m.opps`, five at a time, a reason and a "Say first" line each, one tap logs it on the **Opportunity Log** tab: Review booked, Called, Not interested, Already done). The Branch Manager's My workday shows the roll-up by agent (`m.oppBranch`), untouched inside 30 days first. Facts and a reason to call only; never advice to cancel or replace. Needs Opportunities.gs and KPI.gs pasted and a New version.
+
+## Earthling and Angel (`/angels/`) — a name is not a password
+
+Reported on 26 November 2026 by an outside reader of the page: anyone could sign in as the Branch Manager by typing a
+name, with no attempt limit, and see wish lists and staff names. The stakes were a gift exchange, but the pattern was
+the board's and the wall's pattern, so it was fixed properly. Sign-in now needs the identity **and** a passcode
+(`ANGELS_CODE`, one for the team; `ANGELS_ADMIN_CODE`, the Branch Manager's own, because that account runs the draw and
+reads every note). Both are Script properties, never in the repository. With no `ANGELS_CODE`, nobody signs in. Five wrong
+tries lock a person for 15 minutes and 40 lock the page; every refusal reads the same, so the page never confirms a name.
+**Pasting `Angels.gs` is not enough: set both properties and publish a New version**, or the live script still takes a
+name alone. `tests/test-angels.js` covers it.
