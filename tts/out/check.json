@@ -1,27 +1,17 @@
 {
- "tts/out/gcme1b/01.mp3": [
-  "en",
-  0.997,
-  "We decided not to wait for that to change. Everything we do for your group runs on one system. Built in our branch with a real person behind every step."
- ],
- "tts/out/gcme1b/02.mp3": [
-  "en",
-  0.996,
-  "Applications and increases that are still pinning sit right at the top with how many days each one has been open and who it's waiting on"
- ],
- "tts/out/gcme1b/03.mp3": [
-  "en",
-  0.999,
-  "You can answer every item and give our service a star rating. A real person on our team reads every answer you send."
- ],
- "tts/out/gcme1b/04.mp3": [
+ "tts/out/gcme1c/01.mp3": [
   "en",
   0.998,
-  "Your employees also have guardians own health portal called EasyConnect. They sign in on their own to check their claims and their cover or to make a request."
+  "The biggest change is how someone joins. You send them a link of their own. They fill in their part on their phone, add their dependents and beneficiaries, and sign right on screen. Their health answers go to guardian, never to you."
  ],
- "tts/out/gcme1b/05.mp3": [
+ "tts/out/gcme1c/02.mp3": [
   "en",
-  0.996,
-  "So I come through a branch because we don't wait for what's coming. We make it happen. Your group looked after by people who know your name."
+  0.999,
+  "and you check their details and approve. Guardian's own enrollment form is filled in and sent to Guardian's group team. And your account manager follows it up every three working days. You'll see where it stands on your page and in your Monday report until it's done."
+ ],
+ "tts/out/gcme1c/03.mp3": [
+  "en",
+  0.998,
+  "We also look ahead for your people. We tell you before someone turns 65, before a child comes of age and leaves the family plan, and before someone retires on your company pension. So there are no surprises, and we can help each person before it happens."
  ]
 }
