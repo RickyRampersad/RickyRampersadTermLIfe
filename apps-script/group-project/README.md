@@ -47,7 +47,7 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
 - Make five files and paste each in: `GroupClients.gs`, `GroupBilling.gs`, `GIRenewals.gs`, then `GroupShared.gs`
   and `GroupApp.gs` from this folder. File order does not matter.
 - The clock: Project Settings → tick "Show appsscript.json manifest file in editor" → open `appsscript.json` →
-  set `"timeZone"` to the zone `groupMoveExport` named (`America/Port_of_Spain`, normally) → Save. A new project
+  set `"timeZone"` to the zone `groupMoveExport` named, exactly as written (`America/Puerto_Rico` on the branch's project: the same clock as Port of Spain, but the import compares the name) → Save. A new project
   takes the time zone of the account that made it, and every timed job runs by it. `groupMoveImport` refuses, and
   changes nothing, until the two match.
 - Run `groupMoveImport`, and approve the permissions it asks for the first time. It finds the settings sheet in your
@@ -63,7 +63,7 @@ Do it in one sitting, on a day with no letters or bills due: not Monday morning,
   - `sheets` should say `ok` twice;
   - `settings` should be all `true`;
   - `jobs` should list `gcmRefreshTick`, `gcmMondaySend` and `gcmDay1030`;
-  - `timeZone` should be `America/Port_of_Spain`.
+  - `timeZone` should be the zone the export named (`America/Puerto_Rico`).
 
 **4. The site**
 - Run `python3 tools/move/repoint-group.py <the /exec>` and commit. It changes the 10 group pages and only
