@@ -17973,11 +17973,13 @@ function wallPendMorning_(day, P, numOf) {
   try { sfkQuery_('SELECT Subject, MessageDate, CreatedById FROM EmailMessage WHERE MessageDate >= ' + from + ' AND MessageDate < ' + to + ' LIMIT 500')
     .forEach(function (m) { add(m.MessageDate, m.CreatedById, 'email', m.Subject); }); } catch (e) {}
   // A status moved and a note on the same task in the same minute is one touch, the note.
-  var seen = {}; ev.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
-  ev = ev.filter(function (e) { var k = e.sid + '|' + e.pol + '|' + e.at.slice(0, 16); if (seen[k] && e.kind === 'moved') return false; seen[k] = 1; return true; });
+  ev.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+  var minKey = function (e) { return e.sid + '|' + e.pol + '|' + e.at.slice(0, 16); }, worded = {};
+  ev.forEach(function (e) { if (e.kind !== 'moved') worded[minKey(e)] = 1; });
+  ev = ev.filter(function (e) { return e.kind !== 'moved' || !worded[minKey(e)]; });
   var first = function (s) { return String(s || '').split(/\s+/)[0]; };
   var held = function (pol) { var p = P[pol]; if (!p) return { code: '', kind: '' }; var it = p.items.filter(function (x) { return x.last; })[0] || p.items.filter(function (x) { return x.red; })[0] || p.items[0] || {}; return { code: it.code || '', kind: it.kind || '' }; };
-  var at = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? '' : twelve_(hhmm_(d)); };
+  var at = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? '' : twelve_(Utilities.formatDate(d, CONFIG.TZ, 'HH:mm')); };
   var row = function (e) { var h = held(e.pol); return { at: at(e.at), desk: String(nameFor_(e.sid)).split(' ')[0], agent: first(P[e.pol] ? P[e.pol].ag : ''), code: h.code, kind: h.kind, what: e.kind, pol: String(e.pol).slice(-4) }; };
   var desks = order.filter(function (s) { return s === 'ricky' || users[s]; }).map(function (s) {
     var mine = ev.filter(function (e) { return e.sid === s; }), pols = {};
