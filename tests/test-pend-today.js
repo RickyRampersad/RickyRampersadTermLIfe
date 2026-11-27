@@ -42,8 +42,20 @@ const MAILS = [
   { Id: '02s2', Subject: 'Pending case 5000000004', ToAddress: 'agent.two@example.com', CcAddress: '', FromAddress: 'desk@example.com', MessageDate: '2026-10-26T15:00:00.000+0000' },
   { Id: '02s3', Subject: 'Re: 5000000005 exam', ToAddress: 'agent.three@example.com', CcAddress: '', FromAddress: 'desk@example.com', MessageDate: '2026-10-19T15:00:00.000+0000' }];
 let MORNING = true;
+const PORT = [
+  { Id: 'a02GL1', RecordType: { Name: 'LIFE(GROUP)' }, Unit__c: 'Ricky_Rampersad', AgentName__c: 'A00427 - Ricky Rampersad', Policy_Status_Description__c: 'Pending', CreatedDate: '2026-10-07T16:35:49.000+0000', LastModifiedDate: '2026-10-07T16:36:08.000+0000', LastModifiedById: 'U9' },
+  { Id: 'a02IH1', RecordType: { Name: 'HEALTH' }, Unit__c: 'Ricky_Rampersad', AgentName__c: 'A01066 - Nadia Example', Policy_Status_Description__c: 'Underwriting incomplete. Missing Reqts', CreatedDate: '2026-10-18T16:01:41.000+0000', LastModifiedDate: '2026-10-27T14:20:00.000+0000', LastModifiedById: 'U3' },
+  { Id: 'a02GH1', RecordType: { Name: 'HEALTH (GROUP)' }, Unit__c: 'Ricky_Rampersad', AgentName__c: 'A00427 - Ricky Rampersad', Policy_Status_Description__c: 'Premium Paying', CreatedDate: '2026-01-07T16:35:31.000+0000', LastModifiedDate: '2026-01-07T16:35:31.000+0000', LastModifiedById: 'U9' },
+  { Id: 'a02OLD', RecordType: { Name: 'HEALTH' }, Unit__c: 'Ricky_Rampersad', AgentName__c: 'A1 - Old Case', Policy_Status_Description__c: 'Underwriting incomplete', CreatedDate: '2024-01-01T12:00:00.000+0000', LastModifiedDate: '2024-01-01T12:00:00.000+0000', LastModifiedById: 'U9' }];
+const INCS = [
+  { Id: 'a0HI1', Agent__c: 'Anthony', Unit__c: 'Kerwyn_Ramroach', Policy_Description_Status__c: 'Pending', Policy_Status_Description_R__c: null, Submitted_Date__c: '2026-09-18', Days_O_S__c: 70, CreatedDate: '2026-09-18T16:25:42.000+0000', LastModifiedDate: '2026-09-18T16:25:42.000+0000', LastModifiedById: 'U9' },
+  { Id: 'a0HI2', Agent__c: 'Dina', Unit__c: 'Kerwyn_Ramroach', Policy_Description_Status__c: null, Policy_Status_Description_R__c: 'Underwriting complete, Missing Settlement Reqts', Submitted_Date__c: null, Days_O_S__c: null, CreatedDate: '2025-03-24T12:54:32.000+0000', LastModifiedDate: '2025-03-24T12:54:32.000+0000', LastModifiedById: 'U9' }];
 env.sfkQuery_ = q => {
   queries.push(q);
+  if (/FROM CLIENT_PORTFOLIO__c/.test(q)) return PORT;
+  if (/FROM Policy_Increases__c/.test(q)) return INCS;
+  if (/What\.Type IN/.test(q)) return MORNING ? [{ WhatId: 'a0HI1', IsClosed: false, LastModifiedDate: '2026-10-27T15:10:00.000+0000', LastModifiedById: 'U1' },
+                                                { WhatId: 'a02GL1', IsClosed: false, LastModifiedDate: '2026-10-27T15:03:00.000+0000', LastModifiedById: 'U9' }] : [];
   if (MORNING && /LastModifiedDate >= 2026-10-27/.test(q) && /LastModifiedById/.test(q)) return TODAY_TASKS;
   if (MORNING && /FROM FeedItem/.test(q) && /CreatedDate >= /.test(q) && /ParentId, CreatedById, CreatedDate/.test(q)) return NOTES;
   if (MORNING && /WHERE Id IN/.test(q) && /00TT/.test(q)) return [{ Id: '00TT1', Subject: 'Pending 5000000001 FPP', Task_Type__c: 'Pendings' }, { Id: '00TT4', Subject: 'Servicing 5000000004 call', Task_Type__c: 'Servicing' }];
@@ -72,10 +84,22 @@ ok('Azariah\'s first touch at 8:40am, on Varun\'s case, the code it is held on',
 ok('a note and a status move in the same minute count once, as the note', AZ.notes === 1 && AZ.touches === 2 && AZ.closed === 1, JSON.stringify(AZ));
 ok('Sasha\'s e-mail logged on a pending case is a touch', SA.emails === 1 && SA.first.what === 'email', JSON.stringify(SA));
 ok('a note on any task that names a pending policy is a touch on that case', KA.touches === 1 && KA.first.pol === '0004' && KA.first.what === 'note', JSON.stringify(KA.first));
-ok('a desk with nothing yet says so', EL.touches === 0 && !EL.first);
-ok('started, of, and the first touch of the branch', M.started === 3 && M.firstAt === '8:40am', JSON.stringify([M.started, M.of, M.firstAt]));
-ok('the stream is newest first', M.stream[0].at === '10:05am' && M.stream[0].what === 'closed', JSON.stringify(M.stream[0]));
+ok('Elizabeth\'s only touch is the health record she edited at 10:20am', EL.touches === 1 && EL.first.grp === 'Individual health' && EL.first.at === '10:20am', JSON.stringify(EL.first));
+ok('started, of, and the first touch of the branch', M.started === 4 && M.of === 4 && M.firstAt === '8:40am', JSON.stringify([M.started, M.of, M.firstAt]));
+ok('the stream is newest first', M.stream[0].at === '11:10am' && M.stream[1].at === '10:20am' && M.stream.some(e => e.at === '10:05am' && e.what === 'closed'), JSON.stringify(M.stream.slice(0, 3).map(e => e.at)));
 ok('no client and no full policy number in the morning', !/50000000\d\d/.test(JSON.stringify(M)));
+console.log('\nGroup life, group health, individual health and increases:\n');
+const G = M.other;
+ok('pending group and health records, and increases, are read from their own objects', G && G.pending === 3, JSON.stringify(G && G.types));
+ok('a premium-paying record is not pending, and one over a year old is counted apart', G.stale === 2 && !G.list.some(x => x.agent === 'Old'), JSON.stringify([G.stale, G.list.map(x => x.agent)]));
+ok('an increase with no submitted date is aged from its record, not read as new', !G.list.some(x => x.agent === 'Dina'));
+ok('a desk editing a health record today is a touch, shown by its type', M.stream.some(e => e.desk === 'Elizabeth' && e.grp === 'Individual health' && e.what === 'moved'), JSON.stringify(M.stream.filter(e => e.grp)));
+ok('a desk task on an increase today is a touch', M.stream.some(e => e.desk === 'Sasha' && e.grp === 'Increase'));
+ok('the Branch Manager\'s user is automation, not a desk: its group-life change is no touch', !M.stream.some(e => e.grp === 'Group life') && !M.desks.some(d => d.name === 'Ricky'));
+ok('each type says how many are pending and how many were touched today', G.types.find(t => t.k === 'Increase').today === 1 && G.types.find(t => t.k === 'Group life').today === 0 && G.types.find(t => t.k === 'Individual health').n === 1);
+ok('the report\'s count of cases stays the report\'s', M.cases === 3);
+ok('no record id reaches the wall', !/a02|a0H/.test(JSON.stringify(G.list)) && !/a02|a0H/.test(JSON.stringify(M.stream)));
+
 console.log('\nWork it first:\n');
 ok('the queue leads with only the premium left', M.queue.length && M.queue[0].why === 'Only the premium left', JSON.stringify(M.queue.map(q => q.why)));
 ok('and says whether anybody touched each one today', M.queue.some(q => q.today) && M.queue.some(q => !q.today) && M.queueToday === M.queue.filter(q => q.today).length);

@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27p';
+var SCRIPT_VERSION = '2026-11-27q';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17956,20 +17956,27 @@ function wallPendLive_(day) {
 var WALL_MORN = { STREAM: 14, QUEUE: 12 };
 function wallPendMorning_(day, P, numOf) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
-  var users = sfkUsers_() || {}, ids = {}, order = DAY_MAIL_DESKS.filter(function (s) { return s !== 'pawan'; }).concat(['ricky']);
-  order.forEach(function (s) { var id = s === 'ricky' ? (typeof bmSfId_ === 'function' ? bmSfId_() : '') : (users[s] && users[s].id); if (!id && users[s]) id = users[s].id; if (id) ids[id] = s; });
+  /* The staff desks only. The Branch Manager's Salesforce user is also the one the system's own runs write as (on the day this
+     was built it changed a run of group tasks within four seconds at 11:03am), so counting it would put automation on the
+     board as somebody's work; wallDayHours_ keeps it apart for the same reason. */
+  var users = sfkUsers_() || {}, ids = {}, order = DAY_MAIL_DESKS.filter(function (s) { return s !== 'pawan'; });
+  order.forEach(function (s) { var id = users[s] && users[s].id; if (id) ids[id] = s; });
   var from = sfkUtcAt_(day, 0), to = sfkUtcAt_(shiftDays_(day, 1), 0), ev = [];
   var polsOf = function (subject) { var seen = {}, out = []; (String(subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) { var p = numOf[x]; if (p && !seen[p]) { seen[p] = 1; out.push(p); } }); return out; };
   var add = function (at, uid, kind, subject) { var sid = ids[uid]; if (!sid) return; polsOf(subject).forEach(function (p) { ev.push({ at: String(at || ''), sid: sid, kind: kind, pol: p }); }); };
   sfkQuery_("SELECT Id, Subject, IsClosed, LastModifiedDate, LastModifiedById FROM Task WHERE Task_Type__c = 'Pendings' AND LastModifiedDate >= " + from +
     ' AND LastModifiedDate < ' + to + ' LIMIT 1000').forEach(function (t) { add(t.LastModifiedDate, t.LastModifiedById, t.IsClosed ? 'closed' : 'moved', t.Subject); });
-  var notes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
-    " AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000").filter(function (f) { return ids[f.CreatedById] && /^00T/.test(String(f.ParentId)); });
+  var allNotes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
+    " AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000").filter(function (f) { return ids[f.CreatedById]; });
+  var notes = allNotes.filter(function (f) { return /^00T/.test(String(f.ParentId)); });
   var tl = {}; notes.forEach(function (f) { tl[f.ParentId] = 1; }); tl = Object.keys(tl);
-  var subj = {};
-  for (var i = 0; i < tl.length; i += WALL_PEND.IDS) sfkQuery_('SELECT Id, Subject, Task_Type__c FROM Task WHERE Id IN (' + tl.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ')')
-    .forEach(function (t) { if (String(t.Task_Type__c) === 'Pendings' || polsOf(t.Subject).length) subj[t.Id] = t.Subject; });
+  var subj = {}, whatOf = {};
+  for (var i = 0; i < tl.length; i += WALL_PEND.IDS) sfkQuery_('SELECT Id, Subject, Task_Type__c, WhatId FROM Task WHERE Id IN (' + tl.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ')')
+    .forEach(function (t) { whatOf[t.Id] = String(t.WhatId || ''); if (String(t.Task_Type__c) === 'Pendings' || polsOf(t.Subject).length) subj[t.Id] = t.Subject; });
   notes.forEach(function (f) { if (subj[f.ParentId] != null) add(f.CreatedDate, f.CreatedById, 'note', subj[f.ParentId]); });
+  // Group life, group health, individual health and increases (27 Nov 2026): their own Salesforce objects, not on the report.
+  var O = {}, other = null;
+  try { other = wallPendOther_(day, ids, from, to, allNotes, whatOf); O = other.recs; other.ev.forEach(function (e) { ev.push(e); }); } catch (e) { other = { error: String(e && e.message || e) }; }
   try { sfkQuery_('SELECT Subject, MessageDate, CreatedById FROM EmailMessage WHERE MessageDate >= ' + from + ' AND MessageDate < ' + to + ' LIMIT 500')
     .forEach(function (m) { add(m.MessageDate, m.CreatedById, 'email', m.Subject); }); } catch (e) {}
   // A status moved and a note on the same task in the same minute is one touch, the note.
@@ -17978,17 +17985,19 @@ function wallPendMorning_(day, P, numOf) {
   ev.forEach(function (e) { if (e.kind !== 'moved') worded[minKey(e)] = 1; });
   ev = ev.filter(function (e) { return e.kind !== 'moved' || !worded[minKey(e)]; });
   var first = function (s) { return String(s || '').split(/\s+/)[0]; };
-  var held = function (pol) { var p = P[pol]; if (!p) return { code: '', kind: '' }; var it = p.items.filter(function (x) { return x.last; })[0] || p.items.filter(function (x) { return x.red; })[0] || p.items[0] || {}; return { code: it.code || '', kind: it.kind || '' }; };
+  var held = function (pol) { if (O[pol]) return { code: O[pol].abbr, kind: O[pol].label }; var p = P[pol]; if (!p) return { code: '', kind: '' }; var it = p.items.filter(function (x) { return x.last; })[0] || p.items.filter(function (x) { return x.red; })[0] || p.items[0] || {}; return { code: it.code || '', kind: it.kind || '' }; };
   var at = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? '' : twelve_(Utilities.formatDate(d, CONFIG.TZ, 'HH:mm')); };
-  var row = function (e) { var h = held(e.pol); return { at: at(e.at), desk: String(nameFor_(e.sid)).split(' ')[0], agent: first(P[e.pol] ? P[e.pol].ag : ''), code: h.code, kind: h.kind, what: e.kind, pol: String(e.pol).slice(-4) }; };
-  var desks = order.filter(function (s) { return s === 'ricky' || users[s]; }).map(function (s) {
+  var row = function (e) { var h = held(e.pol), o = O[e.pol];
+    return { at: at(e.at), desk: String(nameFor_(e.sid)).split(' ')[0], agent: first(o ? o.ag : P[e.pol] ? P[e.pol].ag : ''), code: h.code, kind: h.kind, what: e.kind,
+             pol: o ? '' : String(e.pol).slice(-4), grp: o ? o.label : '' }; };
+  var desks = order.filter(function (s) { return users[s]; }).map(function (s) {
     var mine = ev.filter(function (e) { return e.sid === s; }), pols = {};
     mine.forEach(function (e) { pols[e.pol] = 1; });
     return { name: String(nameFor_(s)).split(' ')[0], first: mine.length ? row(mine[0]) : null, last: mine.length ? at(mine[mine.length - 1].at) : '',
              touches: mine.length, cases: Object.keys(pols).length, closed: mine.filter(function (e) { return e.kind === 'closed'; }).length,
              notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length };
   });
-  var today = {}; ev.forEach(function (e) { today[e.pol] = 1; });
+  var today = {}; ev.forEach(function (e) { if (!O[e.pol]) today[e.pol] = 1; });
   var stateOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var s = WALL_PEND.STATES[i]; if (s.re && s.re.test(p.dec)) return s.key; } return 'none'; };
   var rank = function (p) { return p.pay > 0 && p.pay === p.reqs ? 0 : stateOf(p) === 'settle' ? 1 : p.reqs === 1 ? 2 : 9; };
   var queue = Object.keys(P).filter(function (k) { return rank(P[k]) < 9; }).sort(function (a, b) { return (rank(P[a]) - rank(P[b])) || (P[a].reqs - P[b].reqs) || (P[b].days - P[a].days); })
@@ -18001,7 +18010,68 @@ function wallPendMorning_(day, P, numOf) {
            firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
            closed: ev.filter(function (e) { return e.kind === 'closed'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
            stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
-           queue: queue.slice(0, WALL_MORN.QUEUE), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length };
+           queue: queue.slice(0, WALL_MORN.QUEUE), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length,
+           other: other && !other.error ? other.out : other };
+}
+/* Group life, group health, individual health and increases on the pending wall's today (27 November 2026).
+ *  Ricky: "integrate into this the Salesforce, the group health and the group life in terms of the applications that are pending
+ *  and the increases. These are objects on Salesforce." Read the way the increases slide reads them (iGroupsWall_, IGRP in
+ *  Intelligence.gs): CLIENT_PORTFOLIO__c of record types HEALTH, HEALTH (GROUP), LIFE(GROUP), and Policy_Increases__c, the branch's
+ *  units only, pending by iPendState_ (either status field on an increase); a case older than WALL_GRP.OLD_DAYS is a record
+ *  nobody closed, counted apart. Today's touch on one: a task on it changed, a note on it or on its task, or the record itself
+ *  edited, by a desk. Returns { recs: id -> { ag, label, abbr }, ev: touches, out: for the wall }. Agents' first names only. */
+var WALL_OTHER = { LIST: 10, TYPES: { 'LIFE(GROUP)': ['Group life', 'GL'], 'HEALTH (GROUP)': ['Group health', 'GH'], 'HEALTH': ['Individual health', 'IH'] } };
+function wallPendOther_(day, ids, from, to, allNotes, whatOf) {
+  var mine = function () { return true; };
+  if (typeof iBuildUnits_ === 'function' && typeof iPossUnitKey_ === 'function') {
+    var uk = {}; try { Object.keys(iBuildUnits_()).forEach(function (u) { uk[iPossUnitKey_(u)] = 1; }); } catch (e) {}
+    if (Object.keys(uk).length) mine = function (u) { return !!uk[iPossUnitKey_(u)]; };
+  }
+  var pend = typeof iPendState_ === 'function' ? iPendState_ : function (t) { return /pending|underwriting|reqt|requirement|error|settlement/i.test(String(t || '')) ? 'uw' : 'none'; };
+  var nowMs = Date.now(), daysOf = function (v) { var d = v ? new Date(String(v).length <= 10 ? v + 'T12:00:00Z' : String(v).replace(/\+0000$/, 'Z')) : null; return d && !isNaN(d) ? Math.max(0, Math.floor((nowMs - d) / 86400000)) : 0; };
+  var old = (typeof WALL_GRP !== 'undefined' && WALL_GRP.OLD_DAYS) || 365;
+  var recs = {}, list = [], stale = 0, byType = {};
+  var stateWord = { reqts: 'Requirements out', settle: 'Settle it', errors: 'Errors to fix', uw: 'With underwriting' };
+  var agentOf = function (raw) { var s = String(raw == null ? '' : raw).trim(), m = s.match(/^[A-Za-z]?\d{3,}\s*[-–]\s*(.*)$/); return (m ? m[1] : s).trim(); };
+  var take = function (id, ag, label, abbr, st, days, lastBy, lastAt) {
+    if (days > old) { stale++; return; }
+    recs[id] = { ag: ag, label: label, abbr: abbr };
+    var t = byType[label] = byType[label] || { k: label, abbr: abbr, n: 0, today: 0 }; t.n++;
+    list.push({ id: id, agent: String(ag || '').split(/\s+/)[0], label: label, abbr: abbr, state: stateWord[st] || 'Pending', days: days, today: false, _by: lastBy, _at: lastAt });
+  };
+  sfkQuery_("SELECT Id, RecordType.Name, Unit__c, AgentName__c, Policy_Status_Description__c, CreatedDate, LastModifiedDate, LastModifiedById FROM CLIENT_PORTFOLIO__c" +
+    " WHERE RecordType.Name IN ('HEALTH','HEALTH (GROUP)','LIFE(GROUP)') LIMIT 10000").forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var st = pend(x.Policy_Status_Description__c); if (st === 'issued' || st === 'closed' || st === 'none') return;
+    var ty = WALL_OTHER.TYPES[(x.RecordType && x.RecordType.Name) || ''] || ['Group', 'GR'];
+    take(String(x.Id), agentOf(x.AgentName__c), ty[0], ty[1], st, daysOf(x.CreatedDate), x.LastModifiedById, x.LastModifiedDate);
+  });
+  sfkQuery_("SELECT Id, Agent__c, Unit__c, Policy_Description_Status__c, Policy_Status_Description_R__c, Submitted_Date__c, Days_O_S__c, LastModifiedDate, LastModifiedById" +
+    ", CreatedDate FROM Policy_Increases__c WHERE Policy_Description_Status__c = 'Pending' OR Policy_Status_Description_R__c LIKE '%Pending%' OR Policy_Status_Description_R__c LIKE '%Underwriting%'" +
+    " OR Policy_Status_Description_R__c LIKE '%Reqt%' OR Policy_Status_Description_R__c LIKE '%Requirement%' OR Policy_Status_Description_R__c LIKE '%Error%'" +
+    " OR Policy_Status_Description_R__c LIKE '%Settlement%' LIMIT 5000").forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var a = pend(x.Policy_Description_Status__c), b = pend(x.Policy_Status_Description_R__c), st = '';
+    ['reqts', 'settle', 'errors', 'uw'].forEach(function (k) { if (!st && (a === k || b === k)) st = k; });
+    if (!st && /^pending$/i.test(String(x.Policy_Description_Status__c || '').trim())) st = 'uw';
+    if (!st) return;
+    // An increase with no submitted date is aged from its record (27 Nov 2026: 2025 rows with both blank read as new).
+    var d0 = x.Submitted_Date__c ? daysOf(x.Submitted_Date__c) : daysOf(x.CreatedDate);
+    take(String(x.Id), String(x.Agent__c || ''), 'Increase', 'INC', st, Math.max(Number(x.Days_O_S__c) || 0, d0), x.LastModifiedById, x.LastModifiedDate);
+  });
+  var ev = [], inRange = function (iso) { var t = String(iso || '').slice(0, 19); return t >= String(from).slice(0, 19) && t < String(to).slice(0, 19); };
+  var push = function (at, uid, kind, id) { if (ids[uid] && recs[id]) ev.push({ at: String(at || ''), sid: ids[uid], kind: kind, pol: id }); };
+  list.forEach(function (r) { if (inRange(r._at)) push(r._at, r._by, 'moved', r.id); });
+  sfkQuery_("SELECT WhatId, IsClosed, LastModifiedDate, LastModifiedById FROM Task WHERE LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to +
+    " AND What.Type IN ('Policy_Increases__c','CLIENT_PORTFOLIO__c') LIMIT 2000").forEach(function (t) { push(t.LastModifiedDate, t.LastModifiedById, t.IsClosed ? 'closed' : 'moved', String(t.WhatId || '')); });
+  (allNotes || []).forEach(function (f) { var pid = String(f.ParentId || ''); push(f.CreatedDate, f.CreatedById, 'note', recs[pid] ? pid : (whatOf[pid] || '')); });
+  var touched = {}; ev.forEach(function (e) { touched[e.pol] = 1; });
+  list.forEach(function (r) { r.today = !!touched[r.id]; if (r.today) byType[r.label].today++; delete r._by; delete r._at; delete r.id; });
+  var rank = { 'Settle it': 0, 'Requirements out': 1, 'Errors to fix': 2, 'With underwriting': 3, 'Pending': 4 };
+  list.sort(function (a, b) { return (rank[a.state] - rank[b.state]) || (b.days - a.days); });
+  var order = ['Group life', 'Group health', 'Individual health', 'Increase'];
+  return { recs: recs, ev: ev, out: { pending: list.length, today: list.filter(function (r) { return r.today; }).length, stale: stale,
+    types: order.map(function (k) { return byType[k] || { k: k, abbr: '', n: 0, today: 0 }; }), list: list.slice(0, WALL_OTHER.LIST) } };
 }
 
 /* ── The follow-up from the trail (27 November 2026) ──

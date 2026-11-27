@@ -135,6 +135,15 @@
   .qr .td{justify-self:end}
   .why0{color:var(--gold)} .why1{color:var(--green)} .why2{color:var(--teal)}
   .fu{margin-top:auto}
+  /* group life, group health, individual health, increases: their own Salesforce objects (27 Nov 2026) */
+  .gt{display:grid;grid-template-columns:repeat(4,1fr);gap:.55rem;margin-top:.7rem}
+  .gt div{background:rgba(31,36,48,.05);border-radius:.9rem;padding:.5rem .6rem}
+  .gt b{display:block;font:800 1.7rem/1 var(--fd);font-variant-numeric:tabular-nums}
+  .gt span{display:block;font:700 .8rem/1.25 var(--fb);color:var(--dim);margin-top:.2rem}
+  .gt em{display:block;font-style:normal;font:700 .78rem var(--fb);color:var(--green);margin-top:.15rem}
+  .gt em.no{color:var(--red)}
+  .grp{display:inline-block;font:800 .78rem var(--fd);letter-spacing:.06em;padding:.12rem .45rem;border-radius:.4rem;background:#E6EEF6;color:#2A5C8A}
+  .qsub{font:800 .85rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--teal);padding:.55rem 0 .25rem;border-bottom:1px solid var(--line)}
   @media (max-width:900px){
     .qrt{display:none}
     html{font-size:11px} html,body{height:auto;overflow:auto}
@@ -180,6 +189,9 @@
       <div class="card hero" style="--d:0s"><div class="kick">Nearest to settling</div>
         <div class="big" id="qN">0</div><div class="of" id="qOf">&hellip;</div>
         <div class="stat"><div class="green" id="qToday"><b>0</b><span>of them touched today</span></div><div class="red" id="qNot"><b>0</b><span>not touched today</span></div></div></div>
+      <div class="card" style="--d:.1s"><div class="kick">Group &amp; increases &middot; from Salesforce</div>
+        <div class="cap" id="gCap">Pending applications on the group life, group health and individual health records, and the increases.</div>
+        <div class="gt" id="gTypes"></div></div>
       <div class="card fu" style="--d:.12s"><div class="kick">Follow-ups from the trail</div>
         <div class="cap" id="fuCap">Where an e-mail went out on a pending case and nothing has moved in three working days, the follow-up is drafted on the same thread for the Branch Manager to approve.</div>
         <div class="stat"><div class="gold" id="fuWait"><b>0</b><span>waiting approval</span></div><div class="green" id="fuSent"><b>0</b><span>sent today</span></div></div></div>
@@ -222,14 +234,14 @@ function paint(){
   $("#desks").innerHTML = (M.desks||[]).map(function(d){
     var f = d.first;
     return '<div class="dk '+(d.touches?'go':'none')+'"><div class="n"><b>'+esc(d.name)+'</b><span>'+(d.touches ? 'since '+esc(f.at) : 'nothing yet')+'</span></div>'
-      + '<div class="f">'+(f ? 'First: <b>'+esc(who(f.agent))+'</b>\u2019s case &hellip;'+esc(f.pol)+codeTag(f.code)+' &middot; '+esc(WHAT[f.what]||f.what)
+      + '<div class="f">'+(f ? 'First: <b>'+esc(who(f.agent))+'</b>\u2019s '+(f.grp ? '<span class="grp">'+esc(f.grp)+'</span>' : 'case &hellip;'+esc(f.pol)+codeTag(f.code))+' &middot; '+esc(WHAT[f.what]||f.what)
           : 'No pending case touched in Salesforce today.')+'</div>'
       + '<div class="c"><span><b>'+fmt(d.cases)+'</b>cases</span><span><b>'+fmt(d.notes)+'</b>notes</span><span><b>'+fmt(d.closed)+'</b>closed</span>'+'</div></div>';
   }).join("");
   var S = M.stream || [];
   $("#stream").innerHTML = S.length ? S.map(function(e,i){
     return '<div class="ev" style="--d:'+(i*.05).toFixed(2)+'s"><div class="t">'+esc(e.at)+'</div><div class="d">'+esc(e.desk)+'</div>'
-      + '<div class="w"><b>'+esc(who(e.agent))+'</b> &hellip;'+esc(e.pol)+codeTag(e.code)+(e.kind?' &middot; '+esc(e.kind):'')+'</div>'
+      + '<div class="w"><b>'+esc(who(e.agent))+'</b> '+(e.grp ? '<span class="grp">'+esc(e.grp)+'</span>' : '&hellip;'+esc(e.pol)+codeTag(e.code)+(e.kind?' &middot; '+esc(e.kind):''))+'</div>'
       + '<span class="tag '+esc(e.what)+'">'+esc(WHAT[e.what]||e.what)+'</span></div>'; }).join("")
     : '<div class="empty bad">Nothing yet today. The first note, status or close on a pending case in Salesforce lands here within ten minutes.</div>';
   // Work it first
@@ -239,18 +251,30 @@ function paint(){
   stat("#qToday", fmt(M.queueToday)); stat("#qNot", fmt(Math.max(0,(M.queueOf||0)-(M.queueToday||0))));
   var F = L.follow || {}; stat("#fuWait", fmt(F.waiting)); stat("#fuSent", fmt(F.sentToday));
   var wn = ["Only the premium left","Approved \u00b7 settle it","One item left"];
-  $("#queue").innerHTML = Q.length ? Q.map(function(q,i){
+  var G = M.other || {}, GL = (G.list || []).slice(0, 6);
+  $("#gTypes").innerHTML = G.error ? '<div style="grid-column:1/-1;color:var(--red)">'+esc(G.error)+'</div>'
+    : (G.types || []).map(function(t){ return '<div><b>'+fmt(t.n)+'</b><span>'+esc(t.k)+'</span><em class="'+(t.n && !t.today ? 'no' : '')+'">'+(t.n ? fmt(t.today)+' touched today' : '&nbsp;')+'</em></div>'; }).join("");
+  if (G.stale) $("#gCap").innerHTML = "Pending applications on the group life, group health and individual health records, and the increases. <b>"+fmt(G.stale)+"</b> older than a year are records nobody closed, counted apart.";
+  var grow = function(g,i){
+    return '<div class="qr" style="--d:'+(0.4+i*.05).toFixed(2)+'s"><div class="p"><span class="grp">'+esc(g.abbr)+'</span></div><div class="a">'+esc(who(g.agent))+'</div>'
+      + '<div class="y"><span class="why1">'+esc(g.state)+'</span><small>'+esc(g.label)+'</small></div><div class="wm">Salesforce record</div>'
+      + '<div class="dd'+(g.days>90?' red':'')+'">'+fmt(g.days)+'</div>'
+      + '<div class="td">'+(g.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; };
+  Q = Q.slice(0, GL.length ? 7 : 12);
+  $("#queue").innerHTML = (Q.length ? Q.map(function(q,i){
     var w = wn.indexOf(q.why);
     return '<div class="qr" style="--d:'+(i*.05).toFixed(2)+'s"><div class="p">&hellip;'+esc(q.pol)+'</div><div class="a">'+esc(who(q.agent))+'</div>'
       + '<div class="y"><span class="why'+w+'">'+esc(q.why)+'</span>'+(q.codes||[]).map(codeTag).join("")+'<small>'+fmt(q.left)+(q.left===1?' item':' items')+' left</small></div>'
       + '<div class="wm">'+esc(q.who)+'</div><div class="dd'+(q.red?' red':'')+'">'+fmt(q.days)+'</div>'
       + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
-    : '<div class="empty">Nothing is one step from settling on the report.</div>';
+    : '<div class="empty">Nothing is one step from settling on the report.</div>')
+    + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
   // the ticker
   var bits = [M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
     "<b>"+M.started+" of "+M.of+"</b> desks started", M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
     "<b>"+fmt(M.queueOf)+"</b> cases one step from settling, <b>"+fmt(M.queueToday)+"</b> touched today",
-    F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : ""].filter(Boolean);
+    F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : "",
+    (M.other && M.other.pending) ? "<b>"+fmt(M.other.pending)+"</b> group, health and increase applications pending, <b>"+fmt(M.other.today)+"</b> touched today" : ""].filter(Boolean);
   $("#tk").innerHTML = bits.concat(bits).map(function(b){ return "<span>"+b+"</span>"; }).join("");
 }
 var view = 0;
