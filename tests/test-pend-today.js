@@ -150,6 +150,9 @@ ok('the money-held case leads it', FO.list[0].pol === '0002' && /already held/.t
 ok('each row says how long outstanding, the last activity, the owner and the next action', FO.list.every(r => typeof r.days === 'number' && 'last' in r && r.owner && typeof r.next === 'string'), JSON.stringify(FO.list[0]));
 ok('each owner\'s focus cases and how many are done today', FO.owners.reduce((s, o) => s + o.n, 0) === FO.n, JSON.stringify(FO.owners));
 ok('no client and no full policy number in it', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(FO)));
+const VAa = FO.agents.find(a => a.agent === 'Varun Seegolam');
+ok('each agent sees their cases in the order the branch works them', VAa && VAa.cases.length === 2 && VAa.cases[0].order === 1 && VAa.cases[0].rank < VAa.cases[1].rank, JSON.stringify(VAa));
+ok('the agents are listed by their first case on the focus', FO.agents[0].cases[0].rank === 1, JSON.stringify(FO.agents.map(a => [a.agent, a.cases[0].rank])));
 console.log('\nThe morning brief:\n');
 const B = L.brief, step = k => B.steps.find(x => x.k === k);
 ok('seven steps, in the order support works them', B && !B.error && B.steps.map(x => x.k).join(',') === 'save,settle,allin,ho,expiry,never,agents', JSON.stringify(B && (B.error || B.steps.map(x => [x.k, x.n]))));
