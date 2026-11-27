@@ -41,4 +41,7 @@ entries('term1', 'term1-timing.json', {'': 'terminations.mp4'},          # when 
         [(2, 'code'), (5, 'Pick'), (7, 'exactly'), (8, 'send'), (11, 'missed')], (('', WIDE),))
 entries('gcme1', 'gcme1-timing.json', {'': 'a-year-with-us.mp4'},      # a year with your group, for employers (27 Nov 2026), in the teal
         [(6, 'Monday'), (9, 'statement'), (14, 'never'), (16, 'happen')], (('', dict(WIDE, capbg='0A3350')),))
+entries('gcme2', 'gcme2-timing.json', {'': 'a-year-with-us.mp4', 'v': 'a-year-with-us-phone.mp4'},   # the launch cut (27 Nov 2026), light
+        [(8, 'routed'), (10, 'Monday'), (11, 'statement'), (18, 'make')],                       # palette, build-empfilm.py
+        (('', dict(WIDE, capbg='0D3F5E')), ('v', TALL)))
 json.dump(f, open('films.json', 'w'), indent=1)
