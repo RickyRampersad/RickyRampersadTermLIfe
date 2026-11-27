@@ -20,7 +20,7 @@ const R = (agent, pol, code, name, who, rag, age, nw, prem, st, x) => { x = x ||
 const rows = [H,
   R('Varun Seegolam', '5000000001', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'Yes', 500, '', { app: '1000000001', cat: 'Payment', days: 20, dec: 'Standard' }),
   R('Varun Seegolam', '5000000001', 'FUTPY', 'Future Premium Payment', 'Agent', 'Green', '0-30 days', 'Yes', 500, '', { app: '1000000001', cat: 'Payment', days: 20, dec: 'Standard' }),
-  R('Varun Seegolam', '5000000001', 'PRADD', 'Proof of Address', 'Agent', 'Amber', '31-60 days', 'No', 500, '', { app: '1000000001', cat: 'KYC - Identity & Address', days: 20, dec: 'Standard' }),
+  R('Varun Seegolam', '5000000001', 'PRADD', 'Proof of Address', 'Agent', 'Amber', '31-60 days', 'No', 500, '', { app: '1000000001', cat: 'KYC - Identity & Address', days: 20, dec: 'Standard', rdate: '2026-10-15', nf: '2026-10-20' }),
   R('Varun Seegolam', '5000000002', 'FUTPY', 'Future Premium Payment', 'Agent', 'Red', '90+ days', 'No', 250, '', { cat: 'Payment', days: 100, susp: 250, dec: 'Loaded',
     cmt: 'Please submit FUTPY for SHARMA, Kavita Persad. APS from Dr Maharaj received 12/10; call 868-555-0199 or kavita@mail.com', rdate: '2026-10-22', owner: 'Kavita Persad Sharma', nf: '2026-10-27' }),
   R('Aidan Eugene', '5000000003', 'FUTPY', 'Future Premium Payment', 'Agent', 'Amber', '61-90 days', 'No', 300, '', { cat: 'Payment', days: 70, dec: 'Additional Information' }),
@@ -123,6 +123,14 @@ ok('a head-office comment newer than the last move reads not actioned', W2 && W2
 ok('what is happening is head office\'s own words, names out', W2 && /Please submit FUTPY/.test(W2.happening) && !/Kavita|Maharaj/.test(W2.happening), W2 && W2.happening);
 ok('each code says which agents are holding it', M.settle.codes.some(c => (c.agents || []).some(a => a.agent === 'Varun Seegolam')), JSON.stringify(M.settle.codes));
 ok('without an issue date and status column, settled says what it needs', L.settled && L.settled.missing === true, JSON.stringify(L.settled));
+console.log('\nAccountability: owners, deadlines, the agent who is sticking:\n');
+const AC2 = M.acc;
+ok('the accountability view is built', AC2 && !AC2.error && Array.isArray(AC2.owners), JSON.stringify(AC2 && (AC2.error || Object.keys(AC2))));
+ok('every pending case has an owner row, nobody included', AC2.owners.reduce((s, o) => s + o.cases, 0) === AC2.totals.cases, JSON.stringify(AC2.owners.map(o => [o.name, o.cases])));
+ok('each owner groups the agents whose cases it holds', AC2.owners.some(o => o.agents.some(a => a.agent === 'Varun Seegolam')));
+ok('a Guardian follow-up date already gone is a miss on the staff side', AC2.past.some(p => p.on === 'staff'), JSON.stringify(AC2.past));
+ok('an agent item asked for more than three working days ago shows the agent sticking', AC2.sticking.some(x => x.agent === 'Varun Seegolam' && x.codes.includes('PRADD') && x.oldest > 3), JSON.stringify(AC2.sticking));
+ok('the misses carry no client and no full policy number', !/50000000\d\d/.test(JSON.stringify(AC2)));
 console.log('\nGroup life, group health, individual health and increases:\n');
 const G = M.other;
 ok('pending group and health records, and increases, are read from their own objects', G && G.pending === 3, JSON.stringify(G && G.types));
