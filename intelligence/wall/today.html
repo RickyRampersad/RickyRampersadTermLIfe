@@ -184,6 +184,16 @@
   .wk b{font:800 1.3rem var(--fd);margin-bottom:.3rem} .wk span{font:700 .85rem var(--fb);color:var(--faint);margin-top:.35rem}
   .mo{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid rgba(31,36,48,.06);font:800 1.2rem var(--fd)} .mo b{font-size:1.7rem;color:var(--green)}
   .sc{display:flex;gap:.6rem;align-items:center;padding:.35rem 0;font:600 1rem var(--fb);color:var(--dim)} .sc b{margin-left:auto;font:800 1.15rem var(--fd);color:var(--ink)}
+  /* settle today, how (27 Nov 2026, night) */
+  .sig{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,auto);gap:.7rem;margin-top:.7rem;flex:1;min-height:0;overflow:hidden;align-content:start}
+  .sg{border:1px solid var(--line);border-radius:1rem;padding:.6rem .8rem;background:rgba(31,36,48,.025)}
+  .sg.now{border-color:rgba(44,125,79,.45);background:#EEF6F0} .sg.none{opacity:.5}
+  .sg .h{display:flex;align-items:baseline;gap:.5rem} .sg .h b{font:800 1.05rem var(--fd);flex:1} .sg .h span{font:800 1.6rem var(--fd)} .sg.now .h span{color:var(--green)}
+  .sg .pv{font:700 .85rem var(--fb);color:var(--gold);margin:.05rem 0 .3rem}
+  .sg .r{display:flex;gap:.45rem;align-items:baseline;font:600 .88rem var(--fb);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:.12rem 0}
+  .sg .r b{color:var(--ink);font:800 .9rem var(--fd)} .sg .r code{font-size:.72rem;margin-left:0}
+  .ccr{display:flex;align-items:center;gap:.5rem;padding:.32rem 0;border-bottom:1px solid rgba(31,36,48,.06);font:600 .9rem var(--fb);color:var(--dim);flex-wrap:wrap}
+  .ccr b{font:800 1.1rem var(--fd);color:var(--ink);margin-left:auto}
   /* the morning brief (27 Nov 2026, night) */
   .steps{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);gap:.7rem;margin-top:.7rem;flex:1;min-height:0}
   .stp{border:1px solid var(--line);border-radius:1rem;padding:.6rem .8rem;min-height:0;overflow:hidden;background:rgba(31,36,48,.025)}
@@ -236,7 +246,7 @@
     .qr .a{grid-column:1/-1;white-space:normal} .qr .y{grid-column:1/-1} .qr .wm,.qr .dd{display:none}
     .stream{overflow:visible}
     .pr{grid-template-columns:auto minmax(0,1fr) auto} .pr .a,.pr .d{display:none}
-    .steps{grid-template-columns:1fr}
+    .steps{grid-template-columns:1fr} .sig{grid-template-columns:1fr}
     .wr{grid-template-columns:1fr} .wr .do{text-align:left} .wk{height:8rem;gap:.4rem}
     .ch,.xh{display:none} .cr{grid-template-columns:auto minmax(0,1fr) auto} .cr .barw,.cr .wm{display:none} .xr{grid-template-columns:auto minmax(0,1fr) auto} .xr .nm,.xr .wm{display:none}
     .ah{display:none} .ar{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:.25rem} .ar .a{grid-column:1/-1} .ar .ck{grid-column:1/-1}
@@ -271,16 +281,16 @@
   </section>
   <section class="view out" id="v1">
     <div class="col">
-      <div class="card hero" style="--d:0s;flex:1"><div class="kick">Can settle today</div>
-        <div class="big" id="stN">0</div><div class="of" id="stOf">policies one step from issue&hellip;</div>
-        <div class="stat"><div class="gold" id="stPrem"><b>0</b><span>only the premium left</span></div><div class="green" id="stAppr"><b>0</b><span>approved &middot; settle it</span></div>
-          <div id="stOne"><b>0</b><span>one item left</span></div><div class="red" id="stNot"><b>0</b><span>not touched today</span></div></div>
-        <div class="cap" style="margin-top:auto;padding-top:1rem">From Guardian's pending report, with today's moves from Salesforce. A case is counted once under every code still open on it.</div></div>
+      <div class="card hero" style="--d:0s"><div class="kick">Can settle today</div>
+        <div class="big" id="siN">0</div><div class="of" id="siOf">&hellip;</div>
+        <div class="stat"><div class="green" id="siNow"><b>0</b><span>need no call to the client</span></div><div class="gold" id="siPrem"><b>0</b><span>annual premium, TT$</span></div></div>
+        <div class="cap" style="margin-top:.8rem">Each case once, under what is actually standing in its way, read from Guardian's report and the e-mails on the case in Salesforce.</div></div>
+      <div class="card" style="--d:.1s;flex:1;min-height:0;overflow:hidden"><div class="kick">The codes holding the rest</div>
+        <div class="cap">Open on the cases nearest settling, and the agents holding them.</div>
+        <div id="stCodes" style="margin-top:.4rem"></div></div>
     </div>
-    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">Code by code &middot; what stands between these policies and issue</div>
-      <div class="cap">The Ingenium codes still open on the cases that can settle, how many cases each holds, whose move it is, and how many were touched today.</div>
-      <div class="ch"><div>Code</div><div>Requirement</div><div>Cases</div><div></div><div>Held by</div><div>Touched today</div></div>
-      <div id="stCodes" style="flex:1;min-height:0;overflow:hidden"></div></div>
+    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">How each one settles &middot; do these first</div>
+      <div class="sig" id="siGroups"></div></div>
   </section>
   <section class="view out" id="v2">
     <div class="col">
@@ -419,16 +429,22 @@ function paint(){
         + (st.list||[]).slice(0,3).map(function(x){ return '<div class="r">'+(x.pol?'&hellip;'+esc(x.pol)+' ':'')+'<b>'+esc(who(x.agent))+'</b>'+(x.code?String(x.code).split(' ').filter(Boolean).slice(0,3).map(codeTag).join(""):'')+' '+esc(x.detail)+'</div>'; }).join("")
         + '</div>'; }).join("");
   }
-  // Settle today
-  var ST = M.settle || {}, SC = ST.codes || [], mx = SC.reduce(function(m,c){ return Math.max(m, c.n); }, 1);
-  count($("#stN"), ST.n);
-  $("#stOf").innerHTML = "policies can settle today: only the premium, an underwriting approval or one item between them and a policy. <b>"+fmt(ST.today)+"</b> touched so far.";
-  stat("#stPrem", fmt(ST.premiumOnly)); stat("#stAppr", fmt(ST.approved)); stat("#stOne", fmt(ST.oneLeft)); stat("#stNot", fmt(Math.max(0,(ST.n||0)-(ST.today||0))));
-  $("#stCodes").innerHTML = SC.length ? SC.map(function(c,i){
-    return '<div class="cr" style="--d:'+(i*.05).toFixed(2)+'s"><div>'+codeTag(c.code)+'</div><div class="nm">'+esc(c.name)+'</div><div class="n">'+fmt(c.n)+'</div>'
-      + '<div class="barw"><i style="width:'+Math.round(100*c.n/mx)+'%"></i></div><div class="wm">'+((c.agents||[]).length ? (c.agents||[]).map(function(a){ return '<span class="chip bad">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join(' ') : esc(c.who))+'</div>'
-      + '<div class="td '+(c.today?'ok':'no')+'">'+fmt(c.today)+' of '+fmt(c.n)+'</div></div>'; }).join("")
-    : '<div class="empty">No case on the report is one step from settling.</div>';
+  // Settle today: how each one settles
+  var SI = L.settleIntel || {}, ST = M.settle || {}, SC = ST.codes || [];
+  if (SI.error || !SI.groups) { $("#siOf").textContent = SI.error || "Reading Guardian's report…"; }
+  else {
+    count($("#siN"), SI.n);
+    $("#siOf").innerHTML = "cases a step from a policy: the money is held, the documents are in, head office has them, one item is left, or only the premium";
+    stat("#siNow", fmt(SI.nowN)); stat("#siPrem", fmt(SI.prem));
+    var NOW = { money:1, docs:1, review:1 };
+    $("#siGroups").innerHTML = SI.groups.map(function(g){
+      return '<div class="sg'+(g.n ? (NOW[g.k]?' now':'') : ' none')+'"><div class="h"><b>'+esc(g.title)+'</b><span>'+fmt(g.n)+'</span></div>'
+        + '<div class="pv">'+(g.prem?'TT$'+fmt(g.prem)+' annual premium':'&nbsp;')+'</div>'
+        + (g.list||[]).slice(0,4).map(function(x){ return '<div class="r">&hellip;'+esc(x.pol)+' <b>'+esc(who(x.agent))+'</b>'+codeTag(x.code)+' '+esc(x.how)+'</div>'; }).join("")
+        + (g.n>4?'<div class="r" style="color:var(--faint)">and '+(g.n-4)+' more</div>':'')+'</div>'; }).join("");
+  }
+  $("#stCodes").innerHTML = SC.slice(0,7).map(function(c){
+    return '<div class="ccr">'+codeTag(c.code)+'<span>'+esc(c.name)+'</span>'+(c.agents||[]).slice(0,3).map(function(a){ return '<span class="chip bad">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join("")+'<b>'+fmt(c.n)+'</b></div>'; }).join("");
   // Accountability
   var K = M.acc || {};
   if (K.error) { $("#kOf").textContent = K.error; }
@@ -558,9 +574,9 @@ function paint(){
       + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
     : '<div class="empty">Nothing is one step from settling on the report.</div>')
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
-  fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks")); fitRows($("#stCodes")); fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#acList")); fitRows($("#uwList"));
+  fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks"));  fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#acList")); fitRows($("#uwList"));
   // the ticker
-  var bits = [(L.brief && L.brief.steps ? L.brief.steps.filter(function(x){ return x.n; }).slice(0,3).map(function(x){ return "<b>"+fmt(x.n)+"</b> "+esc(x.title.split(":")[0].toLowerCase()); }).join(" &middot; ") : ""), (M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
+  var bits = [(L.settleIntel && L.settleIntel.n ? "<b>"+fmt(L.settleIntel.n)+"</b> can settle, <b>"+fmt(L.settleIntel.nowN)+"</b> with no call to the client" : ""), (L.brief && L.brief.steps ? L.brief.steps.filter(function(x){ return x.n; }).slice(0,3).map(function(x){ return "<b>"+fmt(x.n)+"</b> "+esc(x.title.split(":")[0].toLowerCase()); }).join(" &middot; ") : ""), (M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
     "<b>"+inN+" of "+M.of+"</b> staff signed in", (C.of ? "<b>"+fmt(C.movedToday)+" of "+fmt(C.of)+"</b> agents' cases moved today" : ""), (C.quietWeek ? "<b>"+fmt(C.quietWeek)+"</b> agents with nothing moved in a week" : ""), M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
     "<b>"+fmt(M.queueOf)+"</b> cases one step from settling, <b>"+fmt(M.queueToday)+"</b> touched today",
     F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : "",
