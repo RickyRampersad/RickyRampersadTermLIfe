@@ -62,9 +62,11 @@ env.sfkQuery_ = q => {
   queries.push(q);
   if (/FROM CLIENT_PORTFOLIO__c/.test(q)) return PORT.concat([OTHER_UNIT]);
   if (/FROM Policy_Increases__c/.test(q)) return INCS;
-  if (/What\.Type IN/.test(q)) return MORNING ? [{ WhatId: 'a0HI1', IsClosed: false, LastModifiedDate: '2026-10-27T15:10:00.000+0000', LastModifiedById: 'U1' },
-                                                { WhatId: 'a02GL1', IsClosed: false, LastModifiedDate: '2026-10-27T15:03:00.000+0000', LastModifiedById: 'U9' }] : [];
+  if (/What\.Type IN/.test(q)) return MORNING ? [{ WhatId: 'a0HI1', CreatedDate: '2026-10-27T15:10:00.000+0000', CreatedById: 'U1' },
+                                                { WhatId: 'a02GL1', CreatedDate: '2026-10-27T15:03:00.000+0000', CreatedById: 'U9' }] : [];
   if (MORNING && /LastModifiedDate >= 2026-10-27/.test(q) && /LastModifiedById/.test(q)) return TODAY_TASKS;
+  // Opened today (27 Nov 2026, night: the wall shows tasks opened and the Chatter, never a close).
+  if (MORNING && /Task_Type__c = 'Pendings' AND CreatedDate >= 2026-10-27/.test(q)) return [{ Id: '00TT5', Subject: 'Pending 5000000003 docs to collect', CreatedDate: '2026-10-27T13:20:00.000+0000', CreatedById: 'U3' }];
   if (MORNING && /FROM FeedItem/.test(q) && /CreatedDate >= /.test(q) && /ParentId, CreatedById, CreatedDate/.test(q)) return NOTES;
   if (MORNING && /WHERE Id IN/.test(q) && /00TT/.test(q)) return [{ Id: '00TT1', Subject: 'Pending 5000000001 FPP', Task_Type__c: 'Pendings' }, { Id: '00TT4', Subject: 'Servicing 5000000004 call', Task_Type__c: 'Servicing' }];
   if (/FROM EmailMessage/.test(q) && /MessageDate >= /.test(q)) return [{ Subject: 'Pending case 5000000004 follow-up', MessageDate: '2026-10-27T13:30:00.000+0000', CreatedById: 'U1' }];
@@ -87,14 +89,15 @@ env.sfkQuery_ = q => {
 const L = env.wallPendLive_('2026-10-27', true), M = L.morning;
 console.log('\nThis morning, from Salesforce:\n');
 ok('the cases touched today, on the report only', M && M.cases === 3 && !JSON.stringify(M).includes('9999'), JSON.stringify(M && [M.cases, M.touches]));
+ok('nothing closed and no bare status change is on the wall: only opened, Chatter, e-mail', M.stream.every(e => /^(opened|note|email)$/.test(e.what)) && M.desks.every(d => !('closed' in d)), JSON.stringify(M.stream.map(e => e.what)));
 const AZ = M.desks.find(d => d.name === 'Azariah'), SA = M.desks.find(d => d.name === 'Sasha'), KA = M.desks.find(d => d.name === 'Kamla'), EL = M.desks.find(d => d.name === 'Elizabeth');
 ok('Azariah\'s first touch at 8:40am, on Varun\'s case, the code it is held on', AZ.first && AZ.first.at === '8:40am' && AZ.first.agent === 'Varun Seegolam' && AZ.first.pol === '0001' && /FUTPY|PRADD/.test(AZ.first.code), JSON.stringify(AZ.first));
-ok('a note and a status move in the same minute count once, as the note', AZ.notes === 1 && AZ.touches === 2 && AZ.closed === 1, JSON.stringify(AZ));
+ok('Azariah\'s Chatter note is her touch; the task she closed is not shown', AZ.notes === 1 && AZ.touches === 1 && AZ.opened === 0, JSON.stringify(AZ));
 ok('Sasha\'s e-mail logged on a pending case is a touch', SA.emails === 1 && SA.first.what === 'email', JSON.stringify(SA));
 ok('a note on any task that names a pending policy is a touch on that case', KA.touches === 1 && KA.first.pol === '0004' && KA.first.what === 'note', JSON.stringify(KA.first));
-ok('Elizabeth\'s only touch is the health record she edited at 10:20am', EL.touches === 1 && EL.first.grp === 'Individual health' && EL.first.at === '10:20am', JSON.stringify(EL.first));
+ok('Elizabeth opened a Pendings task at 9:20am; editing a health record is not a touch on the wall', EL.touches === 1 && EL.first.what === 'opened' && EL.first.at === '9:20am' && EL.opened === 1, JSON.stringify(EL.first));
 ok('started, of, and the first touch of the branch', M.started === 4 && M.of === 4 && M.firstAt === '8:40am', JSON.stringify([M.started, M.of, M.firstAt]));
-ok('the stream is newest first', M.stream[0].at === '11:10am' && M.stream[1].at === '10:20am' && M.stream.some(e => e.at === '10:05am' && e.what === 'closed'), JSON.stringify(M.stream.slice(0, 3).map(e => e.at)));
+ok('the stream is newest first', M.stream.every((e, i, a) => i === 0 || new Date('2026-10-27 ' + a[i - 1].at.replace(/(am|pm)/, ' $1')) >= new Date('2026-10-27 ' + e.at.replace(/(am|pm)/, ' $1'))), JSON.stringify(M.stream.map(e => e.at)));
 ok('no client and no full policy number in the morning', !/50000000\d\d/.test(JSON.stringify(M)));
 console.log('\nWhose cases each desk moved, what holds the rest, and each agent:\n');
 ok('each desk says whose cases it moved, by agent', AZ.agents && AZ.agents.some(a => a.agent === 'Varun Seegolam'), JSON.stringify(AZ.agents));
@@ -140,6 +143,13 @@ ok('only the premium left and the money already held: apply it and settle', grp(
 ok('approved with one item left says which item and whose move', grp('one').list.some(x => x.pol === '0001' && /Proof of Address/.test(x.how)) || grp('docs').list.some(x => x.pol === '0001'), JSON.stringify([grp('one'), grp('docs')]));
 ok('each case is counted once, with the premium it would issue', SI.n === SI.groups.reduce((s, g) => s + g.n, 0) && SI.prem > 0, JSON.stringify([SI.n, SI.prem]));
 ok('no client and no full policy number in it', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(SI)));
+console.log('\nToday\'s focus:\n');
+const FO = M.focus;
+ok('a ranked focus list is built', FO && !FO.error && FO.list.length > 0 && FO.list[0].rank === 1, JSON.stringify(FO && (FO.error || FO.list.map(r => [r.rank, r.pol, r.why]))));
+ok('the money-held case leads it', FO.list[0].pol === '0002' && /already held/.test(FO.list[0].why), JSON.stringify(FO.list[0]));
+ok('each row says how long outstanding, the last activity, the owner and the next action', FO.list.every(r => typeof r.days === 'number' && 'last' in r && r.owner && typeof r.next === 'string'), JSON.stringify(FO.list[0]));
+ok('each owner\'s focus cases and how many are done today', FO.owners.reduce((s, o) => s + o.n, 0) === FO.n, JSON.stringify(FO.owners));
+ok('no client and no full policy number in it', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(FO)));
 console.log('\nThe morning brief:\n');
 const B = L.brief, step = k => B.steps.find(x => x.k === k);
 ok('seven steps, in the order support works them', B && !B.error && B.steps.map(x => x.k).join(',') === 'save,settle,allin,ho,expiry,never,agents', JSON.stringify(B && (B.error || B.steps.map(x => [x.k, x.n]))));
@@ -154,8 +164,8 @@ const G = M.other;
 ok('pending group and health records, and increases, are read from their own objects', G && G.pending === 3, JSON.stringify(G && G.types));
 ok('a premium-paying record is not pending, and one over a year old is counted apart', G.stale === 2 && !G.list.some(x => x.agent === 'Old'), JSON.stringify([G.stale, G.list.map(x => x.agent)]));
 ok('an increase with no submitted date is aged from its record, not read as new', !G.list.some(x => x.agent === 'Dina'));
-ok('a desk editing a health record today is a touch, shown by its type', M.stream.some(e => e.desk === 'Elizabeth' && e.grp === 'Individual health' && e.what === 'moved'), JSON.stringify(M.stream.filter(e => e.grp)));
-ok('a desk task on an increase today is a touch', M.stream.some(e => e.desk === 'Sasha' && e.grp === 'Increase'));
+ok('a desk editing a health record is not a touch: only tasks opened and Chatter', !M.stream.some(e => e.grp === 'Individual health'), JSON.stringify(M.stream.filter(e => e.grp)));
+ok('a task opened today on an increase is a touch', M.stream.some(e => e.desk === 'Sasha' && e.grp === 'Increase' && e.what === 'opened'), JSON.stringify(M.stream.filter(e => e.grp)));
 ok('the Branch Manager\'s user is automation, not a desk: its group-life change is no touch', !M.stream.some(e => e.grp === 'Group life') && !M.desks.some(d => d.name === 'Ricky'));
 ok('each type says how many are pending and how many were touched today', G.types.find(t => t.k === 'Increase').today === 1 && G.types.find(t => t.k === 'Group life').today === 0 && G.types.find(t => t.k === 'Individual health').n === 1);
 ok('the report\'s count of cases stays the report\'s', M.cases === 3);
