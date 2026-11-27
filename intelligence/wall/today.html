@@ -90,8 +90,8 @@
   .qrt div{font:600 .8rem/1.3 var(--fb);color:var(--dim);width:11.5rem}
   .qrt b{display:block;font:800 1rem var(--fd);color:var(--ink)}
   .qrt a{color:var(--teal);font-weight:700;text-decoration:none;word-break:break-all}
-  .tabs{display:flex;flex:none;gap:.5rem;margin-left:1rem}
-  .tabs span{white-space:nowrap;font:800 .9rem var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:.35rem .8rem;border-radius:.6rem;border:1px solid var(--line)}
+  .tabs{display:flex;flex:none;gap:.3rem;margin-left:.8rem}
+  .tabs span{white-space:nowrap;font:800 .74rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:.3rem .5rem;border-radius:.6rem;border:1px solid var(--line)}
   .tabs span.on{color:#fff;background:var(--gold);border-color:var(--gold)}
   .hero{display:flex;flex-direction:column}
   .hero .big{font:800 5.4rem/1 var(--fd);letter-spacing:-.04em;margin-top:.3rem;font-variant-numeric:tabular-nums}
@@ -184,6 +184,17 @@
   .wk b{font:800 1.3rem var(--fd);margin-bottom:.3rem} .wk span{font:700 .85rem var(--fb);color:var(--faint);margin-top:.35rem}
   .mo{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid rgba(31,36,48,.06);font:800 1.2rem var(--fd)} .mo b{font-size:1.7rem;color:var(--green)}
   .sc{display:flex;gap:.6rem;align-items:center;padding:.35rem 0;font:600 1rem var(--fb);color:var(--dim)} .sc b{margin-left:auto;font:800 1.15rem var(--fd);color:var(--ink)}
+  /* accountability (27 Nov 2026, evening) */
+  .own{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.7rem;margin-top:.7rem}
+  .ow{border:1px solid var(--line);border-radius:1rem;padding:.7rem .85rem;background:rgba(31,36,48,.03)}
+  .ow.bad{border-color:rgba(185,58,50,.45);background:#FBEDEB}
+  .ow .n{display:flex;justify-content:space-between;align-items:baseline} .ow .n b{font:800 1.25rem var(--fd)} .ow .n span{font:800 1.4rem var(--fd);color:var(--red)}
+  .ow .m{display:flex;flex-wrap:wrap;gap:.25rem .8rem;margin-top:.3rem;font:600 .85rem var(--fb);color:var(--dim)} .ow .m b{color:var(--ink);font:800 .95rem var(--fd)}
+  .ow .ag{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.45rem}
+  .pr{display:grid;grid-template-columns:4.5rem 7.5rem 8rem minmax(0,1fr) 5.5rem;gap:.7rem;align-items:center;padding:.48rem 0;border-bottom:1px solid rgba(31,36,48,.06);opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .pr .p{font:800 1rem var(--fd);color:var(--dim)} .pr .a{font:800 1.05rem var(--fd)} .pr .w{font:600 .98rem var(--fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pr .d{font:800 1.2rem var(--fd);color:var(--red);text-align:right}
+  .sk{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid rgba(31,36,48,.06)} .sk b{font:800 1.15rem var(--fd)} .sk .r{margin-left:auto;text-align:right;font:700 .9rem var(--fb);color:var(--red)} .sk .r big{display:block;font:800 1.3rem var(--fd)}
   /* staff, agents (27 Nov 2026, afternoon) */
   .desks{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
   .dk.out{background:rgba(31,36,48,.03);border-style:dashed} .dk.out .n span{color:var(--faint)}
@@ -215,11 +226,12 @@
     .qr{grid-template-columns:minmax(0,1fr) auto;row-gap:.25rem} .qr .p{grid-column:1/2} .qr .td{grid-column:2/3;grid-row:1/2}
     .qr .a{grid-column:1/-1;white-space:normal} .qr .y{grid-column:1/-1} .qr .wm,.qr .dd{display:none}
     .stream{overflow:visible}
+    .pr{grid-template-columns:auto minmax(0,1fr) auto} .pr .a,.pr .d{display:none}
     .wr{grid-template-columns:1fr} .wr .do{text-align:left} .wk{height:8rem;gap:.4rem}
     .ch,.xh{display:none} .cr{grid-template-columns:auto minmax(0,1fr) auto} .cr .barw,.cr .wm{display:none} .xr{grid-template-columns:auto minmax(0,1fr) auto} .xr .nm,.xr .wm{display:none}
     .ah{display:none} .ar{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:.25rem} .ar .a{grid-column:1/-1} .ar .ck{grid-column:1/-1}
   }
-  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.ev,.qr,.ar,.cr,.xr,.uw,.wr{opacity:1;transform:none} }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr{opacity:1;transform:none} }
 </style>
 </head>
 <body>
@@ -227,7 +239,7 @@
 <header>
   <div class="plate"><b>PENDING</b><span>wall</span></div>
   <div><h1 id="title">Today on the Pendings</h1><div class="sub" id="sub">From Salesforce, today only &middot; agents' first names and codes, no client</div></div>
-  <div class="tabs"><span id="t0" class="on">Settle today</span><span id="t1">Work now</span><span id="t2">Staff</span><span id="t3">By agent</span><span id="t4">Work it first</span><span id="t5">Settled</span></div>
+  <div class="tabs"><span id="t0" class="on">Settle today</span><span id="t1">Accountability</span><span id="t2">Work now</span><span id="t3">Staff</span><span id="t4">By agent</span><span id="t5">Work it first</span><span id="t6">Settled</span></div>
   <div class="right"><div class="qrt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" role="img" aria-label="QR code for this page" class="segno"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#1f2430" d="M2 2.5h7m2 0h7m1 0h3m3 0h1m2 0h7m-33 1h1m5 0h1m2 0h3m2 0h3m1 0h1m1 0h2m1 0h2m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m5 0h1m1 0h1m5 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h2m4 0h2m6 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m4 0h6m1 0h1m4 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h3m1 0h3m1 0h3m3 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h3m1 0h2m1 0h1m2 0h3m-23 1h1m2 0h1m1 0h2m1 0h2m3 0h4m4 0h1m1 0h1m1 0h1m1 0h1m-28 1h1m1 0h2m1 0h1m3 0h2m2 0h1m3 0h1m2 0h1m3 0h4m3 0h2m-32 1h2m2 0h2m2 0h1m2 0h3m4 0h1m1 0h2m4 0h2m1 0h1m1 0h1m-33 1h2m5 0h4m1 0h4m4 0h4m1 0h2m1 0h2m-29 1h1m2 0h4m1 0h2m3 0h4m3 0h1m1 0h4m2 0h1m1 0h1m-32 1h2m3 0h1m1 0h4m1 0h1m4 0h1m1 0h3m2 0h1m1 0h1m1 0h5m-32 1h1m3 0h2m3 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h2m-32 1h2m3 0h1m2 0h2m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m1 0h1m1 0h1m2 0h1m-31 1h3m2 0h2m1 0h1m1 0h1m1 0h1m3 0h1m3 0h4m1 0h1m1 0h1m2 0h1m-31 1h2m2 0h1m4 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m1 0h1m-30 1h3m1 0h1m1 0h1m9 0h1m1 0h2m8 0h1m1 0h1m-33 1h1m2 0h2m2 0h2m2 0h2m1 0h1m1 0h4m1 0h1m3 0h1m1 0h1m3 0h1m-32 1h4m2 0h1m1 0h1m1 0h3m8 0h1m1 0h3m5 0h2m-32 1h2m2 0h1m5 0h1m1 0h1m2 0h3m5 0h3m3 0h3m-33 1h2m2 0h1m1 0h1m1 0h1m8 0h4m1 0h1m2 0h3m4 0h1m-32 1h1m1 0h1m1 0h1m1 0h2m1 0h2m3 0h1m3 0h1m1 0h2m1 0h2m3 0h1m2 0h1m-33 1h1m1 0h1m1 0h1m1 0h1m1 0h1m4 0h5m1 0h1m1 0h1m2 0h6m1 0h1m-24 1h1m4 0h1m5 0h3m1 0h2m3 0h2m2 0h1m-33 1h7m5 0h2m2 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h4m-32 1h1m5 0h1m1 0h2m1 0h4m1 0h7m1 0h1m3 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m2 0h3m1 0h3m1 0h6m1 0h6m-30 1h1m1 0h3m1 0h1m1 0h2m3 0h2m1 0h1m4 0h1m1 0h1m2 0h1m1 0h2m-30 1h1m1 0h3m1 0h1m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h1m5 0h1m1 0h1m1 0h1m-33 1h1m5 0h1m3 0h4m3 0h2m1 0h6m-26 1h7m1 0h3m2 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h2m1 0h1"/></svg><div><b>On your phone</b>Scan, or open <a href="https://rickyrampersadbranch.com/intelligence/wall/today.html">rickyrampersadbranch.com/<wbr>intelligence/wall/today.html</a></div></div><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
 </header>
 <main>
@@ -246,6 +258,25 @@
   </section>
   <section class="view out" id="v1">
     <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">Past their deadline</div>
+        <div class="big bad" id="kN">0</div><div class="of" id="kOf">&hellip;</div>
+        <div class="stat"><div class="red" id="kS"><b>0</b><span>on the staff</span></div><div class="red" id="kA"><b>0</b><span>on the agent</span></div>
+          <div class="red" id="kNo"><b>0</b><span>with nobody owning it</span></div><div class="gold" id="kH"><b>0</b><span>head office updates waiting</span></div></div>
+        <div class="cap" id="kRules" style="margin-top:.8rem"></div></div>
+      <div class="card" style="--d:.1s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">Agents sticking</div>
+        <div class="cap" id="kStickCap">An item that is the agent's to deliver, asked for more than the deadline ago.</div>
+        <div id="kStick" style="flex:1;min-height:0;overflow:hidden"></div></div>
+    </div>
+    <div class="col">
+      <div class="card" style="--d:.06s"><div class="kick">Who owns what &middot; and for whom</div>
+        <div class="cap">The owner is the desk whose open Pendings task the case is in Salesforce. Each desk: cases owned, past deadline, head office waiting, moved today, closed in 30 days, and the agents whose cases it holds.</div>
+        <div class="own" id="kOwn"></div></div>
+      <div class="card" style="--d:.12s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">Past deadline &middot; whose miss, longest first</div>
+        <div id="kPast" style="flex:1;min-height:0;overflow:hidden"></div></div>
+    </div>
+  </section>
+  <section class="view out" id="v2">
+    <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">For the desks to work now</div>
         <div class="big" id="acN">0</div><div class="of" id="acOf">&hellip;</div>
         <div class="stat"><div class="red" id="acH"><b>0</b><span>head office wrote, not actioned</span></div><div class="gold" id="acG"><b>0</b><span>Guardian follow-up due</span></div>
@@ -258,7 +289,7 @@
       <div class="cap">What is happening on each case, who is holding it, what was last done and by whom, and the next thing to do.</div>
       <div id="acList" style="flex:1;min-height:0;overflow:hidden;margin-top:.5rem"></div></div>
   </section>
-  <section class="view out" id="v2">
+  <section class="view out" id="v3">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">The pendings this morning</div>
         <div class="big" id="mN">0</div><div class="of" id="mOf">Reading Salesforce&hellip;</div>
@@ -275,7 +306,7 @@
         <div class="stream" id="stream"></div></div>
     </div>
   </section>
-  <section class="view out" id="v3">
+  <section class="view out" id="v4">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Agents whose cases moved today</div>
         <div class="big" id="aN">0</div><div class="of" id="aOf">&hellip;</div>
@@ -287,7 +318,7 @@
       <div class="ah"><div>Agent</div><div>Cases</div><div>Waiting on agent &middot; codes</div><div>Near settling</div><div>Never tasked</div><div>Moved today</div><div>Last moved</div></div>
       <div id="agents" style="flex:1;min-height:0;overflow:hidden"></div></div>
   </section>
-  <section class="view out" id="v4">
+  <section class="view out" id="v5">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Nearest to settling</div>
         <div class="big" id="qN">0</div><div class="of" id="qOf">&hellip;</div>
@@ -304,7 +335,7 @@
       <div class="qh"><div>Policy</div><div>Agent</div><div>Why first &middot; codes left</div><div>Whose move</div><div>Days</div><div>Today</div></div>
       <div id="queue" style="flex:1;min-height:0;overflow:hidden"></div></div>
   </section>
-  <section class="view out" id="v5">
+  <section class="view out" id="v6">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Settled since 1 October</div>
         <div class="big" id="seN">0</div><div class="of" id="seOf">&hellip;</div>
@@ -344,7 +375,7 @@ function paint(){
     $("#queue").innerHTML = '<div class="empty bad">'+esc(why)+'</div>'; $("#qOf").textContent = why;
     $("#live").classList.remove("on"); $("#liveTxt").textContent = "no data"; return;
   }
-  $("#sub").innerHTML = "From Salesforce, today only, as at <b>"+esc(M.at)+"</b> &middot; against Guardian's report of <b>"+esc(String(L.asOf||"").replace(/,\s*\d{1,2}:\d{2}\s*[ap]m$/i,""))+"</b> &middot; agents' first names and codes, no client";
+  $("#sub").innerHTML = "Salesforce as at <b>"+esc(M.at)+"</b> &middot; Guardian's report of <b>"+esc(String(L.asOf||"").replace(/,\s*\d{1,2}:\d{2}\s*[ap]m$/i,""))+"</b> &middot; first names and codes, no client";
   // Settle today
   var ST = M.settle || {}, SC = ST.codes || [], mx = SC.reduce(function(m,c){ return Math.max(m, c.n); }, 1);
   count($("#stN"), ST.n);
@@ -355,6 +386,28 @@ function paint(){
       + '<div class="barw"><i style="width:'+Math.round(100*c.n/mx)+'%"></i></div><div class="wm">'+((c.agents||[]).length ? (c.agents||[]).map(function(a){ return '<span class="chip bad">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join(' ') : esc(c.who))+'</div>'
       + '<div class="td '+(c.today?'ok':'no')+'">'+fmt(c.today)+' of '+fmt(c.n)+'</div></div>'; }).join("")
     : '<div class="empty">No case on the report is one step from settling.</div>';
+  // Accountability
+  var K = M.acc || {};
+  if (K.error) { $("#kOf").textContent = K.error; }
+  else if (K.totals) {
+    var T = K.totals; count($("#kN"), K.pastOf);
+    $("#kOf").innerHTML = "of <b>"+fmt(T.cases)+"</b> pending cases are past a deadline";
+    stat("#kS", fmt(T.onStaff)); stat("#kA", fmt(T.onAgents)); stat("#kNo", fmt(T.nobody)); stat("#kH", fmt(T.hoWaiting));
+    $("#kRules").innerHTML = "Deadlines, in working days: head office's update actioned within <b>"+K.rules.ho+"</b>; an agent's item within <b>"+K.rules.agent+"</b> of being asked for; Guardian's follow-up on its date; the Salesforce task by its due date.";
+    $("#kStickCap").innerHTML = "An item that is the agent's to deliver, asked for more than <b>"+K.rules.agent+"</b> working days ago.";
+    $("#kOwn").innerHTML = (K.owners||[]).map(function(o){
+      return '<div class="ow'+(o.past?' bad':'')+'"><div class="n"><b>'+esc(o.name)+'</b><span>'+(o.past?fmt(o.past)+' late':'')+'</span></div>'
+        + '<div class="m"><span><b>'+fmt(o.cases)+'</b> owned</span><span><b>'+fmt(o.hoWaiting)+'</b> HO waiting</span><span><b>'+fmt(o.today)+'</b> moved today</span><span><b>'+fmt(o.closed30)+'</b> closed 30d</span></div>'
+        + '<div class="ag">'+(o.agents||[]).map(function(a){ return '<span class="chip'+(a.past?' bad':'')+'">'+esc(who(a.agent))+' '+fmt(a.n)+(a.past?' &middot; '+fmt(a.past)+' late':'')+'</span>'; }).join("")+'</div></div>'; }).join("");
+    $("#kStick").innerHTML = (K.sticking||[]).length ? K.sticking.map(function(x){
+      return '<div class="sk"><b>'+esc(who(x.agent))+'</b>'+(x.codes||[]).map(codeTag).join("")+'<div class="r"><big>'+fmt(x.items)+'</big>items &middot; oldest '+fmt(x.oldest)+'d</div></div>'; }).join("")
+      : '<div class="empty">No agent is past the deadline on an item.</div>';
+    $("#kPast").innerHTML = (K.past||[]).length ? K.past.map(function(x,i){
+      var whose = x.on === 'agent' ? '<span class="hold">'+esc(who(x.agent))+'</span>' : '<span class="hold br">'+esc(x.owner)+'</span>';
+      return '<div class="pr" style="--d:'+(i*.04).toFixed(2)+'s"><div class="p">&hellip;'+esc(x.pol)+'</div><div class="a">'+esc(who(x.agent))+'</div><div>'+whose+'</div>'
+        + '<div class="w">'+esc(x.what)+(x.more?' <span style="color:var(--faint)">+'+x.more+' more</span>':'')+'</div><div class="d">'+(x.days?fmt(x.days)+'d':'')+'</div></div>'; }).join("")
+      : '<div class="empty">Nothing is past its deadline.</div>';
+  }
   // Work now
   var AC = M.action || {}, AL = AC.list || [], UW = M.uw || {};
   count($("#acN"), AC.n);
@@ -462,9 +515,9 @@ function paint(){
       + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
     : '<div class="empty">Nothing is one step from settling on the report.</div>')
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
-  fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks")); fitRows($("#stCodes")); fitRows($("#acList")); fitRows($("#uwList"));
+  fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks")); fitRows($("#stCodes")); fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#acList")); fitRows($("#uwList"));
   // the ticker
-  var bits = [(M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
+  var bits = [(M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
     "<b>"+inN+" of "+M.of+"</b> staff signed in", (C.of ? "<b>"+fmt(C.movedToday)+" of "+fmt(C.of)+"</b> agents' cases moved today" : ""), (C.quietWeek ? "<b>"+fmt(C.quietWeek)+"</b> agents with nothing moved in a week" : ""), M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
     "<b>"+fmt(M.queueOf)+"</b> cases one step from settling, <b>"+fmt(M.queueToday)+"</b> touched today",
     F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : "",
@@ -481,8 +534,9 @@ function fitRows(box){
   if (was) { v.classList.add("out"); v.style.visibility=""; }
 }
 var view = 0;
-function turn(){ view = (view + 1) % 6; [0,1,2,3,4,5].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
-  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
+function turn(){ view = (view + 1) % 7; [0,1,2,3,4,5,6].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
+  setTimeout(function(){ ["#queue","#stream","#agents","#blocks","#stCodes","#kPast","#kStick","#acList","#uwList"].forEach(function(id){ fitRows($(id)); }); }, 950);
+  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
 if(!window.matchMedia("(max-width:900px)").matches) setInterval(turn, 15000);
 function feed(url, body, tries){
   tries = tries === undefined ? 3 : tries;
