@@ -4024,9 +4024,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     if either project reads a name it does not declare, or if a name is declared twice. It checked out at 60 shared
     declarations (48 KB) and 11 kept (11 KB).
   - **The move**: `apps-script/GroupMoveOut.gs` (pasted into the old project for the move: `groupMoveExport`,
-    `groupMoveStopOld`, `groupMoveCleanUp`) carries every Script property, the branch code and the group's timed jobs on
-    a hidden `_move_group` tab, the Move.gs pattern. `groupMoveImport` in the new project reads it, rebuilds the jobs with
-    the project's own installers and deletes the tab. `tools/move/repoint-group.py <new /exec>` then changes the 10 group
+    `groupMoveStopOld`, `groupMoveCleanUp`) carries every Script property, the branch code and the group's timed jobs in
+    a small sheet of its own in the owner's Drive (a hidden `_move_group` tab in the Service Questionnaire workbook only
+    as the fallback). `groupMoveImport` in the new project finds it by name, rebuilds the jobs with the project's own
+    installers, and empties and bins it. `tools/move/repoint-group.py <new /exec>` then changes the 10 group
     pages and only those; it refuses a page that also sends a non-group action. `gcm.ping` answers `project: "group"` or
     `"service"`, so a browser can tell which project answered. `apps-script/group-project/README.md` has every click.
 - **The group tabs have their own spreadsheet, the script does not.** Asked
