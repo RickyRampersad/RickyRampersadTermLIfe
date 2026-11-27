@@ -4564,6 +4564,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     `tab=billing` on Billing, `form=` on Join & leave.
   - `tests/e2e-group-portal.js` covers it (108 checks: phone, both tablets, laptop, every e-mail link).
   - The walkthrough film (`/groupmgt/yourpage/`) shows the old tabs until it is re-cut, so nothing points at it: the page's "How this page works" button and help card are hidden while `PAGE_FILM.href` is empty, and the staff page's copy-a-link panel leaves it out. Set the href and put the link back when the film is re-cut. The welcome film (`welcome.html`), `/groupmgt/client/`, `/healthenrollment/`, `/terminations/` and the training manual's `group-view.mp4` were also filmed on the old page.
+- **The staff page has the group portal's look** (27 November 2026: *"i was of the opinion the layout was changed"*, then
+  *"yes the staff page a new look"*). `groupclientmanagement/index.html` keeps every list, form and button; only the shell and the
+  order changed:
+  - **The shell**: a teal top bar (name, role, Salesforce as at, Refresh, Sign out) and the portal's menu: a side menu on a
+    laptop, a strip of icons on a tablet, a tab bar on a phone (`navDraw`, `go`, the page kept on the device as `rrb-gcm-page`).
+    Today: Home. Groups: Groups, Every account. Team: Team dashboard. Tools (under More on a phone): Billing review,
+    Premium dues, Training.
+  - **Home** (`homeHtml`): the greeting, six figures that open the groups they count (to approve, need a reason, past target,
+    waiting on the group, bills to do, on hold), **Needs you** (`needs`: each group's next job, most pressing first, with Open
+    or Billing review), **This week** (the letters, the bills, Rehearse now), the holds and what was done today. A support-team
+    member's numbers are their own groups (`scope`).
+  - **"To approve" means approvable**: `statusOf('due')` is now a letter due on a group that is set up and not on hold, so the
+    greeting, the figure and the Groups filter all give the same count.
+  - **A group** opens with its name and Billing review in a header card, its figures, then a bar that jumps to each part
+    (`secnav`): Letter, Items, Pending & coming up, Links to send, Record. The letter now comes before the items.
+  - The old tabs (Groups, Team dashboard · every account) are pages of their own; the dashboard no longer sits under the
+    accounts table. The films of the staff page show the old layout until they are re-cut.
+  - `tests/e2e-staff-shell.js` covers it (44 checks: laptop, tablet, phone), and `tests/e2e-staff-links.js` still passes.
 - **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
   staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
   and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors
