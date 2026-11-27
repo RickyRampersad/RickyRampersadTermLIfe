@@ -4418,39 +4418,48 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
       Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
       (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
-  - **A year with your group, for employers: `/groupmgt/employers/`** (27 November 2026: "a video to send off to the
-    employers ... what we do to manage the groups ... the renewal process, what is done monthly, how we send their
-    billings ... the Easy Connect portal ... the enrollment ... what the employer sees on their tasks weekly ... how they
-    rate us ... traditionally in Trinidad it is a manual process ... we are fully digital ... our WhatsApp", then "dont
-    have time do what you can"). `groupclientmanagement/a-year-with-us.mp4` (wide), poster `a-year-with-us.jpg`, built by
-    `build-gcmfilm.py employers` (key `gcme1`, 16 lines in `gcme1-lines.json`, screens in `tools/film/gcmshots-emp/`), 3 min.
-    - **The first film in the branch teal.** `teal()` repaints the builder's corporate blue for this film only (and the
-      gold highlight goes to light teal); the mark is `gcm-mark-teal.png`. The other group films keep their blue until
-      re-cut.
-    - **Digital enrolment is the centrepiece, in two scenes** (asked the same afternoon: "whats most important is out digital
-      enrollment this will be the hit ... routed speeding up the process and integrates with their weekly reports"): HR sends
-      the employee their own link from the page; the employee fills their part on their phone (dependants, beneficiaries),
-      signs on the screen, and their health answers go to Guardian, never to the employer; HR checks and approves; GIO001 is
-      filled and sent to Guardian's group team with the branch copied; the account manager's task is followed up every three
-      working days; and it shows on the page and in the Monday report until done. Screens `n1`..`n5` are the new page's Join
-      & leave on the invented group (the shooter is the enrolment film's, pointed at the new layout).
-    - **What else it shows:** the old way (paper, calls, e-mail chains); one system built in the branch; the Monday 10:30 report; pending at the top; answers and stars;
-      the 25th (bills checked) and the 26th (the statement); looking ahead for their people (turning 65, a child coming of age,
-      retiring on the company pension); leavers (EB0010, chased
-      every three working days); Guardian's easiConnect for employees; renewal; the work behind it (the new staff Home);
-      HELP 868 on WhatsApp; the close. Screens: the redesigned group page and staff Home on the invented branch.
-    - **easiConnect** is Guardian Life's own health portal (`easiconnect.myguardiangroup.com`). The film shows only its
-      public sign-in page and says what employees use it for (their claims, their cover, a request); nobody here has a
-      member's view of it, so nothing inside is drawn. If the branch sends screenshots of a sample member, re-cut scene 11.
-    - **Renewal steps come from the branch's own tasks** (ask for updated staff data, Guardian's renewal terms and the
-      renewal letter in good time, conversion for anyone leaving the plan), with no day counts, because none is
-      recorded. Add the timings when the branch states them.
-    - **Two lines were kept careful on purpose:** "built in our branch", not "the only digital branch"; and "why come
-      through our branch?" answered by what the branch does, never by knocking Guardian. It is employer-facing marketing,
-      so Guardian's written approval is still owed before it is posted, as for Xpress Life.
-    - Voice: Andrew Expressive, checked. "five stars" came back "five stores", "and to send a request" came back "a center
-      request", "how long each one has waited" came back "is weighted": all re-worded. Line 3 came back cut off at 2.5 s
-      and was voiced again unchanged. "Easy Connect" is spoken as two words; the screen shows easiConnect.
+  - **Your group, the digital way: the employers' film, `/digitalvid/`** (`/groupclientmanagementvid/` and `/groupvid/` (asked for as "Group Client Management Vid or something like that"), `/digitalvideo/`, `/groupdigital/` and the first address `/groupmgt/employers/` forward to it, 27 November 2026: "have rickyrampersadbranch /digitalvid"; `/vid/` itself is the orphan film) (first cut 27 November 2026, "a video to send
+    off to the employers ... the renewal process, what is done monthly, how we send their billings ... the Easy Connect
+    portal ... the enrollment ... how they rate us ... traditionally in Trinidad it is a manual process ... we are fully
+    digital ... our WhatsApp"; re-cut the same evening for the launch of the group initiative). 3 min 11 s, 18 scenes, wide
+    `groupclientmanagement/a-year-with-us.mp4` and upright `a-year-with-us-phone.mp4` (1080x1920, for WhatsApp Status and
+    phones), posters beside them. The page plays the phone cut first on a phone held upright, with a switch.
+    - **Why the re-cut, in his words:** "the colors are hurting the eyes and it's not showing good on a monitor ... use
+      international best practices", "a lot more motion and graphics", "a digital form being filled out", "how is the routing
+      process, how is the onboarding process for a new applicant ... what goes on the employee mobile", "a desk with a lot of
+      paper and missed follow-ups", "scale properly so on any device".
+    - **Routing goes to Guardian, the group's agent and the branch's sales support, and the film never says "account
+      manager" or "account executive"** ("it goes directly to your agent, and the support of the branch, our sales support").
+      It is always a branch initiative, always digital, about what is best for the employer.
+    - **The look is the homepage's own** (ground `#faf9f2`, white cards, ink `#0d3f5e`, teal `#00728d` sparingly), FLAT
+      colour throughout: the first cut's gradients and dark title cards banded once compressed, which is what read as
+      "distorted" on a monitor. The mark is `site-mark.svg`'s shield, inline, drawing its check. Captions sit in an ink strip
+      under the picture (wide) or over the ink band at the foot (upright).
+    - **Built by its own builder, `tools/film/build-empfilm.py`** (not build-gcmfilm.py: different look, different motion),
+      from `gcme2-lines.json` and `gcme2-timing.json`. One page, two frames: `body.port` when the window is taller than wide,
+      stage 1280x616 + strip, or 720x960 + band. The routing map is drawn twice (across and down) and CSS shows the one that
+      fits; the follow-up line and the task board re-lay themselves upright. Every reveal lands on its spoken word (`at()`
+      stops the build if a cue word is not in the line).
+    - **The onboarding is drawn, not screenshotted**, so it moves: HR's form typing itself and the send ripple; the
+      employee's phone (the e-mail, Complete my part, details typing, dependants and beneficiary, the private health
+      questions); the signature drawing itself and "Your part is done", with a reminder each working day; Guardian's real
+      GIO001 (`s08-gio`) with a scanning line and its sections lit; the routing map with packets running to Guardian, your
+      agent and our sales support; the follow-up line Day 0, 3, 6, Done. Real screens stay where a real screen is the point:
+      the group page, Guardian's GIO001 and EB0010, the people coming up, and easiConnect's public sign-in page.
+    - **The old way is a desk**: paper piling up, a ringing phone, an inbox counting to 47, sticky notes, a calendar of
+      missed days. Then the papers fly off and one system lands.
+    - **How we work** is a task board: every request a task with a name and a date, cards moving New to In progress to
+      Done (staff first names, made-up tasks).
+    - Unchanged from the first cut, and still true: easiConnect shows only its public sign-in page; renewal steps come from
+      the branch's own tasks with no day counts; "built in our branch", never "the only digital branch"; never knocking
+      Guardian. It is employer-facing marketing, so Guardian's written approval is still owed before it is posted.
+    - Voice: Andrew Expressive (key `gcme2`, fixes `gcme2b`, `gcme2c`), every clip checked word by word. "all of it
+      digital" came back "all of the digital", "follow-ups" lost its s, "onto" came back "on a", and "fills in Guardian's"
+      came back "fills and Guardian's": all re-worded. "our sales support" comes back "our sale support", which is the
+      two s sounds running together, and was kept. Music: his corporate tech track, looped on the bar to length.
+    - Re-cut: `python3.13 importvox.py <vox> vogcme2 1.15 --timing gcme2-timing.json --lines gcme2-lines.json`,
+      `python3 build-empfilm.py`, `python3 films-gcm.py`, `sfx.py` and `usetrack.py <track> gcme2 gcme2v`, then
+      `RENDER_W=1920 RENDER_H=1080 node render.js` (and 1080x1920 into `cap-gcme2v`) and `mixany.py` for each.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
