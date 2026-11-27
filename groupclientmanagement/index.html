@@ -175,7 +175,7 @@ function holdHtml(d, full) {
   if (!h) return '';
   const groups = h.groups || [], can = !!d.canHold;
   if (h.all) return '<div class="hold on" role="status"><div><b>Every group letter is on hold</b> since ' + esc(h.all.at || '') + (h.all.by ? ', by ' + esc(h.all.by) : '') +
-    (h.all.why ? ': “' + esc(h.all.why) + '”' : '') + '.<div class="small">No letter, welcome or reminder goes to any group, and nobody is chased. An approved letter waits: it goes on Monday only if the hold is lifted before 10:00. Bills are not affected.</div></div>' +
+    (h.all.why ? ': “' + esc(h.all.why) + '”' : '') + '.<div class="small">No letter, welcome or reminder goes to any group, and nobody is chased. An approved letter waits: it goes on Monday only if the hold is lifted before 10:30. Bills are not affected.</div></div>' +
     (can ? '<button class="btn" type="button" data-hold="all" data-on="0">Lift the hold</button>' : '') + '</div>';
   let x = '';
   if (groups.length) x += '<div class="hold some" role="status"><div><b>' + groups.length + ' group' + (groups.length === 1 ? ' is' : 's are') + ' on hold</b>: nothing goes to ' + (groups.length === 1 ? 'it' : 'them') + ' and nobody is chased.' +
@@ -191,7 +191,7 @@ function openHold(what, on) {
   $('dlgT').textContent = (on ? 'Put on hold · ' : 'Lift the hold · ') + (all ? 'every group' : nm);
   let h = on
     ? '<p>' + (all ? 'Nothing goes to <b>any group</b>' : 'Nothing goes to <b>' + esc(nm) + '</b>') + ' until you lift it: no weekly letter, no welcome, no reminder to rate us, and no letter sent again. The 10:30 run asks nobody why, and opens no task. ' +
-      'A letter already approved for Monday waits: it goes only if the hold is lifted before 10:00, otherwise it is approved again after. Bills are not part of the hold.</p>' +
+      'A letter already approved for Monday waits: it goes only if the hold is lifted before 10:30, otherwise it is approved again after. Bills are not part of the hold.</p>' +
       '<label for="hdWhy" style="display:block;font-weight:600;margin:12px 0 4px">Why? The team sees this</label><textarea class="field" id="hdWhy" rows="2" maxlength="300" style="width:100%;min-height:64px"></textarea>' +
       '<div class="chips" style="margin:6px 0 12px">' + HOLD_WHY.map(w => '<button class="chip" type="button" data-hw="' + esc(w) + '">' + esc(w) + '</button>').join('') + '</div>' +
       '<div class="row"><button class="btn" type="button" id="hdGo" disabled>' + (all ? 'Hold every group' : 'Put ' + esc(nm) + ' on hold') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>'

@@ -4177,6 +4177,17 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   through the composite resource (`gcmQuery_`), so a long one never meets URL
   Fetch's limit on an address. Salesforce ids are unique in their first 15
   characters; everything is keyed on those.
+- **Since 27 November 2026 the letters go at 10:30, and Salesforce is read at 6:00, 10:00, 12:00 and 15:00 only**
+  (*"why hourly this should be once a day only on morings … does this use tokens"*, then *"add 10am as well and move
+  letters to send 10:30am"*). The 5-minute Salesforce read (`gcmRefreshDue_`, `GCM.REFRESH_AT`, or the
+  `GCM_REFRESH_AT` Script property) runs at those hours; a time missed is read by the next hourly run, and a press of
+  Refresh counts. The hourly run stays for what must go on time (the bills, the Monday 11:00 team letter, a welcome,
+  the renewal desk) and takes seconds when nothing is due. **None of the timed runs uses Claude**: the AI runs only on a
+  person's press (Draft with AI, the billings door's read, a test being marked). The Monday send is a one-off timer
+  for exactly 10:30 (`gcmMondayTrigger_`, `gcm_monday_ms`), made again by the run and by any hourly run that finds it
+  missing or past, because a weekly timer only aims within fifteen minutes. `gcm.ping` answers `refreshAt`. The films
+  still say 10:00 until they are re-cut. `tests/test-group-refresh.js` covers it (34 checks). Everything below that
+  says 10:00 for the Monday letters now means 10:30.
 - **The letters go by themselves at 10:00 on Monday; staff approve, they do
   not send** (8 October 2026: "as we have automated our queries will now
   change to a monday at 10am to go out to client"). Until then Tuesday was send

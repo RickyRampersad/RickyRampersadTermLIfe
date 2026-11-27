@@ -141,7 +141,7 @@ function groupMoveImport() {
       if (fn === 'gcmRefreshTick') {
         ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === fn) ScriptApp.deleteTrigger(t); });
         ScriptApp.newTrigger('gcmRefreshTick').timeBased().everyHours(1).create(); made.push('the hourly refresh');
-      } else if (fn === 'gcmMondaySend') { gcmMondayTrigger_(); made.push('the Monday 10:00 letters'); }
+      } else if (fn === 'gcmMondaySend') { gcmMondayTrigger_(); made.push('the Monday 10:30 letters'); }
       else if (fn === 'gcmDay1030') { gcmDayTrigger_(); made.push('the 10:30 group day'); }
       else byHand.push(fn === 'gcmRehearseTick' ? 'the rehearsal at 10:00 (run gcmRehearseAt10 again if it is still wanted)'
                      : fn === 'gcmWelcomeTick' ? 'the scheduled welcome (run gcmWelcomeAt9 or gcmWelcomeAt6 again if it is still wanted)' : fn);
