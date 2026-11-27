@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27z2';
+var SCRIPT_VERSION = '2026-11-27z3';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17544,6 +17544,21 @@ function wallIsLeft_(v, left) {
   // A unit named for someone who has left ("KERWYN RAMROACH UNIT-CHAGUANAS REG CEN") is theirs too.
   var m = /^(.+?) unit\b/.exec(k); return !!(m && left[m[1]]);
 }
+/* THE PENDING WALL NAMES THEM (27 November 2026, night). Ricky: "don't put Orphan, list the inactive agent name, and frame it
+   properly". On intel.pending only, an agent who has left keeps their name with WALL_INACTIVE after it, so the case shows whose
+   it was and that it needs a new agent; wallScrub_ then leaves it alone (the marked name no longer matches the list). Every other
+   wall still folds them into Orphans. */
+var WALL_INACTIVE = ' \u00b7 inactive';
+function wallMarkInactive_(o, leftOpt) {
+  var left = leftOpt || wallLeft_();
+  var walk = function (x) {
+    if (Array.isArray(x)) return x.map(walk);
+    if (x && typeof x === 'object') { var y = {}; Object.keys(x).forEach(function (k) { var v = x[k];
+      y[k] = typeof v === 'string' && v.indexOf(WALL_INACTIVE) < 0 && /[a-z]/i.test(v) && wallIsLeft_(v, left) && !/ unit\b/i.test(v) ? v + WALL_INACTIVE : walk(v); }); return y; }
+    return x;
+  };
+  return walk(o);
+}
 /** The feed with everyone who has left folded into WALL_ORPHANS (see above). */
 function wallScrub_(o, leftOpt) {
   var left = leftOpt || wallLeft_();
@@ -17600,7 +17615,9 @@ function wallScrub_(o, leftOpt) {
 function wallFeedOut_(action, out) {
   var j = null; try { j = JSON.parse(out.getContent()); } catch (e) { return out; }
   if (!j || !j.ok || !j.data) return out;
-  if (action === 'intel.pending') { try { j.data.live = wallPendLive_(todayISO_()); } catch (e) { j.data.live = { error: String(e && e.message || e) }; } }
+  if (action === 'intel.pending') { try { j.data.live = wallPendLive_(todayISO_()); } catch (e) { j.data.live = { error: String(e && e.message || e) }; }
+    // The pending wall names an agent who has left, marked inactive, rather than folding them into Orphans (Ricky, 27 Nov 2026).
+    try { j.data = wallMarkInactive_(j.data); } catch (e) {} }
   if (action === 'intel.groups') { try { j.data = wallGroupsTidy_(j.data, j.stored); } catch (e) {} }
   try { j.data = wallScrub_(j.data); } catch (e) {}
   if (action === 'intel.day') { try { j.data.system = wallSystemDay_(todayISO_()); } catch (e) {} try { j.data.hours = wallDayHours_(todayISO_()); } catch (e) { j.data.hours = { error: String(e && e.message || e) }; } }

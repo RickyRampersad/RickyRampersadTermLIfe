@@ -222,6 +222,7 @@
   .dk .ag{margin-top:.45rem;display:flex;flex-wrap:wrap;gap:.3rem}
   .chip{font:700 .85rem var(--fb);padding:.15rem .5rem;border-radius:.5rem;background:#E9F2EE;color:var(--teal);white-space:nowrap}
   .chip.bad{background:#FBE7E5;color:var(--red)}
+  .inact{display:inline-block;margin-left:.3rem;font:800 .68em var(--fd);letter-spacing:.08em;text-transform:uppercase;color:#6B6F78;border:1px solid #A9ADB5;border-radius:.35rem;padding:.02rem .3rem;vertical-align:.12em;background:#F1F1EF}
   .bl{padding:.6rem 0;border-bottom:1px solid rgba(31,36,48,.06)}
   .bl .h{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem}
   .bl .h b{font:800 1.15rem var(--fd)} .bl .h span{font:800 1.6rem var(--fd);color:var(--red);font-variant-numeric:tabular-nums}
@@ -392,7 +393,16 @@
 <script>
 var PEND_URL = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
 var D = null, $ = function (s) { return document.querySelector(s); };
-function who(a){ return /^orphans\b/i.test(String(a||"")) ? "Orphan" : String(a||"").split(" ")[0]; }
+/* An agent who has left comes from the feed as "Name Surname · inactive" (27 Nov 2026: "don't put Orphan, list the inactive
+   agent name and frame it properly"): the first name, then a framed "inactive" tag, added after each paint by markInactive(). */
+function who(a){ a = String(a||""); if (/^orphans\b/i.test(a)) return "Orphan"; var inact = /\u00b7 inactive$/.test(a); return a.replace(/\s*\u00b7 inactive$/, "").split(" ")[0] + (inact ? " \u00b7 inactive" : ""); }
+function markInactive(){ Array.prototype.forEach.call(document.querySelectorAll("main .view"), function(v){
+  if (v.innerHTML.indexOf("\u00b7 inactive") < 0) return;
+  var w = document.createTreeWalker(v, NodeFilter.SHOW_TEXT, null), n, hits = [];
+  while ((n = w.nextNode())) if (/ \u00b7 inactive/.test(n.nodeValue)) hits.push(n);
+  hits.forEach(function(t){ var parts = t.nodeValue.split(/ \u00b7 inactive/), frag = document.createDocumentFragment();
+    parts.forEach(function(p, i){ frag.appendChild(document.createTextNode(p)); if (i < parts.length - 1) { var sp = document.createElement("span"); sp.className = "inact"; sp.textContent = "inactive"; frag.appendChild(sp); } });
+    t.parentNode.replaceChild(frag, t); }); }); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
 function fmt(n){ return Math.round(Number(n)||0).toLocaleString("en-US"); }
 function clock(){ var t=new Date(new Date().toLocaleString("en-US",{timeZone:"America/Port_of_Spain"})); $("#clock").textContent=("0"+t.getHours()).slice(-2)+":"+("0"+t.getMinutes()).slice(-2); }
@@ -574,6 +584,7 @@ function paint(){
       + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
     : '<div class="empty">Nothing is one step from settling on the report.</div>')
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
+  markInactive();
   fitRows($("#queue")); fitRows($("#stream")); fitRows($("#agents")); fitRows($("#blocks"));  fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#acList")); fitRows($("#uwList"));
   // the ticker
   var bits = [(L.settleIntel && L.settleIntel.n ? "<b>"+fmt(L.settleIntel.n)+"</b> can settle, <b>"+fmt(L.settleIntel.nowN)+"</b> with no call to the client" : ""), (L.brief && L.brief.steps ? L.brief.steps.filter(function(x){ return x.n; }).slice(0,3).map(function(x){ return "<b>"+fmt(x.n)+"</b> "+esc(x.title.split(":")[0].toLowerCase()); }).join(" &middot; ") : ""), (M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",

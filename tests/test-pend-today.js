@@ -209,6 +209,14 @@ console.log('\nBuilt ahead, served at once:\n');
   ok('the copy says when it was built', typeof a.builtAt === 'number' && a.day === '2026-10-27');
   env.wallPendBuild_ = real;
 }
+console.log('\nThe pending wall names an agent who has left, marked inactive:\n');
+{
+  const mk = env.wallMarkInactive_({ live: { morning: { queue: [{ agent: 'Aidan Eugene', pol: '0003' }, { agent: 'Varun Seegolam' }] }, byAgent: { agents: [{ agent: 'Tricia Baksh', cases: 1 }] } } });
+  ok('an agent who has left keeps their name, marked inactive', mk.live.morning.queue[0].agent === 'Aidan Eugene · inactive' && mk.live.byAgent.agents[0].agent === 'Tricia Baksh · inactive', JSON.stringify(mk));
+  ok('an agent still here is untouched', mk.live.morning.queue[1].agent === 'Varun Seegolam');
+  const sc = env.wallScrub_(mk);
+  ok('and the scrub no longer folds the marked name into Orphans', !/Orphans/.test(JSON.stringify(sc)) && /Aidan Eugene · inactive/.test(JSON.stringify(sc)), JSON.stringify(sc));
+}
 console.log('\nThe follow-up from the trail:\n');
 const appended = [];
 env.__mkSheet('Pending Follow-ups', 9, env.PEND_FU.head.slice(), []);
