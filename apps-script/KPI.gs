@@ -17899,7 +17899,7 @@ function wallPendLive_(day) {
     var kk = p.kinds[kd] = p.kinds[kd] || { n: 0, red: 0, amber: 0 }; kk.n++; if (rg === 'Red') kk.red++; else if (rg === 'Amber') kk.amber++;
     // For the deeper picture (24 Nov 2026): what each item is and who moves it, Guardian's own follow-up date, the underwriter.
     var dOf = function (v) { return v instanceof Date ? Utilities.formatDate(v, CONFIG.TZ, 'yyyy-MM-dd') : String(v == null ? '' : v).trim().slice(0, 10); };
-    p.items.push({ kind: kd, who: cell(r, c.who) || 'Not said', last: /^y/i.test(cell(r, c.last)), red: rg === 'Red' });
+    p.items.push({ kind: kd, who: cell(r, c.who) || 'Not said', last: /^y/i.test(cell(r, c.last)), red: rg === 'Red', code: cell(r, c.code).toUpperCase(), name: cell(r, c.name) || cell(r, c.code) });
     if (!p.uw) p.uw = cell(r, c.uw); if (!p.so) p.so = cell(r, c.so);
     var nfd = c.nf < 0 ? '' : dOf(r[c.nf]); if (/^\d{4}-\d{2}-\d{2}$/.test(nfd) && (!p.nf || nfd < p.nf)) p.nf = nfd;
     if (cell(r, c.cmt)) { var cd = c.rdate < 0 ? '' : dOf(r[c.rdate]); if (/^\d{4}/.test(cd) && cd > p.cmtAt) p.cmtAt = cd; }
@@ -17934,9 +17934,182 @@ function wallPendLive_(day) {
   var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
   wallPendPolicies_(out, P, chase);
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
+  try { out.morning = wallPendMorning_(day, P, numOf); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
+  // The report's items, policy by policy, for the follow-up drafts (pendFollowScan_); kept beside the feed, never served.
+  try { var items = {}; Object.keys(P).forEach(function (k) { items[k] = { ag: P[k].ag, days: P[k].days, items: P[k].items.map(function (it) { return { code: it.code, name: it.name, who: it.who }; }) }; });
+    cache.put('wall_pend_items_' + day, JSON.stringify({ tab: out.tab, asOf: out.asOf, pols: items, numOf: numOf }), 21600); } catch (e) {}
+  try { out.follow = pendFollowCount_(day); } catch (e) {}
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
 }
+/* ── Today on the pendings (27 November 2026) ──
+ *  Ricky, 1:40pm: "a powerful enhanced dashboard ... only stream from today ... show what is the first thing that is worked on
+ *  our pendings and the activity driven by Salesforce to get our cases settled, the codes are important ... so when agents and
+ *  staff look at the board they know this morning it is being actioned ... not to tell them what they already know but approve
+ *  the documents and ensure it's actioned". On the day he asked, Salesforce showed one Pendings task touched all day.
+ *  From Salesforce, today only, matched to the newest pending report by any policy or application number in the subject:
+ *    each desk's first touch on a pending case (when, whose case, the code it is held on), how many cases and touches since,
+ *    and a desk with nothing yet; the stream of today's touches, newest first (a note, a status moved, a task closed, an
+ *    e-mail logged); and the queue to work first: approved by underwriting with items left, then one item from settlement,
+ *    then the first premium alone, each with its codes, who moves it, its age and whether anybody touched it today.
+ *  Agents' first names, codes and the last four digits of a policy only, never a client. wallScrub_ folds anyone who has left. */
+var WALL_MORN = { STREAM: 14, QUEUE: 12 };
+function wallPendMorning_(day, P, numOf) {
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
+  var users = sfkUsers_() || {}, ids = {}, order = DAY_MAIL_DESKS.filter(function (s) { return s !== 'pawan'; }).concat(['ricky']);
+  order.forEach(function (s) { var id = s === 'ricky' ? (typeof bmSfId_ === 'function' ? bmSfId_() : '') : (users[s] && users[s].id); if (!id && users[s]) id = users[s].id; if (id) ids[id] = s; });
+  var from = sfkUtcAt_(day, 0), to = sfkUtcAt_(shiftDays_(day, 1), 0), ev = [];
+  var polsOf = function (subject) { var seen = {}, out = []; (String(subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) { var p = numOf[x]; if (p && !seen[p]) { seen[p] = 1; out.push(p); } }); return out; };
+  var add = function (at, uid, kind, subject) { var sid = ids[uid]; if (!sid) return; polsOf(subject).forEach(function (p) { ev.push({ at: String(at || ''), sid: sid, kind: kind, pol: p }); }); };
+  sfkQuery_("SELECT Id, Subject, IsClosed, LastModifiedDate, LastModifiedById FROM Task WHERE Task_Type__c = 'Pendings' AND LastModifiedDate >= " + from +
+    ' AND LastModifiedDate < ' + to + ' LIMIT 1000').forEach(function (t) { add(t.LastModifiedDate, t.LastModifiedById, t.IsClosed ? 'closed' : 'moved', t.Subject); });
+  var notes = sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE CreatedDate >= " + from + ' AND CreatedDate < ' + to +
+    " AND Type IN ('TextPost','ContentPost','LinkPost') LIMIT 2000").filter(function (f) { return ids[f.CreatedById] && /^00T/.test(String(f.ParentId)); });
+  var tl = {}; notes.forEach(function (f) { tl[f.ParentId] = 1; }); tl = Object.keys(tl);
+  var subj = {};
+  for (var i = 0; i < tl.length; i += WALL_PEND.IDS) sfkQuery_('SELECT Id, Subject, Task_Type__c FROM Task WHERE Id IN (' + tl.slice(i, i + WALL_PEND.IDS).map(soqlStr_).join(',') + ')')
+    .forEach(function (t) { if (String(t.Task_Type__c) === 'Pendings' || polsOf(t.Subject).length) subj[t.Id] = t.Subject; });
+  notes.forEach(function (f) { if (subj[f.ParentId] != null) add(f.CreatedDate, f.CreatedById, 'note', subj[f.ParentId]); });
+  try { sfkQuery_('SELECT Subject, MessageDate, CreatedById FROM EmailMessage WHERE MessageDate >= ' + from + ' AND MessageDate < ' + to + ' LIMIT 500')
+    .forEach(function (m) { add(m.MessageDate, m.CreatedById, 'email', m.Subject); }); } catch (e) {}
+  // A status moved and a note on the same task in the same minute is one touch, the note.
+  var seen = {}; ev.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+  ev = ev.filter(function (e) { var k = e.sid + '|' + e.pol + '|' + e.at.slice(0, 16); if (seen[k] && e.kind === 'moved') return false; seen[k] = 1; return true; });
+  var first = function (s) { return String(s || '').split(/\s+/)[0]; };
+  var held = function (pol) { var p = P[pol]; if (!p) return { code: '', kind: '' }; var it = p.items.filter(function (x) { return x.last; })[0] || p.items.filter(function (x) { return x.red; })[0] || p.items[0] || {}; return { code: it.code || '', kind: it.kind || '' }; };
+  var at = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? '' : twelve_(hhmm_(d)); };
+  var row = function (e) { var h = held(e.pol); return { at: at(e.at), desk: String(nameFor_(e.sid)).split(' ')[0], agent: first(P[e.pol] ? P[e.pol].ag : ''), code: h.code, kind: h.kind, what: e.kind, pol: String(e.pol).slice(-4) }; };
+  var desks = order.filter(function (s) { return s === 'ricky' || users[s]; }).map(function (s) {
+    var mine = ev.filter(function (e) { return e.sid === s; }), pols = {};
+    mine.forEach(function (e) { pols[e.pol] = 1; });
+    return { name: String(nameFor_(s)).split(' ')[0], first: mine.length ? row(mine[0]) : null, last: mine.length ? at(mine[mine.length - 1].at) : '',
+             touches: mine.length, cases: Object.keys(pols).length, closed: mine.filter(function (e) { return e.kind === 'closed'; }).length,
+             notes: mine.filter(function (e) { return e.kind === 'note'; }).length, emails: mine.filter(function (e) { return e.kind === 'email'; }).length };
+  });
+  var today = {}; ev.forEach(function (e) { today[e.pol] = 1; });
+  var stateOf = function (p) { for (var i = 0; i < WALL_PEND.STATES.length; i++) { var s = WALL_PEND.STATES[i]; if (s.re && s.re.test(p.dec)) return s.key; } return 'none'; };
+  var rank = function (p) { return p.pay > 0 && p.pay === p.reqs ? 0 : stateOf(p) === 'settle' ? 1 : p.reqs === 1 ? 2 : 9; };
+  var queue = Object.keys(P).filter(function (k) { return rank(P[k]) < 9; }).sort(function (a, b) { return (rank(P[a]) - rank(P[b])) || (P[a].reqs - P[b].reqs) || (P[b].days - P[a].days); })
+    .map(function (k) { var p = P[k], cs = {}, who = {}; p.items.forEach(function (it) { cs[it.code] = 1; who[it.who] = (who[it.who] || 0) + 1; });
+      var w = Object.keys(who).sort(function (x, y) { return who[y] - who[x]; })[0] || '';
+      return { pol: String(k).slice(-4), agent: first(p.ag), why: ['Only the premium left', 'Approved · settle it', 'One item left'][rank(p)], codes: Object.keys(cs).slice(0, 4), left: p.reqs,
+               who: w, days: p.days, red: p.red > 0, today: !!today[k] }; });
+  var started = desks.filter(function (d) { return d.touches; }).length;
+  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length,
+           firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
+           closed: ev.filter(function (e) { return e.kind === 'closed'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
+           stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
+           queue: queue.slice(0, WALL_MORN.QUEUE), queueOf: queue.length, queueToday: queue.filter(function (q) { return q.today; }).length };
+}
+
+/* ── The follow-up from the trail (27 November 2026) ──
+ *  Ricky: "where an email went out for a follow up on a pending can you also from the trail send a follow up?" Answered the
+ *  same day: he approves each one. Salesforce keeps the e-mails logged on pending cases (EmailMessage) with their recipients
+ *  and the policy number in the subject. pendFollowScan_ finds, for each policy on the newest pending report, its latest
+ *  e-mail; when that is three working days old or more and no Pendings task on the policy has moved since, it drafts the
+ *  follow-up: to the same people, the subject marked "Follow-up:", and what the report still shows outstanding on it today,
+ *  each item with its code and whose move it is. Drafts wait on the "Pending Follow-ups" tab and on his My workday; nothing
+ *  goes out until he taps Approve (pendFollowAct_). Sent through mailSend_ (from support@ when the relay is up), and a note
+ *  is written on the policy's open Pendings task, so the send is itself activity in Salesforce. One draft per e-mail: a
+ *  case skipped or sent is not drafted again until a newer e-mail goes out on it. */
+var PEND_FU = { must: ['Key', 'Policy', 'MsgId', 'Status'], name: 'Pending Follow-ups', WORKDAYS: 3, BACK_DAYS: 60, SHOW: 25,
+  head: ['Drafted', 'Key', 'Policy', 'Agent', 'MsgId', 'Subject', 'To', 'Cc', 'LastSent', 'Outstanding', 'Status', 'ActedAt', 'By', 'TaskNote'] };
+function pendFuRows_() {
+  var sh = hrTab_(PEND_FU, false); if (!sh || sh.getLastRow() < 2) return [];
+  var head = headerOf_(sh);
+  return sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().map(function (r, i) { var o = { _row: i + 2 }; head.forEach(function (h, c) { if (h) o[h] = r[c]; }); return o; });
+}
+function pendFuWorkdaysSince_(iso, day) {
+  var d = String(iso || '').slice(0, 10), n = 0, x = d;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return 0;
+  for (var i = 0; i < 40 && x < day; i++) { x = shiftDays_(x, 1); var w = new Date(x + 'T12:00:00Z').getUTCDay(); if (w > 0 && w < 6 && !(typeof branchClosed_ === 'function' && branchClosed_(x))) n++; }
+  return n;
+}
+/** Drafts the follow-ups that are due. Returns { drafted, waiting }. */
+function pendFollowScan_(day) {
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
+  var cache = CacheService.getScriptCache(), rep = null, hit = cache.get('wall_pend_items_' + day);
+  if (!hit) { try { wallPendLive_(day); } catch (e) {} hit = cache.get('wall_pend_items_' + day); }
+  try { rep = JSON.parse(hit || 'null'); } catch (e) { rep = null; }
+  if (!rep || !rep.pols) return { error: 'The pending report could not be read.' };
+  var latest = {};
+  sfkQuery_('SELECT Id, Subject, ToAddress, CcAddress, FromAddress, MessageDate FROM EmailMessage WHERE MessageDate = LAST_N_DAYS:' + PEND_FU.BACK_DAYS +
+    ' ORDER BY MessageDate DESC LIMIT 2000').forEach(function (m) {
+    var seen = {};
+    (String(m.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) { var pol = rep.numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1; if (!latest[pol]) latest[pol] = m; });
+  });
+  var tasks = {}; try { tasks = pendTasksByPolicy_(rep.numOf, day); } catch (e) {}
+  var rows = pendFuRows_(), had = {}; rows.forEach(function (r) { had[String(r.MsgId)] = 1; });
+  var own = /^(support@rickyrampersadbranch\.com)$/i, split = function (v) { return String(v || '').split(/[;,]/).map(function (x) { return x.trim(); }).filter(function (x) { return /@/.test(x); }); };
+  var drafted = 0, sh = null;
+  Object.keys(latest).forEach(function (pol) {
+    var m = latest[pol], sent = String(m.MessageDate || '').replace(/\+0000$/, 'Z'), sentDay = Utilities.formatDate(new Date(sent), CONFIG.TZ, 'yyyy-MM-dd');
+    if (had[String(m.Id)] || pendFuWorkdaysSince_(sentDay, day) < PEND_FU.WORKDAYS) return;
+    var moved = (tasks[pol] || []).some(function (t) { return String(t.mod || '').replace(/\+0000$/, 'Z') > sent; });
+    if (moved) return;
+    var p = rep.pols[pol]; if (!p || !p.items.length) return;
+    var to = split(m.ToAddress), toLow = to.map(function (x) { return x.toLowerCase(); }), cc = split(m.CcAddress).concat(split(m.FromAddress)).filter(function (x) { return !own.test(x) && toLow.indexOf(x.toLowerCase()) < 0; });
+    var seenCc = {}; cc = cc.filter(function (x) { var k = x.toLowerCase(); if (seenCc[k]) return false; seenCc[k] = 1; return true; });
+    if (!to.length) return;
+    var out = p.items.map(function (it) { return it.name + (it.code ? ' (' + it.code + ')' : '') + ' · ' + it.who; });
+    if (!sh) sh = hrTab_(PEND_FU, true);
+    var head = headerOf_(sh), rec = { Drafted: new Date(), Key: pol + '-' + m.Id, Policy: pol, Agent: p.ag, MsgId: String(m.Id), Subject: String(m.Subject || ''),
+      To: to.join(', '), Cc: cc.join(', '), LastSent: sentDay, Outstanding: out.join('\n'), Status: 'waiting', ActedAt: '', By: '', TaskNote: '' };
+    sh.appendRow(head.map(function (h) { return rec[h] != null ? rec[h] : ''; }));
+    had[String(m.Id)] = 1; drafted++;
+  });
+  try { runlog_('pending follow-ups: ' + drafted + ' drafted'); } catch (e) {}
+  return { drafted: drafted, waiting: pendFuRows_().filter(function (r) { return String(r.Status) === 'waiting'; }).length };
+}
+/** For the wall: how many wait on his approval, and how many went out today. Counts only. */
+function pendFollowCount_(day) {
+  var rows = pendFuRows_(), tz = CONFIG.TZ;
+  var on = function (v) { return v instanceof Date ? Utilities.formatDate(v, tz, 'yyyy-MM-dd') === day : String(v || '').slice(0, 10) === day; };
+  return { waiting: rows.filter(function (r) { return String(r.Status) === 'waiting'; }).length, sentToday: rows.filter(function (r) { return String(r.Status) === 'sent' && on(r.ActedAt); }).length };
+}
+/** The drafts for his My workday. */
+function pendFollowList_() {
+  return pendFuRows_().filter(function (r) { return String(r.Status) === 'waiting'; }).slice(0, PEND_FU.SHOW).map(function (r) {
+    return { k: String(r.Key), pol: String(r.Policy), agent: String(r.Agent || ''), subject: String(r.Subject || ''), to: String(r.To || ''), cc: String(r.Cc || ''),
+             last: String(r.LastSent instanceof Date ? Utilities.formatDate(r.LastSent, CONFIG.TZ, 'yyyy-MM-dd') : r.LastSent || ''), items: String(r.Outstanding || '').split('\n').filter(String) };
+  });
+}
+/** The follow-up e-mail itself. */
+function pendFollowMail_(r) {
+  var items = String(r.Outstanding || '').split('\n').filter(String), last = r.LastSent instanceof Date ? Utilities.formatDate(r.LastSent, CONFIG.TZ, 'yyyy-MM-dd') : String(r.LastSent || '');
+  var subj = String(r.Subject || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '');
+  var text = 'Following up on the e-mail of ' + prettyDate_(last) + ' on policy ' + r.Policy + '.\n\nGuardian’s pending report today still shows ' +
+    (items.length === 1 ? 'this outstanding' : 'these ' + items.length + ' outstanding') + ':\n' + items.map(function (x) { return '  • ' + x; }).join('\n') +
+    '\n\nPlease action ' + (items.length === 1 ? 'it' : 'them') + ' today and reply on this thread once done, so the case can settle.\n\nRicky Rampersad\nBranch Manager · Ricky Rampersad Branch';
+  var html = '<div style="font:14px/1.55 Arial,sans-serif;color:#1d2433">Following up on the e-mail of <b>' + esc_(prettyDate_(last)) + '</b> on policy <b>' + esc_(r.Policy) + '</b>.</div>' +
+    '<div style="font:14px/1.55 Arial,sans-serif;color:#1d2433;margin-top:10px">Guardian’s pending report today still shows ' + (items.length === 1 ? 'this outstanding' : 'these <b>' + items.length + '</b> outstanding') + ':</div>' +
+    '<ul style="font:14px/1.55 Arial,sans-serif;color:#1d2433;margin:6px 0 0 18px;padding:0">' + items.map(function (x) { return '<li>' + esc_(x) + '</li>'; }).join('') + '</ul>' +
+    '<div style="font:14px/1.55 Arial,sans-serif;color:#1d2433;margin-top:10px">Please action ' + (items.length === 1 ? 'it' : 'them') + ' today and reply on this thread once done, so the case can settle.</div>' +
+    '<div style="font:13px/1.5 Arial,sans-serif;color:#6A7180;margin-top:14px">Ricky Rampersad<br>Branch Manager · Ricky Rampersad Branch</div>';
+  return { to: String(r.To || ''), cc: String(r.Cc || ''), subject: 'Follow-up: ' + subj, body: text, htmlBody: html, name: 'Ricky Rampersad' };
+}
+/** His tap: approve (send now) or skip one draft. Only the Branch Manager. */
+function pendFollowAct_(k, act) {
+  var r = pendFuRows_().filter(function (x) { return String(x.Key) === String(k); })[0];
+  if (!r) return { ok: false, error: 'That follow-up is no longer on the list.' };
+  if (String(r.Status) !== 'waiting') return { ok: false, error: 'That one was already ' + r.Status + '.' };
+  var sh = hrTab_(PEND_FU, false), head = headerOf_(sh), set = function (o) { Object.keys(o).forEach(function (h) { var c = head.indexOf(h); if (c > -1) sh.getRange(r._row, c + 1).setValue(o[h]); }); };
+  if (act === 'skip') { set({ Status: 'skipped', ActedAt: new Date(), By: 'Ricky' }); return { ok: true, res: 'skipped' }; }
+  if (act !== 'send') return { ok: false, error: 'Approve or skip.' };
+  try { mailSend_(pendFollowMail_(r)); } catch (e) { return { ok: false, error: 'That did not send: ' + String(e && e.message || e).slice(0, 140) }; }
+  var note = '';
+  try {
+    var rep = JSON.parse(CacheService.getScriptCache().get('wall_pend_items_' + todayISO_()) || 'null'), num = {}; num[r.Policy] = r.Policy;
+    var open = ((pendTasksByPolicy_(rep && rep.numOf ? rep.numOf : num, todayISO_())[r.Policy]) || []).filter(function (t) { return t.open; })[0];
+    if (open) { sfNote_({ ParentId: open.id, Body: 'Follow-up e-mail sent, approved by Ricky Rampersad. Still outstanding:\n' + String(r.Outstanding || '') }); note = open.id; }
+  } catch (e) {}
+  set({ Status: 'sent', ActedAt: new Date(), By: 'Ricky', TaskNote: note || 'no open Pendings task' });
+  try { CacheService.getScriptCache().remove('wall_pend_' + todayISO_()); } catch (e) {}
+  return { ok: true, res: 'sent' + (note ? ', noted on its Pendings task' : '') };
+}
+/** From the editor: draft what is due now and say how many wait. */
+function pendFollowScanNow() { var r = pendFollowScan_(todayISO_()); var m = r.error || (r.drafted + ' drafted · ' + r.waiting + ' waiting for approval'); Logger.log(m); return m; }
+
 /** The policies stop: policy-level figures, the decision states and the board, agent by agent. */
 function wallPendPolicies_(out, P, chase) {
   var list = Object.keys(P).map(function (k) { return P[k]; });
@@ -19205,6 +19378,9 @@ function workdayLeadModel_(m, day, now, base) {
   var post = m.desks; wdUnitModel_(m, 'ricky', day); m.desks = post;   // his Post-to list stays the inbox's
   m.newDesks = DAY_MAIL_DESKS.map(function (d) { return { sid: d, first: String(nameFor_(d)).split(' ')[0] }; });
   try { m.oppBranch = oppBranch_(); } catch (e) { m.oppBranch = { error: String(e && e.message || e).slice(0, 140) }; }
+  // Pending follow-ups from the trail, for his approval (27 Nov 2026); drafted at most every half hour.
+  try { var fc = CacheService.getScriptCache(); if (!fc.get('pfu_scan_' + day)) { fc.put('pfu_scan_' + day, '1', 1800); pendFollowScan_(day); } } catch (e) {}
+  try { m.followUps = pendFollowList_(); } catch (e) { m.followUps = []; }
   return m;
 }
 /** His own notes per working day, the last WORKDAY.BARS of them (postWho_: his words only). */
@@ -19945,6 +20121,11 @@ function workdayPost_(p) {
     try { var sentTo = agCoachMailSample_(vm.agent, day, emailFor_(sid)); return { ok: true, msg: 'Sent to ' + sentTo + '.' }; } catch (e) { return { ok: false, error: 'That did not send: ' + String(e && e.message || e).slice(0, 140) }; } }
   var person = workdayPerson_(sid); if (!person) return { ok: false, error: 'That desk is no longer on the register.' };
   if (String(p.act || '') === 'post') { if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' }; return workdayPostNote_(p, day); }
+  if (String(p.act || '') === 'pfu') {   // his approval of a pending follow-up (27 Nov 2026)
+    if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' };
+    var pf = pendFollowAct_(String(p.k || ''), String(p.sub || '')); if (!pf.ok) return pf;
+    var mf = workdayModel_(sid, day); mf.pfu = { k: String(p.k || ''), res: pf.res }; return mf;
+  }
   if (String(p.act || '') === 'draft') { if (!claudeFor_(sid)) return { ok: false, error: 'Branch Intelligence drafting is the Branch Manager\'s alone.' }; return workdayDraft_(p, day); }
   // The managers' screen (29 Oct 2026): the unit's tasks, from here.
   if (String(p.act || '') === 'unit') {
