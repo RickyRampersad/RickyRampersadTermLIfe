@@ -133,6 +133,13 @@ ok('each owner groups the agents whose cases it holds', AC2.owners.some(o => o.a
 ok('a Guardian follow-up date already gone is a miss on the staff side', AC2.past.some(p => p.on === 'staff'), JSON.stringify(AC2.past));
 ok('an agent item asked for more than three working days ago shows the agent sticking', AC2.sticking.some(x => x.agent === 'Varun Seegolam' && x.codes.includes('PRADD') && x.oldest > 3), JSON.stringify(AC2.sticking));
 ok('the misses carry no client and no full policy number', !/50000000\d\d/.test(JSON.stringify(AC2)));
+console.log('\nWhat can settle today, and how:\n');
+const SI = L.settleIntel, grp = k => SI.groups.find(g => g.k === k);
+ok('the intelligence is built, five ways a case can settle', SI && !SI.error && SI.groups.map(g => g.k).join(',') === 'money,docs,review,one,premium', JSON.stringify(SI && (SI.error || SI.groups.map(g => [g.k, g.n]))));
+ok('only the premium left and the money already held: apply it and settle', grp('money').list.some(x => x.pol === '0002' && /already held/.test(x.how)), JSON.stringify(grp('money')));
+ok('approved with one item left says which item and whose move', grp('one').list.some(x => x.pol === '0001' && /Proof of Address/.test(x.how)) || grp('docs').list.some(x => x.pol === '0001'), JSON.stringify([grp('one'), grp('docs')]));
+ok('each case is counted once, with the premium it would issue', SI.n === SI.groups.reduce((s, g) => s + g.n, 0) && SI.prem > 0, JSON.stringify([SI.n, SI.prem]));
+ok('no client and no full policy number in it', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(SI)));
 console.log('\nThe morning brief:\n');
 const B = L.brief, step = k => B.steps.find(x => x.k === k);
 ok('seven steps, in the order support works them', B && !B.error && B.steps.map(x => x.k).join(',') === 'save,settle,allin,ho,expiry,never,agents', JSON.stringify(B && (B.error || B.steps.map(x => [x.k, x.n]))));
