@@ -1,92 +1,17 @@
 {
- "tts/out/gcme2/01.mp3": [
+ "tts/out/gcme2b/01.mp3": [
   "en",
-  0.99,
-  "Introducing a new way to look after your group, group life, group health and pension from our branch and all of the digital."
+  0.991,
+  "Introducing a new way to look after your group, group life, group health and pension from our branch, and every step of it is digital."
  ],
- "tts/out/gcme2/02.mp3": [
+ "tts/out/gcme2b/02.mp3": [
   "en",
-  0.997,
-  "You know how it usually goes. Forms on paper, piles on the desk, phone calls to find out where things stand, and follow up that slip through the cracks."
+  0.998,
+  "You know how it usually goes. Forms on paper, piles on the desk, phone calls to find out where things stand, and promises to call back that slip through the cracks."
  ],
- "tts/out/gcme2/03.mp3": [
-  "en",
-  0.995,
-  "as a branch we've always done things differently so we built one digital system around what employers actually need with real people behind every step."
- ],
- "tts/out/gcme2/04.mp3": [
+ "tts/out/gcme2b/03.mp3": [
   "en",
   0.999,
-  "When someone joins your company, it starts with you. Type their name and email, tick the cover they're joining and press send. That takes about a minute."
- ],
- "tts/out/gcme2/05.mp3": [
-  "en",
-  0.999,
-  "Your new employee gets their own link by email. On their phone, they fill in their details, add their dependents and beneficiaries, and answer the health questions in private."
- ],
- "tts/out/gcme2/06.mp3": [
-  "en",
-  0.994,
-  "They sign right on the screen and their part is done. If they haven't finished, we send them a friendly reminder every working day."
- ],
- "tts/out/gcme2/07.mp3": [
-  "en",
-  0.998,
-  "Everything they entered goes straight on a guardian's own enrollment form filled in for you nothing is typed twice and nothing is left out"
- ],
- "tts/out/gcme2/08.mp3": [
-  "en",
-  0.997,
-  "You check the details and approve. It's routed straight to Guardian, to your agent, and to our sale support team, all at the same moment."
- ],
- "tts/out/gcme2/09.mp3": [
-  "en",
-  0.995,
-  "From there, nobody waits and wonders. It's followed up every three working days until it's done, and you can see where it stands at any time."
- ],
- "tts/out/gcme2/10.mp3": [
-  "en",
-  0.996,
-  "Every Monday morning, you get one short report, what we finished, what's still pending, and who has it, and anything we need from you. You can answer and give us a star rating right there."
- ],
- "tts/out/gcme2/11.mp3": [
-  "en",
-  0.994,
-  "Every month, your bills come to us first. We check every line against our records, and you get one clear statement of what's due."
- ],
- "tts/out/gcme2/12.mp3": [
-  "en",
-  0.996,
-  "We also look ahead for your people. We tell you before someone turns 65, before a child comes of age and leaves the family plan, and before someone retires on your company pension."
- ],
- "tts/out/gcme2/13.mp3": [
-  "en",
-  0.994,
-  "When someone leaves, just search their name. Guardians Change form fills itself in from our records and it's routed and followed up the same way."
- ],
- "tts/out/gcme2/14.mp3": [
-  "en",
-  0.996,
-  "Your employees also have Guardians own health portal called EasyConnect. They sign in on their own to check their claims and their cover or to make a request."
- ],
- "tts/out/gcme2/15.mp3": [
-  "en",
-  0.998,
-  "At Renewal Time, we start early. We ask for your updated staff list, bring you Guardians Renewal Terms in Good Time, and help anyone leaving the plan move to a plan of their own."
- ],
- "tts/out/gcme2/16.mp3": [
-  "en",
-  0.998,
-  "Behind all of it is how we work. Every request becomes a task with a name and a date on it, and our branch can see what's moving and what isn't."
- ],
- "tts/out/gcme2/17.mp3": [
-  "en",
-  0.998,
-  "Would you rather send a message? Help868 on WhatsApp is connected to our system. So your message reaches the right person on our team."
- ],
- "tts/out/gcme2/18.mp3": [
-  "en",
-  0.999,
-  "This is what employers have always wanted. Less paper, no chasing, and a branch that knows your people. We don't wait for what's coming. We make it happen."
+  "Everything they entered fills and guardians own enrollment form for you nothing is typed twice and nothing is left out"
  ]
 }
