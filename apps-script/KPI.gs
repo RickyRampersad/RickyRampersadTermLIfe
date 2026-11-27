@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27z7';
+var SCRIPT_VERSION = '2026-11-27z8';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18043,7 +18043,7 @@ function wallPendBuild_(day) {
   out.first.prem = Math.round(out.first.agents.reduce(function (s2, x) { return s2 + x.prem; }, 0));
   lap('report');
   try { out.today = wallPendToday_(day, agentOf, numOf); } catch (e) { out.today = { error: String(e && e.message || e) }; }
-  var chase = null; try { chase = wallPendChase_(day, numOf); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
+  var chase = null; try { chase = wallPendChase_(day, numOf, P); } catch (e) { out.chase = { error: String(e && e.message || e) }; }
   lap('chase'); wallPendPolicies_(out, P, chase);
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
   // The report's own headings, so a column Guardian or the branch adds is seen on the feed (27 Nov 2026). Headings only, no row.
@@ -18216,8 +18216,9 @@ function wallPendMorning_(day, P, numOf, chase, settleIntel) {
     .filter(function (x) { return x.text; });
   var acc = null; try { acc = wallAccount_(day, P, chase, today, ids, sinceHO); } catch (e) { acc = { error: String(e && e.message || e) }; }
   var focus = null; try { focus = wallFocus_(day, P, chase, today, ids, sinceHO, settleIntel, todoOf); } catch (e) { focus = { error: String(e && e.message || e) }; }
+  var conv = null; try { conv = wallConversations_(day, P, chase, ids, CODESET); } catch (e) { conv = { error: String(e && e.message || e) }; }
   var byAgent = null; try { byAgent = wallAgentPend_(day, P, today, queue, chase); } catch (e) { byAgent = { error: String(e && e.message || e) }; }
-  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, acc: acc, focus: focus, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
+  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, acc: acc, focus: focus, conv: conv, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
            firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
            opened: ev.filter(function (e) { return e.kind === 'opened'; }).length, notes: ev.filter(function (e) { return e.kind === 'note'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
            stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
@@ -18288,7 +18289,8 @@ var WALL_WORDS = ('a about above after again all also am an and any approved are
   'monday tuesday wednesday thursday friday saturday sunday mon tue wed thu fri sat sun january february march april may june july august september october november december jan feb mar apr ' +
   'jun jul aug sep sept oct nov dec loading exclusion exclusions counter offer accepted acceptance amend amendment amended reinstatement waiver rider riders benefit sum assured cover term ' +
   'life health critical illness disability hiv glucose cholesterol pressure history questionnaire attending physician statement paramedical nurse visit fasting cleared clear pay paid unpaid ' +
-  'cheque deposit debit credit card draft mandate initial first second third final').split(' ');
+  'cheque deposit debit credit card draft mandate initial first second third final docs doc document documents form forms sent ' +
+  'collect collecting collected drop dropping dropped branch office will can tomorrow week next friday monday ok okay thanks noted done paying pay').split(' ');
 var WALL_WORD_SET = null;
 function wallSafeText_(raw, names, codes) {
   if (!WALL_WORD_SET) { WALL_WORD_SET = {}; WALL_WORDS.forEach(function (w) { if (w) WALL_WORD_SET[w] = 1; }); }
@@ -18432,6 +18434,34 @@ function wallBrief_(day, P, MV, S, chase, numOf) {
     speed: speed.slice(0, 12) } };
 }
 
+/* ── The conversations: the agent spoke, has the branch answered? (27 November 2026, night) ──
+ *  From wallPendChase_'s reading of every post and reply on the open Pendings tasks. A case is waiting on the branch when the
+ *  agent's last word is newer than the branch's; it is answered when a person at the branch has written since. The agent's words
+ *  are shown with names, long numbers and e-mails taken out (wallSafeText_). Waiting, oldest first; answered, newest first; each
+ *  agent's last word and how many of theirs wait; and how long the branch took to answer, the median over the answered ones. */
+var WALL_CONV = { WAIT: 10, DONE: 6, AGENTS: 12 };
+function wallConversations_(day, P, chase, ids, codes) {
+  var deskOf = function (uid) { return uid && ids[uid] ? String(nameFor_(ids[uid])).split(' ')[0] : 'the branch'; };
+  var nowMs = Date.now(), ms = function (iso) { var d = new Date(String(iso) + 'Z'); return isNaN(d) ? 0 : d.getTime(); };
+  var ago = function (iso) { var m = Math.max(0, Math.round((nowMs - ms(iso)) / 60000)); return m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
+  var waiting = [], done = [], ag = {}, spans = [];
+  Object.keys(P).forEach(function (k) { var c = (chase || {})[k] || {}, s = c.said; if (!s) return;
+    var p = P[k], a = ag[p.ag] = ag[p.ag] || { agent: String(p.ag || '').trim(), last: '', waiting: 0, cases: 0, said7: 0 };
+    a.cases++; a.said7 += c.said7 || 0; if (s.at > a.last) a.last = s.at;
+    var row = { pol: String(k).slice(-4), agent: String(p.ag || '').trim(), said: ago(s.at), text: wallSafeText_(s.text, '', codes), owner: c.owner ? deskOf(c.owner) : 'Nobody' };
+    if (c.post && c.post.at > s.at) { row.by = deskOf(c.post.by); row.after = ago(s.at) ; row.answered = ago(c.post.at); row._at = c.post.at; spans.push((ms(c.post.at) - ms(s.at)) / 3600000); done.push(row); }
+    else { row.mins = Math.round((nowMs - ms(s.at)) / 60000); waiting.push(row); a.waiting++; }
+  });
+  waiting.sort(function (a, b) { return b.mins - a.mins; });
+  done.sort(function (a, b) { return a._at < b._at ? 1 : -1; }); done.forEach(function (r) { delete r._at; });
+  spans.sort(function (a, b) { return a - b; });
+  var med = spans.length ? spans[Math.floor(spans.length / 2)] : null;
+  return { waiting: waiting.length, answered: done.length, medianHours: med == null ? null : Math.round(med * 10) / 10,
+    waitList: waiting.slice(0, WALL_CONV.WAIT).map(function (r) { delete r.mins; return r; }), doneList: done.slice(0, WALL_CONV.DONE),
+    agents: Object.keys(ag).map(function (k) { var a = ag[k]; return { agent: a.agent, last: ago(a.last), waiting: a.waiting, said7: a.said7, _l: a.last }; })
+      .sort(function (a, b) { return a._l < b._l ? 1 : -1; }).slice(0, WALL_CONV.AGENTS).map(function (a) { delete a._l; return a; }) };
+}
+
 /* ── Today's focus: the cases, why, how long, what was last done, whose (27 November 2026, night) ──
  *  Ricky: "have some structure and show intelligence, and have this collated along as: these are the focus today, and what was
  *  done, given how long outstanding and the last activity etc. It must make an impact and hold the staff accountable."
@@ -18468,7 +18498,8 @@ function wallFocus_(day, P, chase, todayPols, ids, sinceHO, si, todoOf) {
     return { _s: score[k].max + 0.15 * (score[k].sum - score[k].max) + Math.min(10, (p.days || 0) / 30), pol: String(k).slice(-4), agent: String(p.ag || '').trim(), code: it.code || '',
       why: ws[0].w, also: ws.slice(1).map(function (x) { return x.w; }),
       days: p.oldR || p.days || 0, last: lastOn ? { by: lastBy, ago: quiet } : null, guardian: p.dsla != null ? p.dsla : ago(p.lact),
-      owner: owner, next: todoOf ? todoOf(p, it) : '', today: !!(todoPols(k)), quiet: quiet == null || quiet >= WALL_FOCUS.QUIET };
+      owner: owner, next: todoOf ? todoOf(p, it) : '', today: !!(todoPols(k)), quiet: quiet == null || quiet >= WALL_FOCUS.QUIET,
+      conv: c.said ? { agentAgo: ago(Utilities.formatDate(new Date(String(c.said.at) + 'Z'), CONFIG.TZ, 'yyyy-MM-dd')), waiting: !c.post || c.post.at < c.said.at } : null };
     function todoPols(x) { return todayPols && todayPols[x]; }
   }).sort(function (a, b) { return b._s - a._s; });
   /* FOR THE AGENTS (27 Nov 2026, night). Ricky: "a proper structure so the agent will see what's actioned first". Every case
@@ -19098,7 +19129,7 @@ function wallClawLive_(day) {
   return out;
 }
 /** The Salesforce Pendings tasks on the report's policies, matched by any policy or application number in the subject. */
-function wallPendChase_(day, numOf) {
+function wallPendChase_(day, numOf, P) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return null;
   var from = sfkUtcAt_(day, 0).slice(0, 19), to = sfkUtcAt_(shiftDays_(day, 1), 0).slice(0, 19), weekAgo = sfkUtcAt_(shiftDays_(day, -7), 0).slice(0, 19);
   var rows = sfkQuery_("SELECT Id, Subject, IsClosed, ActivityDate, CreatedDate, LastModifiedDate, LastModifiedById, OwnerId FROM Task WHERE Task_Type__c = 'Pendings'" +
@@ -19120,13 +19151,29 @@ function wallPendChase_(day, numOf) {
      Chatter". The last Chatter post on each case's open Pendings tasks (who, when) is its last activity, and every desk's posts
      on them in the last WALL_CHATTER.DAYS days are counted (posts30 on any policy's record, keyed by user id). */
   var tids = Object.keys(polsOfTask), since = sfkUtcAt_(shiftDays_(day, -WALL_CHATTER.DAYS), 0), d30 = sfkUtcAt_(shiftDays_(day, -30), 0).slice(0, 19);
+  /* THE CONVERSATION (27 Nov 2026, night). Ricky: "aren't agents responding to the Chatter? Some agents are logging in, seeing
+     the appended cases and making their comments ... it's now about managing conversations." Every post and reply on the open
+     Pendings tasks is read with its words, and agSaidWho_ (the agents' midday e-mail uses it) says whose it is: the agent's
+     (their own Salesforce post, or "Agent · Name" from My day, or the assignment board), the tracker's own (ACTION REQUIRED and
+     the like: not anybody's answer), or a person at the branch. Per case: the agent's last word (when, what) and the branch's
+     last word (when, who). b.post is the branch's last word by a person; the system's posts no longer count as activity. */
+  var handle = function (pid, uid, byName, at, body) {
+    at = String(at || '').slice(0, 19); var text = postPlain_(body);
+    (polsOfTask[pid] || []).forEach(function (pol) { var b = by[pol]; if (!b) return;
+      var ag = P && P[pol] ? [P[pol].ag] : [], w = agSaidWho_(text, byName, ag);
+      if (w.sys) return;
+      if (w.agent) { var np = noteParts_(text), words = np.ours ? np.body : text.replace(/^From the assignment board · [\s\S]*?\d{1,2}:\d{2}:\s*/, '');
+        if (!b.said || at > b.said.at) b.said = { at: at, text: words }; if (at >= d7) b.said7 = (b.said7 || 0) + 1; return; }
+      if (!b.post || at > b.post.at) b.post = { at: at, by: uid };
+      if (at >= d30) { b.posts30 = b.posts30 || {}; b.posts30[uid] = (b.posts30[uid] || 0) + 1; } });
+  };
+  var d7 = sfkUtcAt_(shiftDays_(day, -7), 0).slice(0, 19);
   for (var i = 0; i < tids.length; i += 150) {
-    try { sfkQuery_("SELECT ParentId, CreatedById, CreatedDate FROM FeedItem WHERE Type IN ('TextPost','ContentPost','LinkPost') AND ParentId IN (" +
-        tids.slice(i, i + 150).map(soqlStr_).join(',') + ') AND CreatedDate >= ' + since + ' LIMIT 2000').forEach(function (f) {
-      var at = String(f.CreatedDate || '').slice(0, 19), uid = String(f.CreatedById || '');
-      (polsOfTask[f.ParentId] || []).forEach(function (pol) { var b = by[pol]; if (!b) return;
-        if (!b.post || at > b.post.at) b.post = { at: at, by: uid };
-        if (at >= d30) { b.posts30 = b.posts30 || {}; b.posts30[uid] = (b.posts30[uid] || 0) + 1; } }); }); } catch (e) {}
+    var inL = tids.slice(i, i + 150).map(soqlStr_).join(',');
+    try { sfkQuery_("SELECT ParentId, CreatedById, CreatedBy.Name, CreatedDate, Body FROM FeedItem WHERE Type IN ('TextPost','ContentPost','LinkPost') AND ParentId IN (" +
+        inL + ') AND CreatedDate >= ' + since + ' LIMIT 2000').forEach(function (f) { handle(f.ParentId, String(f.CreatedById || ''), (f.CreatedBy && f.CreatedBy.Name) || '', f.CreatedDate, f.Body); }); } catch (e) {}
+    try { sfkQuery_('SELECT ParentId, CreatedById, CreatedBy.Name, CreatedDate, CommentBody FROM FeedComment WHERE ParentId IN (' + inL + ') AND CreatedDate >= ' + since + ' LIMIT 2000')
+        .forEach(function (f) { handle(f.ParentId, String(f.CreatedById || ''), (f.CreatedBy && f.CreatedBy.Name) || '', f.CreatedDate, f.CommentBody); }); } catch (e) {}
   }
   return by;
 }
