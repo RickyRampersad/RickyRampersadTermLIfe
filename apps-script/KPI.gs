@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27z5';
+var SCRIPT_VERSION = '2026-11-27z6';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2863,6 +2863,9 @@ function nothingToReport_(e) {
    one cell; running it round the clock costs nothing worth counting. */
 function keepWarm() {
   var kw0 = Date.now();
+  /* The pending wall's feed first (27 Nov 2026, night): built last, it ran out of the trigger's six minutes behind the other
+     jobs and the wall kept serving a copy from before the deploy. It rebuilds at most every WALL_PEND.REBUILD_MIN minutes. */
+  try { var pw = wallPendWarm_(); if (pw) runlog_(pw); } catch (e) { try { runlog_('pending feed build failed: ' + (e && e.message)); } catch (e2) {} }
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
   // Housekeeping rides on this ten-minute trigger rather than adding one.
   try { housekeepingTick_(); } catch (e) {}
@@ -2872,8 +2875,6 @@ function keepWarm() {
   try { var pc = pendSyncTick_(); if (pc && /Portal note/.test(pc)) runlog_(pc); } catch (e) { try { runlog_('pending chase failed: ' + (e && e.message)); } catch (e2) {} }
   // The wall copies no clock rebuilt: increases and group hourly, the premium dues copy when its midnight build missed (28 Oct 2026).
   try { wallFeedsTick_(kw0); } catch (e) {}
-  // The pending wall's feed, built ahead so no screen waits for it (27 Nov 2026).
-  try { var pw = wallPendWarm_(); if (pw) runlog_(pw); } catch (e) { try { runlog_('pending feed build failed: ' + (e && e.message)); } catch (e2) {} }
   // The day's opportunities (Opportunities.gs, 24 Nov 2026): built once, from 4:30, before the agents' morning e-mails.
   try { var ob = bigGet_(OPP.KEY, null), oh = new Date().getHours() * 60 + new Date().getMinutes();
     if (oh >= 270 && (!ob || ob.day !== iIso_(iToday_())) && Date.now() - kw0 < 120000) oppBuild_(); } catch (e) { try { runlog_('opportunities build failed: ' + (e && e.message)); } catch (e2) {} }
@@ -17892,6 +17893,9 @@ function wallPendLive_(day, build) {
   return out0;
 }
 /** keepWarm's part: rebuild the pending feed when the kept copy is older than WALL_PEND.REBUILD_MIN, one build at a time. */
+/** Run from the editor to build the pending wall's feed now and see how long it took (View → Logs). */
+function buildPendingWallNow() { var t = Date.now(); try { CacheService.getScriptCache().remove('wall_pend_' + todayISO_()); } catch (e) {}
+  var out = wallPendLive_(todayISO_(), true); Logger.log('pending feed built in ' + Math.round((Date.now() - t) / 1000) + 's · ' + JSON.stringify(out && (out.error || out.ms))); return out && (out.error || out.ms); }
 function wallPendWarm_() {
   var day = todayISO_(), h = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'H'));
   if (h < 5 || h > 21) return '';
