@@ -554,6 +554,31 @@
     }).catch(function () { btn.disabled = false; btn.textContent = was; toast("That did not reach the tracker. Try again."); });
   }
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-draft]"); if (b) { e.preventDefault(); draft(b); } });
+  /* Pending follow-ups from the e-mail trail (27 Nov 2026): drafted when a pending case's last e-mail is three working days
+     old and nothing has moved; each waits for his Approve. Sent on the same people, with today's outstanding items. */
+  function pfuCard(m) {
+    var f = m.followUps; if (!f || !f.length) return "";
+    return '<div class="card" id="pfu"><div class="ch"><h2>Pending follow-ups to approve</h2><span class="n">' + f.length + '</span></div>' +
+      '<div style="font:500 12.5px/1.45 var(--fb);color:var(--muted);margin:-4px 0 8px">The last e-mail on each case is three working days old and nothing has moved in Salesforce since. Approve sends the follow-up to the same people and notes it on the Pendings task.</div>' +
+      f.map(function (x) {
+        return '<div class="wt" data-pfu="' + esc(x.k) + '" style="padding:10px 0;border-top:1px solid var(--line)"><div class="who">' + esc(firstOf(x.agent)) + ' <span>· policy ' + esc(x.pol) + ' · last e-mail ' + esc(x.last) + '</span></div>' +
+          '<div style="font:600 13px/1.4 var(--fb);color:var(--ink);margin-top:3px;overflow-wrap:anywhere">Follow-up: ' + esc(String(x.subject).replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, "")) + '</div>' +
+          '<div style="font:500 12px/1.4 var(--fb);color:var(--muted);margin-top:2px;overflow-wrap:anywhere">To ' + esc(x.to) + (x.cc ? ' · cc ' + esc(x.cc) : '') + '</div>' +
+          '<ul style="margin:6px 0 0 18px;padding:0;font:500 12.5px/1.5 var(--fb);color:var(--ink)">' + (x.items || []).map(function (i) { return '<li>' + esc(i) + '</li>'; }).join("") + '</ul>' +
+          '<div class="act" style="display:flex;gap:8px;margin-top:8px"><button class="go" data-pfuact="send">Approve and send</button><button data-pfuact="skip" style="background:none;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font:700 12.5px var(--fb);color:var(--muted);cursor:pointer">Skip</button></div></div>';
+      }).join("") + '</div>';
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-pfuact]"); if (!b) return;
+    var row = b.closest("[data-pfu]"), act = b.getAttribute("data-pfuact");
+    if (act === "send" && !b.classList.contains("sure")) { b.classList.add("sure"); b.textContent = "Send it now"; return; }   // the second tap sends
+    b.disabled = true; b.textContent = act === "send" ? "Sending…" : "Skipping…";
+    api({ act: "pfu", fk: row.getAttribute("data-pfu"), sub: act })   // fk: k is the sign-in.then(function (m) {
+      if (!m || !m.ok) { b.disabled = false; b.classList.remove("sure"); b.textContent = act === "send" ? "Approve and send" : "Skip"; toast((m && m.error) || "That did not go through. Try again."); return; }
+      toast(act === "send" ? "Follow-up " + ((m.pfu && m.pfu.res) || "sent") + "." : "Skipped.");
+      store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
+    }).catch(function () { b.disabled = false; b.classList.remove("sure"); b.textContent = act === "send" ? "Approve and send" : "Skip"; toast("That did not reach the tracker. Try again."); });
+  });
   function waitingCard(m) {
     var w = m.waiting; if (!w) return "";
     if (!w.length) return '<div class="card"><div class="ch"><h2>Waiting on you</h2></div><div class="empty">Nobody is waiting on your word. Well done.</div></div>';
@@ -1255,7 +1280,7 @@
     // One screen (29 Oct 2026): no "Open My day" foot; what the white page did is here.
     // The coach on top (29 Oct 2026, Ricky: "we can put a note on top there"); before check-in, the check-in first.
     var inYet = !!(m.checkin && m.checkin.at);
-    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + oppBranchCard(m) + attCard(m) + unitCard(m) + timelineCard(m) + checksCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
+    $("main").innerHTML = (inYet ? coachCard(m) + newsCard(m) + checkinCard(m) : checkinCard(m) + coachCard(m) + newsCard(m)) + waitingCard(m) + pfuCard(m) + oppBranchCard(m) + attCard(m) + unitCard(m) + timelineCard(m) + checksCard(m) + listCard(m) + scrubCard(m) + achievedCard(m) + nextCard(m) + barsCard(m) + teamCard(m) + closeCard(m);
     if (!m._t) m._t = Date.now();
     coachTick();
     $("upd").hidden = true; pending = null;
