@@ -97,10 +97,10 @@ env.CacheService.getScriptCache().removeAll && env.CacheService.getScriptCache()
 env.intelRoute_ = b => env.ContentService.createTextOutput(JSON.stringify({ ok: true, data: { units: [{ name: 'KERWYN RAMROACH UNIT-CHAGUANAS REG CEN', n: 30 }, { name: 'AKAASH KALLADEEN UNIT - R RAMPERSAD BRCH', n: 8 }] } }));
 const j = JSON.parse(env.doPost({ postData: { contents: JSON.stringify({ action: 'intel.pending' }) }, parameter: {} }).getContent());
 ok('intel.pending carries the live report', j.data.live && j.data.live.reqs === 7);
-ok('the departed fold: first premiums of Aidan and Tricia are one Orphans bar', (() => { const o = j.data.live.first.agents.find(a => a.k === env.WALL_ORPHANS); return o && o.n === 2 && o.prem === 500; })(), JSON.stringify(j.data.live.first.agents));
+ok('the pending wall names them, marked inactive: Aidan and Tricia keep their own first-premium bars (27 Nov 2026)', (() => { const a = j.data.live.first.agents; return a.some(x => x.k === 'Aidan Eugene · inactive' && x.prem === 300) && a.some(x => x.k === 'Tricia Baksh · inactive' && x.prem === 200) && !a.some(x => x.k === env.WALL_ORPHANS); })(), JSON.stringify(j.data.live.first.agents));
 ok('a unit named for someone who has left reads Orphans', j.data.units[0].name === env.WALL_ORPHANS && /AKAASH/.test(j.data.units[1].name), JSON.stringify(j.data.units));
-ok('the departed fold on the board too: Aidan and Tricia are one Orphans row', (() => { const o = j.data.live.board.agents.find(a => a.agent === env.WALL_ORPHANS); return o && o.policies === 2 && o.cash === 2 && o.ready === 2 && o.never === 1 && o.oldest === 70; })(), JSON.stringify(j.data.live.board.agents.map(a => a.agent)));
-ok('on a code, the departed agents fold into one Orphans count', (() => { const c = j.data.live.codes.find(x => x.k === 'Future Premium Payment'); const o = c.agents.find(a => a.k === env.WALL_ORPHANS); return o && o.n === 2 && c.agents.length === 2; })(), JSON.stringify(j.data.live.codes[0].agents));
-ok('nobody who has left is named', !/Aidan|Baksh|KERWYN/i.test(JSON.stringify(j.data)));
+ok('on the board too, each by name, marked inactive', (() => { const b = j.data.live.board.agents; return b.some(x => x.agent === 'Aidan Eugene · inactive') && b.some(x => x.agent === 'Tricia Baksh · inactive'); })(), JSON.stringify(j.data.live.board.agents.map(a => a.agent)));
+ok('on a code, each agent who has left is named, marked inactive', (() => { const c = j.data.live.codes.find(x => x.k === 'Future Premium Payment'); return c.agents.some(a => a.k === 'Aidan Eugene · inactive'); })(), JSON.stringify(j.data.live.codes[0].agents));
+ok('everyone who has left is marked inactive wherever they are named', !/(Aidan Eugene|Tricia Baksh)(?! · inactive)/.test(JSON.stringify(j.data)), (JSON.stringify(j.data).match(/.{30}(Aidan Eugene|Tricia Baksh)(?! · inactive).{10}/) || [''])[0]);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll passed');
 process.exit(fails ? 1 : 0);
