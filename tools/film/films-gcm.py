@@ -40,5 +40,5 @@ entries('henr1', 'henr1-timing.json', {'': 'health-enrolment.mp4'},      # joini
 entries('term1', 'term1-timing.json', {'': 'terminations.mp4'},          # when someone leaves the plan (17 Nov 2026)
         [(2, 'code'), (5, 'Pick'), (7, 'exactly'), (8, 'send'), (11, 'missed')], (('', WIDE),))
 entries('gcme1', 'gcme1-timing.json', {'': 'a-year-with-us.mp4'},      # a year with your group, for employers (27 Nov 2026), in the teal
-        [(5, 'Monday'), (8, 'statement'), (13, 'never'), (15, 'happen')], (('', dict(WIDE, capbg='0A3350')),))
+        [(6, 'Monday'), (9, 'statement'), (14, 'never'), (16, 'happen')], (('', dict(WIDE, capbg='0A3350')),))
 json.dump(f, open('films.json', 'w'), indent=1)

@@ -4423,13 +4423,20 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     billings ... the Easy Connect portal ... the enrollment ... what the employer sees on their tasks weekly ... how they
     rate us ... traditionally in Trinidad it is a manual process ... we are fully digital ... our WhatsApp", then "dont
     have time do what you can"). `groupclientmanagement/a-year-with-us.mp4` (wide), poster `a-year-with-us.jpg`, built by
-    `build-gcmfilm.py employers` (key `gcme1`, 15 lines in `gcme1-lines.json`, screens in `tools/film/gcmshots-emp/`).
+    `build-gcmfilm.py employers` (key `gcme1`, 16 lines in `gcme1-lines.json`, screens in `tools/film/gcmshots-emp/`), 3 min.
     - **The first film in the branch teal.** `teal()` repaints the builder's corporate blue for this film only (and the
       gold highlight goes to light teal); the mark is `gcm-mark-teal.png`. The other group films keep their blue until
       re-cut.
-    - **What it shows:** the old way (paper, calls, e-mail chains); one system built in the branch; joining (the
-      employee's own link, HR approves, GIO001 filled); the Monday 10:30 report; pending at the top; answers and stars;
-      the 25th (bills checked) and the 26th (the statement); your people and who is coming up; leavers (EB0010, chased
+    - **Digital enrolment is the centrepiece, in two scenes** (asked the same afternoon: "whats most important is out digital
+      enrollment this will be the hit ... routed speeding up the process and integrates with their weekly reports"): HR sends
+      the employee their own link from the page; the employee fills their part on their phone (dependants, beneficiaries),
+      signs on the screen, and their health answers go to Guardian, never to the employer; HR checks and approves; GIO001 is
+      filled and sent to Guardian's group team with the branch copied; the account manager's task is followed up every three
+      working days; and it shows on the page and in the Monday report until done. Screens `n1`..`n5` are the new page's Join
+      & leave on the invented group (the shooter is the enrolment film's, pointed at the new layout).
+    - **What else it shows:** the old way (paper, calls, e-mail chains); one system built in the branch; the Monday 10:30 report; pending at the top; answers and stars;
+      the 25th (bills checked) and the 26th (the statement); looking ahead for their people (turning 65, a child coming of age,
+      retiring on the company pension); leavers (EB0010, chased
       every three working days); Guardian's easiConnect for employees; renewal; the work behind it (the new staff Home);
       HELP 868 on WhatsApp; the close. Screens: the redesigned group page and staff Home on the invented branch.
     - **easiConnect** is Guardian Life's own health portal (`easiconnect.myguardiangroup.com`). The film shows only its
