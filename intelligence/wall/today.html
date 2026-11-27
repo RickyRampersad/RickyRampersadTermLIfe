@@ -28,7 +28,7 @@
   :root{
     --bg:#F3F1EC; --panel:#FFFFFF; --line:rgba(31,36,48,.12);
     --ink:#1F2430; --dim:#4B5363; --faint:#7A808C;
-    --gold:#A8751A; --amber:#B9620F; --teal:#1E7F74; --green:#2C7D4F; --coral:#B8553A; --red:#B93A32; --violet:#5E4BB5;
+    --gold:#87590C; --amber:#B9620F; --teal:#1E7F74; --green:#2C7D4F; --coral:#B8553A; --red:#B93A32; --violet:#5E4BB5;
     --fd:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif; --fb:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
     --ease:cubic-bezier(.16,1,.3,1);
   }
@@ -153,7 +153,8 @@
     .view{position:static;grid-template-columns:1fr;margin-bottom:1.3rem} .view.out{opacity:1;transform:none;pointer-events:auto}
     .glow{display:none} .qh{display:none}
     .ev{grid-template-columns:4.8rem minmax(0,1fr) auto} .ev .d{display:none}
-    .qr{grid-template-columns:4rem minmax(0,1fr) auto} .qr .wm,.qr .dd{display:none}
+    .qr{grid-template-columns:minmax(0,1fr) auto;row-gap:.25rem} .qr .p{grid-column:1/2} .qr .td{grid-column:2/3;grid-row:1/2}
+    .qr .a{grid-column:1/-1;white-space:normal} .qr .y{grid-column:1/-1} .qr .wm,.qr .dd{display:none}
     .stream{overflow:visible}
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} .card,.ev,.qr{opacity:1;transform:none} }
@@ -222,7 +223,9 @@ function paint(){
   var L = D && D.live, M = L && L.morning;
   if(!L || L.error || !M || M.error){
     var why = (M && M.error) || (L && L.error) || (D && D.error) || "Reading Salesforce…";
-    $("#mOf").textContent = why; $("#stream").innerHTML = '<div class="empty">'+esc(why)+'</div>'; return;
+    $("#mOf").textContent = why; $("#stream").innerHTML = '<div class="empty bad">'+esc(why)+'</div>';
+    $("#queue").innerHTML = '<div class="empty bad">'+esc(why)+'</div>'; $("#qOf").textContent = why;
+    $("#live").classList.remove("on"); $("#liveTxt").textContent = "no data"; return;
   }
   $("#sub").innerHTML = "From Salesforce, today only, as at <b>"+esc(M.at)+"</b> &middot; against Guardian's report of <b>"+esc(L.asOf)+"</b> &middot; agents' first names and codes, no client";
   // This morning
@@ -269,6 +272,7 @@ function paint(){
       + '<div class="td">'+(q.today?'<span class="tag closed">touched</span>':'<span class="tag" style="background:#FBE7E5;color:var(--red)">not yet</span>')+'</div></div>'; }).join("")
     : '<div class="empty">Nothing is one step from settling on the report.</div>')
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
+  fitRows($("#queue")); fitRows($("#stream"));
   // the ticker
   var bits = [M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
     "<b>"+M.started+" of "+M.of+"</b> desks started", M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
@@ -276,6 +280,15 @@ function paint(){
     F.waiting ? "<b>"+fmt(F.waiting)+"</b> follow-ups waiting approval" : "",
     (M.other && M.other.pending) ? "<b>"+fmt(M.other.pending)+"</b> group, health and increase applications pending, <b>"+fmt(M.other.today)+"</b> touched today" : ""].filter(Boolean);
   $("#tk").innerHTML = bits.concat(bits).map(function(b){ return "<span>"+b+"</span>"; }).join("");
+}
+/* A row the box cannot hold whole is left off, not cut in half (review, 27 Nov 2026). Phones scroll, so they keep every row. */
+function fitRows(box){
+  if(!box || window.matchMedia("(max-width:900px)").matches) return;
+  var v = box.closest(".view"), was = v && v.classList.contains("out"); if (was) v.style.visibility="hidden", v.classList.remove("out");
+  var bottom = box.getBoundingClientRect().bottom;
+  Array.prototype.forEach.call(box.children, function(r){ r.style.display = ""; });
+  Array.prototype.forEach.call(box.children, function(r){ if (r.getBoundingClientRect().bottom > bottom + 1) r.style.display = "none"; });
+  if (was) { v.classList.add("out"); v.style.visibility=""; }
 }
 var view = 0;
 function turn(){ view = 1 - view; [0,1].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
@@ -289,7 +302,9 @@ function feed(url, body, tries){
 }
 function load(){
   feed(PEND_URL,{action:"intel.pending"})
-    .then(function(j){ if(!j||!j.ok||!j.data) throw new Error("bad feed"); D=j.data; paint(); $("#live").classList.add("on"); $("#liveTxt").textContent="live"; })
+    .then(function(j){ if(!j||!j.ok||!j.data) throw new Error("bad feed"); D=j.data; paint();
+      var L=D.live, bad=!L||L.error||!L.morning||L.morning.error;   // an answer with an error in it is not live
+      $("#live").classList.toggle("on", !bad); $("#liveTxt").textContent = bad ? "no data" : "live"; })
     .catch(function(){ if(!D){ D={live:{error:"The tracker did not answer. Trying again shortly."}}; paint(); } $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; });
 }
 load(); setInterval(load, 5*60*1000);   // the feed keeps five minutes; the stream is today's, so it is read as often

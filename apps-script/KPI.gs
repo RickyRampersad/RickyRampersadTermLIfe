@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27q';
+var SCRIPT_VERSION = '2026-11-27r';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -17935,9 +17935,6 @@ function wallPendLive_(day) {
   wallPendPolicies_(out, P, chase);
   try { wallPendDeep_(out, P, chase, day); } catch (e) { out.deepError = String(e && e.message || e); }
   try { out.morning = wallPendMorning_(day, P, numOf); } catch (e) { out.morning = { error: String(e && e.message || e) }; }
-  // The report's items, policy by policy, for the follow-up drafts (pendFollowScan_); kept beside the feed, never served.
-  try { var items = {}; Object.keys(P).forEach(function (k) { items[k] = { ag: P[k].ag, days: P[k].days, items: P[k].items.map(function (it) { return { code: it.code, name: it.name, who: it.who }; }) }; });
-    cache.put('wall_pend_items_' + day, JSON.stringify({ tab: out.tab, asOf: out.asOf, pols: items, numOf: numOf }), 21600); } catch (e) {}
   try { out.follow = pendFollowCount_(day); } catch (e) {}
   try { cache.put(key, JSON.stringify(out), WALL_PEND.TTL); } catch (e) {}
   return out;
@@ -17984,7 +17981,8 @@ function wallPendMorning_(day, P, numOf) {
   var minKey = function (e) { return e.sid + '|' + e.pol + '|' + e.at.slice(0, 16); }, worded = {};
   ev.forEach(function (e) { if (e.kind !== 'moved') worded[minKey(e)] = 1; });
   ev = ev.filter(function (e) { return e.kind !== 'moved' || !worded[minKey(e)]; });
-  var first = function (s) { return String(s || '').split(/\s+/)[0]; };
+  // Full names, never cut here: wallScrub_ matches whoever has left by the whole name, and today.html shows the first name only.
+  var first = function (s) { return String(s || '').trim(); };
   var held = function (pol) { if (O[pol]) return { code: O[pol].abbr, kind: O[pol].label }; var p = P[pol]; if (!p) return { code: '', kind: '' }; var it = p.items.filter(function (x) { return x.last; })[0] || p.items.filter(function (x) { return x.red; })[0] || p.items[0] || {}; return { code: it.code || '', kind: it.kind || '' }; };
   var at = function (iso) { var d = new Date(String(iso).replace(/\+0000$/, 'Z')); return isNaN(d) ? '' : twelve_(Utilities.formatDate(d, CONFIG.TZ, 'HH:mm')); };
   var row = function (e) { var h = held(e.pol), o = O[e.pol];
@@ -18022,11 +18020,11 @@ function wallPendMorning_(day, P, numOf) {
  *  edited, by a desk. Returns { recs: id -> { ag, label, abbr }, ev: touches, out: for the wall }. Agents' first names only. */
 var WALL_OTHER = { LIST: 10, TYPES: { 'LIFE(GROUP)': ['Group life', 'GL'], 'HEALTH (GROUP)': ['Group health', 'GH'], 'HEALTH': ['Individual health', 'IH'] } };
 function wallPendOther_(day, ids, from, to, allNotes, whatOf) {
-  var mine = function () { return true; };
-  if (typeof iBuildUnits_ === 'function' && typeof iPossUnitKey_ === 'function') {
-    var uk = {}; try { Object.keys(iBuildUnits_()).forEach(function (u) { uk[iPossUnitKey_(u)] = 1; }); } catch (e) {}
-    if (Object.keys(uk).length) mine = function (u) { return !!uk[iPossUnitKey_(u)]; };
-  }
+  // The branch's units only. Without them nothing is shown: every branch's records on this wall would be worse than none.
+  if (typeof iBuildUnits_ !== 'function' || typeof iPossUnitKey_ !== 'function') throw new Error('The branch\u2019s units are not in this project (Intelligence.gs).');
+  var uk = {}; Object.keys(iBuildUnits_() || {}).forEach(function (u) { uk[iPossUnitKey_(u)] = 1; });
+  if (!Object.keys(uk).length) throw new Error('The branch\u2019s units could not be read, so no group or increase case is shown.');
+  var mine = function (u) { return !!uk[iPossUnitKey_(u)]; };
   var pend = typeof iPendState_ === 'function' ? iPendState_ : function (t) { return /pending|underwriting|reqt|requirement|error|settlement/i.test(String(t || '')) ? 'uw' : 'none'; };
   var nowMs = Date.now(), daysOf = function (v) { var d = v ? new Date(String(v).length <= 10 ? v + 'T12:00:00Z' : String(v).replace(/\+0000$/, 'Z')) : null; return d && !isNaN(d) ? Math.max(0, Math.floor((nowMs - d) / 86400000)) : 0; };
   var old = (typeof WALL_GRP !== 'undefined' && WALL_GRP.OLD_DAYS) || 365;
@@ -18037,7 +18035,7 @@ function wallPendOther_(day, ids, from, to, allNotes, whatOf) {
     if (days > old) { stale++; return; }
     recs[id] = { ag: ag, label: label, abbr: abbr };
     var t = byType[label] = byType[label] || { k: label, abbr: abbr, n: 0, today: 0 }; t.n++;
-    list.push({ id: id, agent: String(ag || '').split(/\s+/)[0], label: label, abbr: abbr, state: stateWord[st] || 'Pending', days: days, today: false, _by: lastBy, _at: lastAt });
+    list.push({ id: id, agent: String(ag || '').trim(), label: label, abbr: abbr, state: stateWord[st] || 'Pending', days: days, today: false, _by: lastBy, _at: lastAt });
   };
   sfkQuery_("SELECT Id, RecordType.Name, Unit__c, AgentName__c, Policy_Status_Description__c, CreatedDate, LastModifiedDate, LastModifiedById FROM CLIENT_PORTFOLIO__c" +
     " WHERE RecordType.Name IN ('HEALTH','HEALTH (GROUP)','LIFE(GROUP)') LIMIT 10000").forEach(function (x) {
@@ -18100,23 +18098,25 @@ function pendFuWorkdaysSince_(iso, day) {
 /** Drafts the follow-ups that are due. Returns { drafted, waiting }. */
 function pendFollowScan_(day) {
   if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) return { error: 'Salesforce is not connected.' };
-  var cache = CacheService.getScriptCache(), rep = null, hit = cache.get('wall_pend_items_' + day);
-  if (!hit) { try { wallPendLive_(day); } catch (e) {} hit = cache.get('wall_pend_items_' + day); }
-  try { rep = JSON.parse(hit || 'null'); } catch (e) { rep = null; }
-  if (!rep || !rep.pols) return { error: 'The pending report could not be read.' };
+  // The report read here, whole: a cached copy of every policy's items can pass CacheService's 100 KB and vanish silently.
+  var ss = null; try { ss = typeof iSs_ === 'function' ? iSs_() : null; } catch (e) { ss = null; }
+  var rep = ss ? pendFollowReport_(ss) : null;
+  if (!rep) return { error: 'The pending report could not be read.' };
   var latest = {};
-  sfkQuery_('SELECT Id, Subject, ToAddress, CcAddress, FromAddress, MessageDate FROM EmailMessage WHERE MessageDate = LAST_N_DAYS:' + PEND_FU.BACK_DAYS +
+  // Only what the branch sent (Incoming = false): a client's or an agent's reply is not our chase, and its sender is not who we write to.
+  sfkQuery_('SELECT Id, Subject, ToAddress, CcAddress, FromAddress, MessageDate FROM EmailMessage WHERE Incoming = false AND MessageDate = LAST_N_DAYS:' + PEND_FU.BACK_DAYS +
     ' ORDER BY MessageDate DESC LIMIT 2000').forEach(function (m) {
     var seen = {};
     (String(m.Subject || '').match(/\b\d{10}\b/g) || []).forEach(function (x) { var pol = rep.numOf[x]; if (!pol || seen[pol]) return; seen[pol] = 1; if (!latest[pol]) latest[pol] = m; });
   });
   var tasks = {}; try { tasks = pendTasksByPolicy_(rep.numOf, day); } catch (e) {}
-  var rows = pendFuRows_(), had = {}; rows.forEach(function (r) { had[String(r.MsgId)] = 1; });
+  var rows = pendFuRows_(), had = {}, waiting = {};
+  rows.forEach(function (r) { had[String(r.Policy) + '-' + String(r.MsgId)] = 1; if (String(r.Status) === 'waiting') waiting[String(r.Policy)] = 1; });
   var own = /^(support@rickyrampersadbranch\.com)$/i, split = function (v) { return String(v || '').split(/[;,]/).map(function (x) { return x.trim(); }).filter(function (x) { return /@/.test(x); }); };
   var drafted = 0, sh = null;
   Object.keys(latest).forEach(function (pol) {
     var m = latest[pol], sent = String(m.MessageDate || '').replace(/\+0000$/, 'Z'), sentDay = Utilities.formatDate(new Date(sent), CONFIG.TZ, 'yyyy-MM-dd');
-    if (had[String(m.Id)] || pendFuWorkdaysSince_(sentDay, day) < PEND_FU.WORKDAYS) return;
+    if (had[pol + '-' + m.Id] || waiting[pol] || pendFuWorkdaysSince_(sentDay, day) < PEND_FU.WORKDAYS) return;
     var moved = (tasks[pol] || []).some(function (t) { return String(t.mod || '').replace(/\+0000$/, 'Z') > sent; });
     if (moved) return;
     var p = rep.pols[pol]; if (!p || !p.items.length) return;
@@ -18128,10 +18128,29 @@ function pendFollowScan_(day) {
     var head = headerOf_(sh), rec = { Drafted: new Date(), Key: pol + '-' + m.Id, Policy: pol, Agent: p.ag, MsgId: String(m.Id), Subject: String(m.Subject || ''),
       To: to.join(', '), Cc: cc.join(', '), LastSent: sentDay, Outstanding: out.join('\n'), Status: 'waiting', ActedAt: '', By: '', TaskNote: '' };
     sh.appendRow(head.map(function (h) { return rec[h] != null ? rec[h] : ''; }));
-    had[String(m.Id)] = 1; drafted++;
+    had[pol + '-' + m.Id] = 1; waiting[pol] = 1; drafted++;
   });
   try { runlog_('pending follow-ups: ' + drafted + ' drafted'); } catch (e) {}
   return { drafted: drafted, waiting: pendFuRows_().filter(function (r) { return String(r.Status) === 'waiting'; }).length };
+}
+/** The newest pending report for the follow-ups: { pols: { policy: { ag, items: [ { code, name, who } ] } }, numOf }, each item once. */
+function pendFollowReport_(ss) {
+  var tabs = reportTabs_(ss.getSheets(), WALL_PEND.PREFIX); if (!tabs.length) return null;
+  var vals = tabs[0].getDataRange().getValues(); if (vals.length < 2) return null;
+  var h = vals[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
+  var c = { pol: ix('POLICY'), app: ix('application_number'), ag: ix('Agent Name'), st: ix('REQUIREMENT_STATUS'), code: ix('REQUIREMENT_CODE'), name: ix('requirement_name'), who: ix('WHO_ACTS_NEXT') };
+  if (c.pol < 0) return null;
+  var cell = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+  var pols = {}, numOf = {}, seen = {};
+  vals.slice(1).forEach(function (r) {
+    var pol = cell(r, c.pol); if (!pol || /closed|received|waived|complete|cancel/i.test(cell(r, c.st))) return;
+    var p = pols[pol] = pols[pol] || { ag: cell(r, c.ag), items: [] };
+    numOf[pol] = pol; var an = cell(r, c.app); if (an) numOf[an] = pol;
+    var code = cell(r, c.code).toUpperCase(), name = cell(r, c.name) || code, k = pol + '|' + code + '|' + name;
+    if (seen[k]) return; seen[k] = 1;
+    p.items.push({ code: code, name: name, who: cell(r, c.who) || 'Not said' });
+  });
+  return { pols: pols, numOf: numOf };
 }
 /** For the wall: how many wait on his approval, and how many went out today. Counts only. */
 function pendFollowCount_(day) {
@@ -18162,17 +18181,24 @@ function pendFollowMail_(r) {
 }
 /** His tap: approve (send now) or skip one draft. Only the Branch Manager. */
 function pendFollowAct_(k, act) {
-  var r = pendFuRows_().filter(function (x) { return String(x.Key) === String(k); })[0];
-  if (!r) return { ok: false, error: 'That follow-up is no longer on the list.' };
-  if (String(r.Status) !== 'waiting') return { ok: false, error: 'That one was already ' + r.Status + '.' };
-  var sh = hrTab_(PEND_FU, false), head = headerOf_(sh), set = function (o) { Object.keys(o).forEach(function (h) { var c = head.indexOf(h); if (c > -1) sh.getRange(r._row, c + 1).setValue(o[h]); }); };
-  if (act === 'skip') { set({ Status: 'skipped', ActedAt: new Date(), By: 'Ricky' }); return { ok: true, res: 'skipped' }; }
-  if (act !== 'send') return { ok: false, error: 'Approve or skip.' };
-  try { mailSend_(pendFollowMail_(r)); } catch (e) { return { ok: false, error: 'That did not send: ' + String(e && e.message || e).slice(0, 140) }; }
+  if (act !== 'send' && act !== 'skip') return { ok: false, error: 'Approve or skip.' };
+  // One at a time, and the row claimed before anything goes out: two taps, or two screens, never send it twice.
+  var lock = takeLock_(); if (!lock) return { ok: false, error: 'Busy for a moment. Tap again.' };
+  var r, sh, head, set;
+  try {
+    r = pendFuRows_().filter(function (x) { return String(x.Key) === String(k); })[0];
+    if (!r) return { ok: false, error: 'That follow-up is no longer on the list.' };
+    if (String(r.Status) !== 'waiting') return { ok: false, error: 'That one was already ' + r.Status + '.' };
+    sh = hrTab_(PEND_FU, false); head = headerOf_(sh);
+    set = function (o) { Object.keys(o).forEach(function (h) { var c = head.indexOf(h); if (c > -1) sh.getRange(r._row, c + 1).setValue(o[h]); }); try { SpreadsheetApp.flush(); } catch (e) {} };
+    set(act === 'skip' ? { Status: 'skipped', ActedAt: new Date(), By: 'Ricky' } : { Status: 'sending', ActedAt: new Date(), By: 'Ricky' });
+  } finally { lock.releaseLock(); }
+  if (act === 'skip') return { ok: true, res: 'skipped' };
+  try { mailSend_(pendFollowMail_(r)); } catch (e) { set({ Status: 'waiting', ActedAt: '', By: '' }); return { ok: false, error: 'That did not send: ' + String(e && e.message || e).slice(0, 140) }; }
   var note = '';
   try {
-    var rep = JSON.parse(CacheService.getScriptCache().get('wall_pend_items_' + todayISO_()) || 'null'), num = {}; num[r.Policy] = r.Policy;
-    var open = ((pendTasksByPolicy_(rep && rep.numOf ? rep.numOf : num, todayISO_())[r.Policy]) || []).filter(function (t) { return t.open; })[0];
+    var num = {}; num[r.Policy] = r.Policy;
+    var open = ((pendTasksByPolicy_(num, todayISO_())[r.Policy]) || []).filter(function (t) { return t.open; })[0];
     if (open) { sfNote_({ ParentId: open.id, Body: 'Follow-up e-mail sent, approved by Ricky Rampersad. Still outstanding:\n' + String(r.Outstanding || '') }); note = open.id; }
   } catch (e) {}
   set({ Status: 'sent', ActedAt: new Date(), By: 'Ricky', TaskNote: note || 'no open Pendings task' });
@@ -20195,8 +20221,8 @@ function workdayPost_(p) {
   if (String(p.act || '') === 'post') { if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' }; return workdayPostNote_(p, day); }
   if (String(p.act || '') === 'pfu') {   // his approval of a pending follow-up (27 Nov 2026)
     if (sid !== 'ricky') return { ok: false, error: 'Nothing to do.' };
-    var pf = pendFollowAct_(String(p.k || ''), String(p.sub || '')); if (!pf.ok) return pf;
-    var mf = workdayModel_(sid, day); mf.pfu = { k: String(p.k || ''), res: pf.res }; return mf;
+    var pf = pendFollowAct_(String(p.fk || ''), String(p.sub || '')); if (!pf.ok) return pf;   // fk: k is the page's own signature
+    var mf = workdayModel_(sid, day); mf.pfu = { k: String(p.fk || ''), res: pf.res }; return mf;
   }
   if (String(p.act || '') === 'draft') { if (!claudeFor_(sid)) return { ok: false, error: 'Branch Intelligence drafting is the Branch Manager\'s alone.' }; return workdayDraft_(p, day); }
   // The managers' screen (29 Oct 2026): the unit's tasks, from here.

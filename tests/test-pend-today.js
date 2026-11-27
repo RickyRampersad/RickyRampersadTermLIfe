@@ -40,8 +40,13 @@ const NOTES = [{ ParentId: '00TT1', CreatedById: 'U2', CreatedDate: '2026-10-27T
 const MAILS = [
   { Id: '02s1', Subject: 'Pending case 5000000003 - documents', ToAddress: 'agent.one@example.com', CcAddress: 'support@rickyrampersadbranch.com; desk@example.com', FromAddress: 'desk@example.com', MessageDate: '2026-10-20T15:00:00.000+0000' },
   { Id: '02s2', Subject: 'Pending case 5000000004', ToAddress: 'agent.two@example.com', CcAddress: '', FromAddress: 'desk@example.com', MessageDate: '2026-10-26T15:00:00.000+0000' },
+  { Id: '02s4', Subject: 'Pendings 5000000002 / 5000000004 - premium', ToAddress: 'agent.four@example.com', CcAddress: '', FromAddress: 'desk@example.com', MessageDate: '2026-10-21T15:00:00.000+0000' },
   { Id: '02s3', Subject: 'Re: 5000000005 exam', ToAddress: 'agent.three@example.com', CcAddress: '', FromAddress: 'desk@example.com', MessageDate: '2026-10-19T15:00:00.000+0000' }];
 let MORNING = true;
+// The branch's units (Intelligence.gs in the live project); without them the group section shows nothing.
+env.iBuildUnits_ = () => ({ 'Ricky_Rampersad': [], 'Kerwyn_Ramroach': [] });
+env.iPossUnitKey_ = u => String(u || '').toLowerCase().replace(/[_\s]+/g, ' ').trim();
+const OTHER_UNIT = { Id: 'a02XX', RecordType: { Name: 'HEALTH' }, Unit__c: 'Some_Other_Branch', AgentName__c: 'A9 - Not Ours', Policy_Status_Description__c: 'Pending', CreatedDate: '2026-10-20T12:00:00.000+0000', LastModifiedDate: '2026-10-20T12:00:00.000+0000', LastModifiedById: 'U9' };
 const PORT = [
   { Id: 'a02GL1', RecordType: { Name: 'LIFE(GROUP)' }, Unit__c: 'Ricky_Rampersad', AgentName__c: 'A00427 - Ricky Rampersad', Policy_Status_Description__c: 'Pending', CreatedDate: '2026-10-07T16:35:49.000+0000', LastModifiedDate: '2026-10-07T16:36:08.000+0000', LastModifiedById: 'U9' },
   { Id: 'a02IH1', RecordType: { Name: 'HEALTH' }, Unit__c: 'Ricky_Rampersad', AgentName__c: 'A01066 - Nadia Example', Policy_Status_Description__c: 'Underwriting incomplete. Missing Reqts', CreatedDate: '2026-10-18T16:01:41.000+0000', LastModifiedDate: '2026-10-27T14:20:00.000+0000', LastModifiedById: 'U3' },
@@ -52,7 +57,7 @@ const INCS = [
   { Id: 'a0HI2', Agent__c: 'Dina', Unit__c: 'Kerwyn_Ramroach', Policy_Description_Status__c: null, Policy_Status_Description_R__c: 'Underwriting complete, Missing Settlement Reqts', Submitted_Date__c: null, Days_O_S__c: null, CreatedDate: '2025-03-24T12:54:32.000+0000', LastModifiedDate: '2025-03-24T12:54:32.000+0000', LastModifiedById: 'U9' }];
 env.sfkQuery_ = q => {
   queries.push(q);
-  if (/FROM CLIENT_PORTFOLIO__c/.test(q)) return PORT;
+  if (/FROM CLIENT_PORTFOLIO__c/.test(q)) return PORT.concat([OTHER_UNIT]);
   if (/FROM Policy_Increases__c/.test(q)) return INCS;
   if (/What\.Type IN/.test(q)) return MORNING ? [{ WhatId: 'a0HI1', IsClosed: false, LastModifiedDate: '2026-10-27T15:10:00.000+0000', LastModifiedById: 'U1' },
                                                 { WhatId: 'a02GL1', IsClosed: false, LastModifiedDate: '2026-10-27T15:03:00.000+0000', LastModifiedById: 'U9' }] : [];
@@ -60,7 +65,7 @@ env.sfkQuery_ = q => {
   if (MORNING && /FROM FeedItem/.test(q) && /CreatedDate >= /.test(q) && /ParentId, CreatedById, CreatedDate/.test(q)) return NOTES;
   if (MORNING && /WHERE Id IN/.test(q) && /00TT/.test(q)) return [{ Id: '00TT1', Subject: 'Pending 5000000001 FPP', Task_Type__c: 'Pendings' }, { Id: '00TT4', Subject: 'Servicing 5000000004 call', Task_Type__c: 'Servicing' }];
   if (/FROM EmailMessage/.test(q) && /MessageDate >= /.test(q)) return [{ Subject: 'Pending case 5000000004 follow-up', MessageDate: '2026-10-27T13:30:00.000+0000', CreatedById: 'U1' }];
-  if (/FROM EmailMessage/.test(q)) return MAILS;
+  if (/FROM EmailMessage/.test(q)) { if (!/Incoming = false/.test(q)) throw new Error('the trail must be outbound only'); return MAILS; }
   if (/SELECT Id, Subject, IsClosed, ActivityDate, LastModifiedDate, Owner.Name/.test(q)) return [
     { Id: '00TX', Subject: 'Pending 5000000005 exam', IsClosed: false, ActivityDate: '2026-10-30', LastModifiedDate: '2026-10-21T15:00:00.000+0000', Owner: { Name: 'Desk' } },
     { Id: '00TY', Subject: 'Pending 5000000003 docs', IsClosed: false, ActivityDate: '2026-10-30', LastModifiedDate: '2026-10-10T15:00:00.000+0000', Owner: { Name: 'Desk' } }];
@@ -80,7 +85,7 @@ const L = env.wallPendLive_('2026-10-27'), M = L.morning;
 console.log('\nThis morning, from Salesforce:\n');
 ok('the cases touched today, on the report only', M && M.cases === 3 && !JSON.stringify(M).includes('9999'), JSON.stringify(M && [M.cases, M.touches]));
 const AZ = M.desks.find(d => d.name === 'Azariah'), SA = M.desks.find(d => d.name === 'Sasha'), KA = M.desks.find(d => d.name === 'Kamla'), EL = M.desks.find(d => d.name === 'Elizabeth');
-ok('Azariah\'s first touch at 8:40am, on Varun\'s case, the code it is held on', AZ.first && AZ.first.at === '8:40am' && AZ.first.agent === 'Varun' && AZ.first.pol === '0001' && /FUTPY|PRADD/.test(AZ.first.code), JSON.stringify(AZ.first));
+ok('Azariah\'s first touch at 8:40am, on Varun\'s case, the code it is held on', AZ.first && AZ.first.at === '8:40am' && AZ.first.agent === 'Varun Seegolam' && AZ.first.pol === '0001' && /FUTPY|PRADD/.test(AZ.first.code), JSON.stringify(AZ.first));
 ok('a note and a status move in the same minute count once, as the note', AZ.notes === 1 && AZ.touches === 2 && AZ.closed === 1, JSON.stringify(AZ));
 ok('Sasha\'s e-mail logged on a pending case is a touch', SA.emails === 1 && SA.first.what === 'email', JSON.stringify(SA));
 ok('a note on any task that names a pending policy is a touch on that case', KA.touches === 1 && KA.first.pol === '0004' && KA.first.what === 'note', JSON.stringify(KA.first));
@@ -98,6 +103,17 @@ ok('a desk task on an increase today is a touch', M.stream.some(e => e.desk === 
 ok('the Branch Manager\'s user is automation, not a desk: its group-life change is no touch', !M.stream.some(e => e.grp === 'Group life') && !M.desks.some(d => d.name === 'Ricky'));
 ok('each type says how many are pending and how many were touched today', G.types.find(t => t.k === 'Increase').today === 1 && G.types.find(t => t.k === 'Group life').today === 0 && G.types.find(t => t.k === 'Individual health').n === 1);
 ok('the report\'s count of cases stays the report\'s', M.cases === 3);
+ok('another branch\'s record is not shown', !G.list.some(x => /Not Ours/.test(x.agent)));
+const env2 = env; const saveU = env2.iBuildUnits_; env2.iBuildUnits_ = () => ({});
+env2.CacheService.getScriptCache().remove && env2.CacheService.getScriptCache().remove('wall_pend_2026-10-27');
+let L2 = null; try { env2.CacheService = { getScriptCache: () => ({ get: () => null, put: () => {}, remove: () => {} }) }; L2 = env2.wallPendLive_('2026-10-27'); } catch (e) {}
+ok('with no unit list, the group section says so and shows nothing', L2 && L2.morning.other && L2.morning.other.error && !L2.morning.other.list, JSON.stringify(L2 && L2.morning.other));
+env2.iBuildUnits_ = saveU;
+console.log('\nWhoever has left reads Orphans on the wall, in every new part:\n');
+const scrubbed = env.wallScrub_({ morning: { queue: [{ agent: 'Aidan Eugene' }], stream: [{ agent: 'Aidan Eugene' }], desks: [{ first: { agent: 'Aidan Eugene' } }], other: { list: [{ agent: 'Aidan Eugene' }] } } },
+  env.wallLeft_('Aidan Eugene'));
+ok('the queue, the stream, a desk\'s first and the group list', JSON.stringify(scrubbed).indexOf('Aidan') < 0 && (JSON.stringify(scrubbed).match(/Orphans/g) || []).length === 4, JSON.stringify(scrubbed));
+ok('and the feed carries whole names for it to match', M.queue.some(q => / /.test(q.agent)) && M.stream.some(e => / /.test(e.agent)), JSON.stringify(M.queue.map(q => q.agent)));
 ok('no record id reaches the wall', !/a02|a0H/.test(JSON.stringify(G.list)) && !/a02|a0H/.test(JSON.stringify(M.stream)));
 
 console.log('\nWork it first:\n');
@@ -112,12 +128,16 @@ env.wallPendLive_('2026-10-27');
 const r = env.pendFollowScan_('2026-10-27');
 const list = env.pendFollowList_();
 ok('a case whose last e-mail is three working days old with nothing moved is drafted', list.some(x => x.pol === '5000000003'), JSON.stringify(list.map(x => x.pol)));
+ok('an e-mail naming two policies drafts a follow-up for each it is due on', list.some(x => x.pol === '5000000002'), JSON.stringify(list.map(x => x.pol)));
 ok('one e-mailed yesterday is not yet', !list.some(x => x.pol === '5000000004'));
 ok('one whose Pendings task moved after the e-mail is not', !list.some(x => x.pol === '5000000005'));
 const d3 = list.find(x => x.pol === '5000000003');
 ok('it goes to the same people, the branch mailbox left off the cc', d3 && d3.to === 'agent.one@example.com' && d3.cc === 'desk@example.com', d3 && JSON.stringify([d3.to, d3.cc]));
 ok('and carries what the report still shows outstanding, with its code', d3 && d3.items.length === 1 && /\(FUTPY\)/.test(d3.items[0]), d3 && JSON.stringify(d3.items));
 ok('scanning again drafts nothing twice', env.pendFollowScan_('2026-10-27').drafted === 0);
+MAILS.unshift({ Id: '02s9', Subject: 'Pending case 5000000003 - again', ToAddress: 'agent.one@example.com', CcAddress: '', FromAddress: 'desk@example.com', MessageDate: '2026-10-21T15:00:00.000+0000' });
+ok('a policy with a draft already waiting gets no second one', env.pendFollowScan_('2026-10-27').drafted === 0 && env.pendFollowList_().filter(x => x.pol === '5000000003').length === 1);
+MAILS.shift();
 ok('the wall counts it waiting', env.pendFollowCount_('2026-10-27').waiting === list.length);
 const sent = [], notes = [];
 env.mailSend_ = o => { sent.push(o); return 'relay'; };
@@ -126,6 +146,11 @@ let a = env.pendFollowAct_(d3.k, 'send');
 ok('approving sends it, subject marked Follow-up', a.ok && sent.length === 1 && /^Follow-up: Pending case 5000000003/.test(sent[0].subject) && sent[0].to === 'agent.one@example.com', JSON.stringify(sent[0] && sent[0].subject));
 ok('and notes it on the case\'s open Pendings task', notes.length === 1 && notes[0].ParentId === '00TY' && /approved by Ricky/.test(notes[0].Body), JSON.stringify(notes[0]));
 ok('it cannot be sent twice', !env.pendFollowAct_(d3.k, 'send').ok && sent.length === 1);
+const d2 = env.pendFollowList_().find(x => x.pol === '5000000002');
+env.mailSend_ = () => { throw new Error('relay down'); };
+const bad = env.pendFollowAct_(d2.k, 'send');
+ok('a send that fails puts the draft back, waiting', !bad.ok && env.pendFollowList_().some(x => x.k === d2.k), JSON.stringify(bad));
+env.mailSend_ = o => { sent.push(o); return 'relay'; };
 const realDay = env.Utilities.formatDate(new Date(), env.CONFIG.TZ, 'yyyy-MM-dd');
 ok('the wall counts it sent today', env.pendFollowCount_(realDay).sentToday === 1);
 ok('nothing sends without a tap: the scan itself sent nothing', true);

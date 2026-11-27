@@ -573,11 +573,11 @@
     var row = b.closest("[data-pfu]"), act = b.getAttribute("data-pfuact");
     if (act === "send" && !b.classList.contains("sure")) { b.classList.add("sure"); b.textContent = "Send it now"; return; }   // the second tap sends
     b.disabled = true; b.textContent = act === "send" ? "Sending…" : "Skipping…";
-    api({ act: "pfu", k: row.getAttribute("data-pfu"), sub: act }).then(function (m) {
+    api({ act: "pfu", fk: row.getAttribute("data-pfu"), sub: act })   // fk: k is the sign-in.then(function (m) {
       if (!m || !m.ok) { b.disabled = false; b.classList.remove("sure"); b.textContent = act === "send" ? "Approve and send" : "Skip"; toast((m && m.error) || "That did not go through. Try again."); return; }
       toast(act === "send" ? "Follow-up " + ((m.pfu && m.pfu.res) || "sent") + "." : "Skipped.");
       store.set("wd_day_" + WHO, { day: m.day, m: m }); draw(m, false);
-    }).catch(function () { b.disabled = false; b.classList.remove("sure"); toast("That did not reach the tracker. Try again."); });
+    }).catch(function () { b.disabled = false; b.classList.remove("sure"); b.textContent = act === "send" ? "Approve and send" : "Skip"; toast("That did not reach the tracker. Try again."); });
   });
   function waitingCard(m) {
     var w = m.waiting; if (!w) return "";
