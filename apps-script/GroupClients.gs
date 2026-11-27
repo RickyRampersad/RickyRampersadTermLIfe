@@ -51,7 +51,7 @@
  *    Group Sends      every letter: when, who, to whom, what it said, which items
  *    Group Responses  every answer a group gives: per item, and the rating
  *    Group Shares     which items and which Chatter comments a group may see
- *    Group Queue      every letter staff approved for Monday at 10:00, and what became of it
+ *    Group Queue      every letter staff approved for Monday at 10:30, and what became of it
  *    Salesforce       a group's note on an item, and a staff note for the group,
  *                     are posted to that task's Chatter
  *
@@ -85,7 +85,8 @@ var GCM = {
   LIFE: 'Group Milestones',
   VIEWS: 'Group Views',     // every sign-in on a group's own page (15 October 2026), at most one a half hour per group
   SEND_DAY: 1,              // Monday (1 Monday … 7 Sunday): the week's letters go out by themselves at SEND_HOUR (8 October 2026)
-  SEND_HOUR: 10,            // staff approve each letter during the week; at 10:00 on Monday the approved letters go
+  SEND_HOUR: 10,            // staff approve each letter during the week; at 10:30 on Monday the approved letters go
+  SEND_MIN: 30,             // (10:00 until 27 November 2026, when the branch manager moved them to 10:30, after the 10:00 Salesforce read)
   QUEUE: 'Group Queue',
   QUEUE_FRESH_MIN: 60,
   TEAM_HOUR: 11,            // Monday 11:00: if any group still has no letter this week, the whole team is told why and who
@@ -100,7 +101,13 @@ var GCM = {
   TELL_CC: ['rickyrampersadsalessupport@myguardiangroup.com'], // copied on a group's answer, which goes to the account owner
   TRIES: 8, LOCK_S: 900,    // wrong codes on one list bill before it closes for fifteen minutes
   MIN_CODE: 10,             // a group code shorter than this opens nothing
-  HOURS: [6, 18],           // the hourly refresh runs from 6:00 to 18:00, Monday to Saturday
+  HOURS: [6, 18],           // the hourly run (the sends and checks) runs from 6:00 to 18:00, Monday to Saturday
+  /* the Salesforce read itself, at these hours only (27 November 2026: "why hourly this should be once a day only on
+     mornings"; the branch manager chose 6, 12 and 3, then added 10). The read takes about five minutes and is what keeps the staff board
+     and the groups' pages current; the hourly run's sends and checks take seconds and stay hourly. A slot the trigger
+     misses is caught by the next run, and the Monday letters and the billing run read Salesforce afresh themselves. The
+     GCM_REFRESH_AT Script property ("6,10,12,15") replaces it. */
+  REFRESH_AT: [6, 10, 12, 15],
   CHUNK: 150,              // ids in one Chatter read
   REASON_DAYS: 30,          // an item open longer than this needs a note for the group, shared in the last REASON_DAYS, before a letter goes
   MAILS: 12,                // e-mails kept per open item
@@ -141,7 +148,7 @@ var GCM_EXCLUDE_TYPES = ['HR', 'Lic/Staffing/SA/HR'];
 function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
-      case 'gcm.ping':    return { ok: true, gcm: 1, project: (typeof GROUP_APP === 'object') ? 'group' : 'service', salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(),
+      case 'gcm.ping':    return { ok: true, gcm: 1, project: (typeof GROUP_APP === 'object') ? 'group' : 'service', salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), train: !!gcmTrainId_(), orphanTrain: !!gcmTrainId_(GCM_COURSES.orphan), refreshed: gcmRefreshed_(), refreshAt: gcmRefreshAt_().map(function (x) { return x + ':00'; }).join(', '),
                                    sends: gcmSendLabel_(gcmNextSend_()), monday: gcmHasMondayTrigger_(),
                                    /* new members who fill in their own part (GroupBilling.gs, 17 November 2026) */
                                    enrol: typeof gblEnrolGet_ === 'function' ? 1 : 0,
@@ -239,8 +246,9 @@ function gcmSetup() {
   gcmMondayTrigger_();
   var on = tSfOn_(), gs = gcmSS_(), own = gs.getId() === ss_().getId();
   return tSay_('Group client management is set up in "' + gs.getName() + '"' + (own ? ' (this spreadsheet: set GCM_SHEET_ID to keep the group tabs in a sheet of their own)' : '') +
-    ': the ' + Object.keys(GCM_HEAD).length + ' Group tabs exist, the refresh runs every hour from ' +
-    GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday, and the approved letters go every Monday at ' + GCM.SEND_HOUR + ':00.\n\n' +
+    ': the ' + Object.keys(GCM_HEAD).length + ' Group tabs exist, the checks run every hour from ' +
+    GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday, Salesforce is read at ' + gcmRefreshAt_().map(function (x) { return x + ':00'; }).join(', ') +
+    ', and the approved letters go every Monday at ' + gcmSendClock_() + '.\n\n' +
     (on ? 'Salesforce is linked. Run gcmRefresh once now to fill the Group Tasks tab.'
         : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
 }
@@ -261,7 +269,7 @@ function gcmRefreshTick() {
      the working day after it is approved; at 13:00 on the 25th, the report of who has worked each group's bills */
   try { if (typeof gblDayRun_ === 'function') gblDayRun_({ auto: true }); } catch (e) {}
   try { gcmTeamCheck_({ auto: true }); } catch (e) {}
-  if (Date.now() - gcmRefreshedMs_() > 15 * 60000) gcmRefreshLocked_();
+  if (gcmRefreshDue_(now, gcmRefreshedMs_())) gcmRefreshLocked_();
   try { if (typeof gblBillReport_ === 'function') gblBillReport_({ auto: true }); else if (typeof gblMondayReport_ === 'function') gblMondayReport_({ auto: true }); } catch (e) {}
   /* once the welcome is on, a group a staff member has just verified gets it, in working hours */
   try { if (gcmWelcomeOn_() && d <= 5 && h >= 8 && h <= 17) gcmWelcomeRun_({ auto: true }); } catch (e) {}
@@ -775,6 +783,26 @@ function gcmToGroup_(addr, g, m) {
 
 function gcmRefreshed_() { return PropertiesService.getScriptProperties().getProperty('gcm_refreshed') || ''; }
 /** When the last refresh finished, in ms: the stamp written beside the printed one, else the printed one read back. */
+/** The hours the hourly run reads Salesforce at: the GCM_REFRESH_AT Script property, else GCM.REFRESH_AT. */
+function gcmRefreshAt_() {
+  var raw = '';
+  try { raw = String(PropertiesService.getScriptProperties().getProperty('GCM_REFRESH_AT') || ''); } catch (e) {}
+  var at = raw.split(/[\s,;]+/).filter(function (x) { return /^\d{1,2}$/.test(x) && Number(x) <= 23; }).map(Number);
+  return (at.length ? at : GCM.REFRESH_AT).slice().sort(function (a, b) { return a - b; });
+}
+
+/** Whether this run should read Salesforce: the latest of today's refresh hours that has come, if nothing has read it
+ *  since (a refresh a person pressed counts), and never within fifteen minutes of the last. So a slot the trigger missed
+ *  is read by the next run, and a refresh that failed is tried again the next hour. */
+function gcmRefreshDue_(now, last) {
+  var tz = tTz_(), h = Number(Utilities.formatDate(now, tz, 'H')), m = Number(Utilities.formatDate(now, tz, 'm'));
+  var sec = Number(Utilities.formatDate(now, tz, 's')), slot = -1;
+  gcmRefreshAt_().forEach(function (x) { if (x <= h && x > slot) slot = x; });
+  if (slot < 0) return false;
+  var slotMs = now.getTime() - (((h - slot) * 60 + m) * 60 + sec) * 1000 - now.getMilliseconds();
+  return last < slotMs && now.getTime() - last > 15 * 60000;
+}
+
 function gcmRefreshedMs_() {
   var p = PropertiesService.getScriptProperties(), ms = Number(p.getProperty('gcm_refreshed_ms') || 0);
   if (ms) return ms;
@@ -957,7 +985,7 @@ function gcmGroupStats_(g, today) {
   });
   s.onTimePct = s.withDue ? Math.round(100 * s.onTime / s.withDue) : null;
   s.avgDays = s.done ? Math.round(s.days / s.done) : null;
-  /* the week runs from one Monday's send to the next: a letter is approved for the coming Monday, sent at 10:00, and
+  /* the week runs from one Monday's send to the next: a letter is approved for the coming Monday, sent at 10:30, and
      shows as sent until the Thursday, when the next one is due for approval */
   var next = gcmNextSend_(), cycle = gcmAddDays_(next, -7);
   var sent = g.sends.filter(function (x) { return x.when >= cycle && !/failed/i.test(x.status); });
@@ -2189,28 +2217,33 @@ function gcmAccount_(g, who, L) {
 
 /* ── Monday at ten: the week's letters go by themselves ───────────────
  *  Decided 8 October 2026: "as we have automated our queries will now change to a monday at 10am to go out to client".
- *  Staff check a group during the week and approve its letter; at 10:00 on Monday the approved letters are written
+ *  Staff check a group during the week and approve its letter; at 10:30 on Monday (10:00 until 27 November 2026) the approved letters are written
  *  again from Salesforce as it is then, and sent from support@. A letter waits instead, and its approver and the branch
  *  are told, when the group gained an item since it was checked, an item has gone more than REASON_DAYS without a
  *  reason, the group lost its contact or its code, or a letter already went: nothing reaches a group that a person did
  *  not check. Every approval and what became of it is a row on Group Queue. */
 
-/** The Monday the next letters go, as yyyy-MM-dd: today when it is Monday before SEND_HOUR, else the Monday after. */
+/** The Monday send's time of day: in minutes after midnight, and as it is written ("10:30"). */
+function gcmSendMins_() { return GCM.SEND_HOUR * 60 + (GCM.SEND_MIN || 0); }
+function gcmSendClock_() { var m = GCM.SEND_MIN || 0; return GCM.SEND_HOUR + ':' + (m < 10 ? '0' : '') + m; }
+function gcmMinsNow_(now) { var tz = tTz_(); return Number(Utilities.formatDate(now, tz, 'H')) * 60 + Number(Utilities.formatDate(now, tz, 'm')); }
+
+/** The Monday the next letters go, as yyyy-MM-dd: today when it is Monday before the send time, else the Monday after. */
 function gcmNextSend_(now) {
   now = now || new Date();
-  var today = gcmYmd_(now), dow = gcmDow_(today), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
-  if (dow === GCM.SEND_DAY && h < GCM.SEND_HOUR) return today;
+  var today = gcmYmd_(now), dow = gcmDow_(today);
+  if (dow === GCM.SEND_DAY && gcmMinsNow_(now) < gcmSendMins_()) return today;
   var d = (GCM.SEND_DAY - dow + 7) % 7;
   return gcmAddDays_(today, d || 7);
 }
 var GCM_DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-function gcmSendLabel_(ymd) { return GCM_DAYS[gcmDow_(ymd)] + ' ' + tDmy_(ymd).replace(/ \d{4}$/, '') + ', ' + GCM.SEND_HOUR + ':00'; }
-/** The day an approval made now goes: the coming Monday; or today, when it is Monday after ten and nothing has gone to
- *  the group today (a letter held at ten, put right and approved again, still goes the same day). */
+function gcmSendLabel_(ymd) { return GCM_DAYS[gcmDow_(ymd)] + ' ' + tDmy_(ymd).replace(/ \d{4}$/, '') + ', ' + gcmSendClock_(); }
+/** The day an approval made now goes: the coming Monday; or today, when it is Monday after the send and nothing has
+ *  gone to the group today (a letter held at the run, put right and approved again, still goes the same day). */
 function gcmApproveFor_(g, now) {
   now = now || new Date();
-  var today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H'));
-  if (gcmDow_(today) === GCM.SEND_DAY && h >= GCM.SEND_HOUR && !g.sends.some(function (x) { return x.when === today && !/failed/i.test(x.status); })) return today;
+  var today = gcmYmd_(now);
+  if (gcmDow_(today) === GCM.SEND_DAY && gcmMinsNow_(now) >= gcmSendMins_() && !g.sends.some(function (x) { return x.when === today && !/failed/i.test(x.status); })) return today;
   return gcmNextSend_(now);
 }
 
@@ -2263,7 +2296,11 @@ function gcmUnapprove_(b) {
 }
 
 /** The Monday trigger (and the hourly run, which catches up): every approval due by now is sent or held. */
-function gcmMondaySend() { var r = gcmQueueRun_(); return r.said || r.error || ''; }
+function gcmMondaySend() {
+  var r = gcmQueueRun_();
+  try { gcmMondayTrigger_(); } catch (e) {}   // the next Monday's timer
+  return r.said || r.error || '';
+}
 
 /** The rehearsal of Monday's run (asked for on 11 October 2026: "i want to test before going to me and the team"):
  *  every letter approved for the next run is written now, exactly as the run would write it, with the same checks, and
@@ -2319,7 +2356,7 @@ function gcmWelcome_(g, today, signed) {
   var subject = 'Your group account, now in one place: ' + g.name;
   var pre = 'Watch how it works in ' + GCM_WELCOME.LENGTH + '. One letter every Monday, your own page to answer it.';
   var p1 = 'From this week, the way our branch looks after ' + g.name + '’s account changes. Everything we have open for you is in one place, and you tell us in one tap what needs our attention.';
-  var steps = [['Every Monday at 10:00', 'One letter: what is open, what is pending for your employees, what is coming up for them, and what we need from you.'],
+  var steps = [['Every Monday at ' + gcmSendClock_(), 'One letter: what is open, what is pending for your employees, what is coming up for them, and what we need from you.'],
     ['Your own page', 'Applications and increases still pending, who turns 65 or retires soon, and every open item with who is handling it. Mark each one Correct, Needs a change or Not ours, and rate our service.'],
     ['We act on it', 'Your answer reaches ' + (carer || 'the person looking after you') + ' the moment you send it, and the next Monday letter shows what changed.']];
   var p2 = 'Your page is open now: sign in with your list bill and your access code below.' + (me ? ' I look after your account, and a reply to this e-mail reaches me and our team.'
@@ -2846,8 +2883,8 @@ var GCM_DAY = {
   TASK_TYPE: 'Lic/Staffing/SA/HR', TASK_TAG: 'GROUP LETTER NOT SENT',
   MANUAL: 'training.html',
   TRAIN: [
-    ['Section 2, Your week', 'Friday: Approve. Finish the checks, deal with every escalation (section 4), write the reasons (section 6), then preview and approve each group marked Approve for Monday. You can approve up to 10:00 on Monday, but Friday leaves Monday morning for what changed.'],
-    ['Section 2, Your week', 'Monday, 10:00: the letters go by themselves. Every letter you approved is written again from Salesforce and sent.'],
+    ['Section 2, Your week', 'Friday: Approve. Finish the checks, deal with every escalation (section 4), write the reasons (section 6), then preview and approve each group marked Approve for Monday. You can approve up to ' + gcmSendClock_() + ' on Monday, but Friday leaves Monday morning for what changed.'],
+    ['Section 2, Your week', 'Monday, ' + gcmSendClock_() + ': the letters go by themselves. Every letter you approved is written again from Salesforce and sent.'],
     ['Section 7, After Monday’s letter', 'No answer by Friday? Before you approve the next letter, call or e-mail the contact, check they got the letter and can sign in, and note it in Chatter.']
   ]
 };
@@ -2904,7 +2941,7 @@ function gcmDay_(o) {
   var props = PropertiesService.getScriptProperties(), today = gcmToday_(), out = { said: '' };
   if (!o.test && !o.now && props.getProperty(GCM_DAY.LAST_PROP) === today) return { said: 'The group day ran already today.' };
   if (!o.test) props.setProperty(GCM_DAY.LAST_PROP, today);
-  /* on a Monday, any approved letter the 10:00 run has not reached goes first, so it is never called missed */
+  /* on a Monday, any approved letter the 10:30 run has not reached goes first, so it is never called missed */
   if (!o.test && gcmDow_(today) === GCM.SEND_DAY) { try { gcmQueueRun_(); } catch (e) {} }
   var rate = null, said = [];
   var runRate = function () {
@@ -2955,7 +2992,7 @@ function gcmChaseList_(L) {
     var later = q.filter(function (x) { return x.status === 'queued' && x.for > cycle; }).pop();
     var state = held ? 'held' : later ? 'later' : 'none';
     o.missed.push({ g: g, s: s, state: state,
-      why: held ? 'Approved, but held at the 10:00 run: ' + held.status.replace(/^held:\s*/i, '')
+      why: held ? 'Approved, but held at the ' + gcmSendClock_() + ' run: ' + held.status.replace(/^held:\s*/i, '')
         : later ? 'Approved by ' + later.staff + ' after this week’s run, so it waits for ' + gcmSendLabel_(later.for)
         : 'Not approved by ' + gcmSendLabel_(cycle),
       todo: held ? 'Write the note for the group on that item (manual, section 6), then press Send now.'
@@ -2987,14 +3024,14 @@ function gcmChaseMail_(o, cycle, today, tasks) {
     head.map(function (h) { return '<th ' + th + '>' + E(h) + '</th>'; }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td ' + td + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>'; };
   var html = '<div style="font:15px/1.6 Arial,sans-serif;color:#11393F;max-width:720px">' +
     '<p>Good morning, ' + E(first) + '.</p>' +
-    '<p>This week’s group letters went at 10:00 on ' + E(gcmSendLabel_(cycle).replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> ' +
-    'A letter not approved by 10:00 on Monday waits for the next Monday unless you send it now.</p>' +
+    '<p>This week’s group letters went at ' + gcmSendClock_() + ' on ' + E(gcmSendLabel_(cycle).replace(/, \d+:\d+$/, '')) + '. <b>' + n + ' of your groups had none.</b> ' +
+    'A letter not approved by ' + gcmSendClock_() + ' on Monday waits for the next Monday unless you send it now.</p>' +
     table(['Group', 'Why it did not go', 'Do this today'], o.missed.map(function (m) {
       var t = tasks && tasks[m.g.key];
       return ['<b>' + E(m.g.name) + '</b>' + (t && t.id ? '<br><span style="color:#4B586C;font-size:12.5px">Salesforce task ' + E(t.id) + '</span>' : ''), E(m.why), E(m.todo)];
     })) +
     (tasks && Object.keys(tasks).length ? '<p>A Salesforce task (' + E(GCM_DAY.TASK_TYPE) + ') is open for each one in your name. Close it with your reason in its comments.</p>' : '') +
-    '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each one was not approved by 10:00 on Monday, and when it will go. Your reply goes to Mr Rampersad.</p>' +
+    '<p style="background:#FFF4D6;border-left:4px solid #E0A800;padding:10px 14px"><b>Please reply to this e-mail by ' + E(GCM_DAY.REPLY_BY) + '</b> with why each one was not approved by ' + gcmSendClock_() + ' on Monday, and when it will go. Your reply goes to Mr Rampersad.</p>' +
     '<p style="margin:16px 0 6px;font-weight:700">From your training: the group client management manual</p>' +
     GCM_DAY.TRAIN.map(function (t) { return '<p style="margin:0 0 8px;padding:8px 12px;background:#F4F7FA;border-left:3px solid #00728D"><i>“' + E(t[1]) + '”</i><br><span style="font-size:12.5px;color:#4B586C">' + E(t[0]) + '</span></p>'; }).join('') +
     '<p><a href="' + GCM.SITE + GCM_DAY.MANUAL + '" style="color:#00728D;font-weight:700">Open the manual</a> · <a href="' + GCM.SITE + '" style="color:#00728D;font-weight:700">Open group client management</a></p>' +
@@ -3006,7 +3043,7 @@ function gcmChaseMail_(o, cycle, today, tasks) {
     '<p style="color:#777;font-size:12px">' + E(tInternal_(null)) + '</p></div>';
   var text = ['Good morning, ' + first + '.', '', n + ' of your groups had no letter this week:']
     .concat(o.missed.map(function (m) { return '- ' + m.g.name + ': ' + m.why + '. ' + m.todo; }))
-    .concat(['', 'Please reply by ' + GCM_DAY.REPLY_BY + ' with why each one was not approved by 10:00 on Monday, and when it will go.']).join('\n');
+    .concat(['', 'Please reply by ' + GCM_DAY.REPLY_BY + ' with why each one was not approved by ' + gcmSendClock_() + ' on Monday, and when it will go.']).join('\n');
   return { subject: subject, html: html, text: text };
 }
 
@@ -3039,7 +3076,7 @@ function gcmChaseTasks_(owners, cycle, today, test, o) {
     if (made) { kept.tasks[g.key] = made; out[g.key] = { id: made, subject: subjectOf(x), existing: true }; return; }
     var owner = users[String(x.o.email || '').toLowerCase()];
     if (!owner || !x.o.active) { out[g.key] = { error: 'no active Salesforce user for ' + (x.o.name || 'the account owner') + (x.o.email ? ' (' + x.o.email + ')' : '') }; return; }
-    var desc = [x.m.why + '.', 'Do this today: ' + x.m.todo, '', 'Close this task with your reason: why it was ' + (o.why || 'not approved by 10:00 on Monday') + ', and when it went.', '',
+    var desc = [x.m.why + '.', 'Do this today: ' + x.m.todo, '', 'Close this task with your reason: why it was ' + (o.why || 'not approved by ' + gcmSendClock_() + ' on Monday') + ', and when it went.', '',
       'From the group client management manual:'].concat(TRAIN.map(function (t) { return '"' + t[1] + '" (' + t[0] + ')'; })).join('\n');
     try {
       var res = tSfSend_('post', '/sobjects/Task', { Subject: subjectOf(x).slice(0, 255), OwnerId: owner, WhatId: acct || null, ActivityDate: today,
@@ -3180,7 +3217,7 @@ function gcmTeamCheck_(o) {
     var s = gcmGroupStats_(g, L.today);
     if (s.sentThisWeek) return;
     var q = (g.queue || []).filter(function (y) { return y.status === 'queued' && y.for === cycle; }).pop();
-    if (q) rows.push({ group: g.name, kind: 'system', why: 'Approved by ' + gcmNiceName_(q.staff) + '; the 10:00 run has not sent it yet.', todo: 'Nothing for you: the next hourly run sends it. If it must go now, press Send now on the group.', who: 'The branch (the send itself)', short: 'the send' });
+    if (q) rows.push({ group: g.name, kind: 'system', why: 'Approved by ' + gcmNiceName_(q.staff) + '; the ' + gcmSendClock_() + ' run has not sent it yet.', todo: 'Nothing for you: the next hourly run sends it. If it must go now, press Send now on the group.', who: 'The branch (the send itself)', short: 'the send' });
   });
   var total = sent.length + rows.length;
   if (!rows.length) { if (!o.test) props.setProperty(GCM.TEAM_PROP, today); return { ok: true, sent: sent.length, missing: 0, said: 'Every group had its letter this week (' + sent.length + '): nobody to tell.' }; }
@@ -3197,7 +3234,7 @@ function gcmTeamCheck_(o) {
     Object.keys(byWho).map(function (k) { return k + ' ' + byWho[k]; }).join(', ') + ')';
   var html = '<div style="font:15px/1.55 Arial,sans-serif;color:#11393F;max-width:760px">' +
     (o.test ? '<p style="background:#FFF4D6;border:2px solid #E0A800;padding:10px 14px"><b>TEST.</b> The team letter as it would go now. It went to you alone.</p>' : '') +
-    '<p>Team,</p><p>Every group is to have its letter each Monday at 10:00. At 11:00, <b>' + sent.length + ' of ' + total + '</b> groups have this week’s letter. ' +
+    '<p>Team,</p><p>Every group is to have its letter each Monday at ' + gcmSendClock_() + '. At 11:00, <b>' + sent.length + ' of ' + total + '</b> groups have this week’s letter. ' +
     'These <b>' + rows.length + '</b> do not. Each is named with the reason and the person responsible for it.</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 16px"><tr>' +
     ['Group', 'Why it is not out', 'Responsible', 'What to do today'].map(function (x) { return '<th ' + th + '>' + E(x) + '</th>'; }).join('') + '</tr>' +
@@ -3233,11 +3270,12 @@ function gcmQueueRun_(o) {
   o = o || {};
   var test = !!o.test;
   var due = function () {
-    var now = new Date(), today = gcmYmd_(now), h = Number(Utilities.formatDate(now, tTz_(), 'H')), oldest = gcmAddDays_(today, -2);
+    var now = new Date(), today = gcmYmd_(now), mins = gcmMinsNow_(now), oldest = gcmAddDays_(today, -2);
     return gcmRows_(GCM.QUEUE).filter(function (r) {
       var f = gcmYmd_(r.For);
       if (gcmText_(r.Status) !== 'queued' || !f) return false;
-      return test ? f >= today : f >= oldest && (f < today || (f === today && h >= GCM.SEND_HOUR));
+      /* two minutes' grace: a timer can wake a moment before the minute it was set for */
+      return test ? f >= today : f >= oldest && (f < today || (f === today && mins >= gcmSendMins_() - 2));
     });
   };
   if (!test && !due().length) return { ok: true, sent: 0, held: 0, said: 'No approved letter is due.' };
@@ -3344,10 +3382,23 @@ function gcmQueueTell_(sent, held, o) {
 function gcmHasMondayTrigger_() {
   try { return ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'gcmMondaySend'; }); } catch (e) { return false; }
 }
-/** The Monday trigger, made once: by gcmSetup, or by the first hourly run that finds none. */
+/** The Monday trigger, set for the exact minute of the coming send: a one-off timer, made again each week. A weekly timer
+ *  can only be asked for "near" a minute, fifteen minutes either side, and a run that woke at 10:17 for a 10:30 send
+ *  would find nothing due yet (27 November 2026, when the letters moved to 10:30). Made by gcmSetup, by the run itself,
+ *  and by any hourly run that finds it missing, already past, or set for another time; the old weekly timer is
+ *  replaced the first time. The hourly run still sends anything a timer missed. */
 function gcmMondayTrigger_() {
-  if (gcmHasMondayTrigger_()) return;
-  ScriptApp.newTrigger('gcmMondaySend').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(GCM.SEND_HOUR).nearMinute(0).inTimezone(tTz_()).create();
+  var p = PropertiesService.getScriptProperties();
+  var want = gcmNextSendMs_(), have = Number(p.getProperty('gcm_monday_ms') || 0);
+  if (have === want && gcmHasMondayTrigger_()) return;
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmMondaySend') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('gcmMondaySend').timeBased().at(new Date(want)).create();
+  p.setProperty('gcm_monday_ms', String(want));
+}
+/** When the coming send is, in ms: today at the send time when it is Monday before it, else the Monday after. */
+function gcmNextSendMs_(now) {
+  now = now || new Date();
+  return Utilities.parseDate(gcmNextSend_(now) + ' ' + gcmSendClock_(), tTz_(), 'yyyy-MM-dd H:mm').getTime();
 }
 
 /** Staff decide what the group sees: an item shown or not, a Chatter comment shared or not, and a note for the group,

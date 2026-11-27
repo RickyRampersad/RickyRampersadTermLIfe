@@ -20,7 +20,8 @@ var GCM = {
   LIFE: 'Group Milestones',
   VIEWS: 'Group Views',     // every sign-in on a group's own page (15 October 2026), at most one a half hour per group
   SEND_DAY: 1,              // Monday (1 Monday … 7 Sunday): the week's letters go out by themselves at SEND_HOUR (8 October 2026)
-  SEND_HOUR: 10,            // staff approve each letter during the week; at 10:00 on Monday the approved letters go
+  SEND_HOUR: 10,            // staff approve each letter during the week; at 10:30 on Monday the approved letters go
+  SEND_MIN: 30,             // (10:00 until 27 November 2026, when the branch manager moved them to 10:30, after the 10:00 Salesforce read)
   QUEUE: 'Group Queue',
   QUEUE_FRESH_MIN: 60,
   TEAM_HOUR: 11,            // Monday 11:00: if any group still has no letter this week, the whole team is told why and who
@@ -35,7 +36,13 @@ var GCM = {
   TELL_CC: ['rickyrampersadsalessupport@myguardiangroup.com'], // copied on a group's answer, which goes to the account owner
   TRIES: 8, LOCK_S: 900,    // wrong codes on one list bill before it closes for fifteen minutes
   MIN_CODE: 10,             // a group code shorter than this opens nothing
-  HOURS: [6, 18],           // the hourly refresh runs from 6:00 to 18:00, Monday to Saturday
+  HOURS: [6, 18],           // the hourly run (the sends and checks) runs from 6:00 to 18:00, Monday to Saturday
+  /* the Salesforce read itself, at these hours only (27 November 2026: "why hourly this should be once a day only on
+     mornings"; the branch manager chose 6, 12 and 3, then added 10). The read takes about five minutes and is what keeps the staff board
+     and the groups' pages current; the hourly run's sends and checks take seconds and stay hourly. A slot the trigger
+     misses is caught by the next run, and the Monday letters and the billing run read Salesforce afresh themselves. The
+     GCM_REFRESH_AT Script property ("6,10,12,15") replaces it. */
+  REFRESH_AT: [6, 10, 12, 15],
   CHUNK: 150,              // ids in one Chatter read
   REASON_DAYS: 30,          // an item open longer than this needs a note for the group, shared in the last REASON_DAYS, before a letter goes
   MAILS: 12,                // e-mails kept per open item

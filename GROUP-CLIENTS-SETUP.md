@@ -66,7 +66,7 @@ property and never in the code, since the `.gs` files are public.
 3. **Run `gcmSetup`** from the editor, with `GroupClients.gs` open (authorise
    when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses`,
    `Group Shares` and `Group Queue` tabs to the group sheet, says which sheet
-   it used, and installs the hourly refresh and the Monday 10:00 send. Then **run `gcmRefresh`** once to fill
+   it used, and installs the hourly run and the Monday 10:30 send. Then **run `gcmRefresh`** once to fill
    `Group Tasks`.
 4. **Deploy → Manage deployments → pencil → New version.** Never New
    deployment: that changes the address every page uses.
@@ -143,16 +143,23 @@ Salesforce (the `History` and `Mails` columns of `Group Tasks`):
 
 ## The week
 
-- **Every hour**, 6:00 to 18:00 Monday to Saturday, the refresh rereads
-  Salesforce. Staff can refresh by hand from the page.
-- **The letters go out by themselves at 10:00 on Monday** (`GCM.SEND_DAY`,
-  `GCM.SEND_HOUR`). During the week each staff member opens their groups marked
+- **Salesforce is read at 6:00, 10:00, 12:00 and 15:00**, Monday to Saturday
+  (`GCM.REFRESH_AT`, or the `GCM_REFRESH_AT` Script property, "6,10,12,15").
+  The read takes about five minutes; a time the timer misses is read by the
+  next hourly run. The hourly run itself, 6:00 to 18:00, only sends what is due
+  (the bills, the Monday team letter, a welcome, the renewal desk's follow-ups)
+  and takes seconds when nothing is. Staff can refresh by hand from the page.
+  None of it uses Claude: the AI runs only when a person presses for it.
+- **The letters go out by themselves at 10:30 on Monday** (`GCM.SEND_DAY`,
+  `GCM.SEND_HOUR`, `GCM.SEND_MIN`; 10:00 until 27 November 2026), just after the
+  10:00 read. The timer is a one-off set for that exact minute and made again
+  each week (a weekly timer only aims within 15 minutes). During the week each staff member opens their groups marked
   "Approve for Monday". For each one they check every item against Salesforce
   and the latest billing, tick what the group sees, and preview the letter
   (written from the group's own numbers, with an optional opening line of
   their own). Then they tick that they checked and press **Approve for
   Monday**; the group reads "Approved" on the board and the wall.
-  - **The 10:00 run.** It rereads Salesforce, rebuilds each approved letter
+  - **The 10:30 run.** It uses the 10:00 read (or rereads Salesforce if that is over an hour old), rebuilds each approved letter
     and sends it from support@. A letter waits, and its approver is told why,
     if something arrived after the check that nobody looked at. The hourly
     refresh catches up a missed run.

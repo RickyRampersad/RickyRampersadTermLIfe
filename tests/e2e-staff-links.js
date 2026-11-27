@@ -65,10 +65,10 @@ const clip = page => page.evaluate(() => navigator.clipboard.readText());
       // the group's own links
       ok('the group’s links are open to see, not folded away', await page.$eval('#lnk details.lkg', d => d.open));
       const gl = await page.$$eval('#lnk details.lkg .lku', els => els.map(e => e.value));
-      ok('five group links, each a full address', gl.length === 5 && gl.every(u => /^https:\/\/rickyrampersadbranch\.com\//.test(u)), gl.join(' '));
-      ok('the films are among them', ['/healthenrollment/', '/terminations/', '/pensionpresentationourprocess/'].every(p => gl.some(u => u.endsWith(p))));
+      ok('six group links, each a full address', gl.length === 6 && gl.every(u => /^https:\/\/rickyrampersadbranch\.com\//.test(u)), gl.join(' '));
+      ok('the films are among them', ['/groupmgt/employers/', '/healthenrollment/', '/terminations/', '/pensionpresentationourprocess/'].every(p => gl.some(u => u.endsWith(p))));
       ok('the walkthrough cut on the old layout is not offered until it is re-cut', !gl.some(u => u.endsWith('/groupmgt/yourpage/')));
-      await page.click('#lnk details.lkg [data-copy="lg1"]');
+      await page.click('#lnk details.lkg [data-copy="lg2"]');
       ok('Copy link puts the health enrolment film on the clipboard', (await clip(page)) === 'https://rickyrampersadbranch.com/healthenrollment/');
       ok('the toast says paste it into respond.io', /respond\.io/.test(await page.textContent('#toast')));
       // a member's own link
@@ -110,7 +110,7 @@ const clip = page => page.evaluate(() => navigator.clipboard.readText());
     await mock(page, W);
     await openGroup(page, false);
     await sleep(500);
-    ok('the group’s links are there to copy', (await page.$$('#lnk details.lkg .lku')).length === 5);
+    ok('the group’s links are there to copy', (await page.$$('#lnk details.lkg .lku')).length === 6);
     ok('no member links are read for a colleague’s group', !W.posts.some(p => p.act === 'invites') && /assistant branch manager or the branch manager/.test(await page.textContent('#lnkInv')));
     await ctx.close();
     console.log('\nlive');

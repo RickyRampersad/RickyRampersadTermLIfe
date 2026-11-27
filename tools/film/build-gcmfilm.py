@@ -34,11 +34,11 @@ import base64, io, json, os, pathlib, re, sys
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 FILM = sys.argv[1] if len(sys.argv) > 1 else 'client'
-KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1'}[FILM]
-SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots'}.get(FILM, 'gcmshots')))
+KEY = {'client': 'gcmc3', 'staff': 'gcms3', 'walk': 'gcmw', 'pension': 'pens2', 'henr': 'henr1', 'term': 'term1', 'employers': 'gcme1'}[FILM]
+SHOTS = pathlib.Path(os.environ.get('GCM_SHOTS', HERE / {'walk': 'gcmshots-walk', 'pension': 'pensionshots', 'henr': 'henrshots', 'term': 'termshots', 'employers': 'gcmshots-emp'}.get(FILM, 'gcmshots')))
 OUT = ROOT / 'groupclientmanagement' / ({'client': 'new-way-film.html', 'staff': 'staff-new-way-film.html', 'walk': 'what-you-see-film.html',
                                         'pension': 'company-pension-film.html', 'henr': 'health-enrolment-film.html',
-                                        'term': 'terminations-film.html'}[FILM])
+                                        'term': 'terminations-film.html', 'employers': 'a-year-with-us-film.html'}[FILM])
 TIMING = HERE / (KEY + '-timing.json')
 
 def b64(p, mime):
@@ -67,11 +67,11 @@ def img(name):
     _cache[name] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
     return _cache[name]
 
-MARK = b64(ROOT / 'groupclientmanagement' / 'gcm-mark.png', 'image/png')
+MARK = b64(ROOT / 'groupclientmanagement' / ('gcm-mark-teal.png' if FILM == 'employers' else 'gcm-mark.png'), 'image/png')
 PLEX = b64(HERE / 'fonts' / 'IBMPlexSans-latin.woff2', 'font/woff2')
 
 T = json.loads(TIMING.read_text()) if TIMING.exists() else {}
-N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11}[FILM]
+N_LINES = {'client': 11, 'staff': 19, 'walk': 15, 'pension': 14, 'henr': 12, 'term': 11, 'employers': 16}[FILM]
 #  importvox writes SECONDS; data-d is MILLISECONDS.
 DURS = [int(round(d * 1000)) for d in (T.get('durs') or [6.0] * N_LINES)]
 WORDS = [l.get('words', []) for l in T.get('lines', [])]
@@ -1363,17 +1363,220 @@ body.port .net{transform:scale(.72);transform-origin:top center;width:900px;marg
 body.port .clock{font-size:76px}body.port .big{font-size:110px}
 """
 
+# ------------------------------------------------------------------- a year with your group, for employers (27 Nov 2026)
+def employers():
+    """Asked for on 27 Nov 2026 as one film for employers: what we do every week, every month and at renewal, the
+       enrolment, the leavers, Guardian's easiConnect for their employees, the work behind it, and HELP 868. Sixteen
+       lines. The screens are the redesigned group page and the new staff Home on an invented branch (gcmshots-emp);
+       the easiConnect screen is Guardian's real sign-in page, with no member on it. In the branch teal."""
+    sc = []
+    def plain(name, d, w=520):
+        iw, ih = _size(name)
+        return ('<div class="lap" style="--kd:%.2fs"><div class="bar3"><i></i><i></i><i></i></div>'
+                '<div class="vp" style="width:%dpx;height:%dpx"><img src="%s" alt="" style="width:%dpx"></div></div>'
+                % (d, w, round(w * ih / iw), img(name), w))
+    # 1 the title
+    sc.append(S(1,
+        '<div class="mid"><img class="mk" src="%s" alt="">%s<h1>%s</h1>'
+        '<div class="sub" style="--kd:%.2fs">Group Life &middot; Group Health &middot; Pension &middot; all of it digital</div></div>'
+        % (MARK, eb('Ricky Rampersad Branch &middot; Guardian Life of the Caribbean', .4), kin('A year with your group', .7, hi=('group',)), at(1, 'digital')),
+        'blue title'))
+    # 2 the usual way
+    sc.append(S(2,
+        '<div class="mid">' + eb('The usual way', .15) +
+        '<h2>%s</h2>' % kin('Paper, phone calls and long e-mail chains.', .3) +
+        '<div class="olds">' +
+        ''.join('<div class="old" style="--kd:%.2fs"><b>%s</b><span>%s</span><s style="--kd:%.2fs"></s></div>' % (d, ICON[i], t, d + .5)
+                for d, i, t in ((at(2, 'paper'), 'doc', 'Forms printed, signed and scanned'),
+                                (at(2, 'phone'), 'phone', '&ldquo;Where is it?&rdquo; on the phone'),
+                                (at(2, 'chains'), 'mail', 'The same question, e-mailed three times'))) +
+        '</div><div class="strike" style="--kd:%.2fs">You ask, and then <b class="waitw" style="--kd:%.2fs">you wait.</b></div></div>' % (at(2, 'ask'), at(2, 'wait')),
+        'old2'))
+    # 3 our way
+    sc.append(split(3,
+        eb('Our way') +
+        '<h2>%s</h2>' % kin('One system, built in our branch.', at(3, 'Everything'), hi=('one', 'system,')) +
+        row('list', 'Everything we do for your group', at(3, 'system'), 'in one place, as it happens', 'ok') +
+        row('user', 'A real person behind every step', at(3, 'real'), 'with a name you know', 'ok'),
+        lap('l01-home.png', d=.3, n=3, moves=((at(3, 'system'), 'needs', 1.25),), marks=((at(3, 'step'), 'needs'),)),
+        'wide'))
+    # 4 the big one: joining, with a link of their own
+    sc.append(split(4,
+        eb('The big one: joining') +
+        row('mail', 'You send them a link of their own', at(4, 'link'), 'from your page, in a minute') +
+        row('phone', 'They fill in their part on their phone', at(4, 'phone'), 'their details, dependants and beneficiaries') +
+        row('tick2', 'They sign right on the screen', at(4, 'sign'), '', 'ok') +
+        row('lock', 'Their health answers go to Guardian, never to you', at(4, 'health'), '', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('n1-link-form.png', 'back', .2, n=4, w=200, marks=((at(4, 'link'), 'email'),)),
+            phone('p03-details.png', 'front', at(4, 'phone', lead=.4), n=4, moves=((at(4, 'dependants'), 'name', 1.2),))),
+        'wide2'))
+    # 5 then you approve, and it is routed
+    sc.append(split(5,
+        eb('Then you approve') +
+        row('check', 'You check their details and approve', at(5, 'approve'), 'and see where each new member stands', 'ok') +
+        row('doc', 'Guardian&rsquo;s enrolment form, filled in and sent', at(5, 'filled'), 'to Guardian&rsquo;s group team, our branch copied', 'ok') +
+        row('clock', 'Followed up every three working days', at(5, 'three'), 'by your account manager') +
+        row('list', 'On your page and your Monday report', at(5, 'Monday'), 'until it&rsquo;s done', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('n4-check.png', 'back', .2, n=5, w=200, marks=((at(5, 'check'), 'panel'),)),
+            phone('n5-gio.png', 'front', at(5, 'form', lead=.4), n=5, moves=((at(5, 'filled'), 'pdf', 1.2),))),
+        'wide2'))
+    # 6 every week
+    sc.append(split(6,
+        eb('Every week') +
+        '<div class="clock" style="--kd:%.2fs">Monday<span>10:30, one short report by e-mail</span></div>' % at(6, 'Monday') +
+        row('check', 'What we finished', at(6, 'finished'), '', 'ok') +
+        row('clock', 'What&rsquo;s still open, and who has it', at(6, 'open')) +
+        row('alert', 'What we need from you', at(6, 'need'), 'answered on your own page', 'warn'),
+        mailcard('Your weekly service report', 'Harbour Point Logistics Ltd &middot; Monday 23 November',
+                 '<p>Good morning, Pat. Here is where everything we are doing for your group stands.</p>'
+                 '<div class="cnts"><div><b class="cnt" data-to="6" data-at="%d">6</b><span>finished</span></div>'
+                 '<div><b class="cnt" data-to="4" data-at="%d">4</b><span>still open</span></div>'
+                 '<div class="w"><b class="cnt" data-to="2" data-at="%d">2</b><span>need you</span></div></div>'
+                 '<div class="btnish sm">Open your service page</div>'
+                 % (at(6, 'finished') * 1000, at(6, 'open') * 1000, at(6, 'need') * 1000), .5)))
+    # 7 pending, at the top
+    sc.append(split(7,
+        eb('What&rsquo;s pending') +
+        row('clock', 'Applications and increases', at(7, 'Applications'), 'Group Life, Group Health and Pension') +
+        row('alert', 'How many days each has been open', at(7, 'days'), 'past our target, in red', 'warn') +
+        row('users', 'Who it&rsquo;s waiting on', at(7, 'waiting'), 'Guardian Life, the employee, or you'),
+        phone('e04b-pending-cards.png', d=.3, n=7, moves=((at(7, 'days'), 'pend', 1.12),), marks=((at(7, 'waiting'), 'pend'),)),
+        'ph'))
+    # 8 answer and rate
+    sc.append(split(8,
+        eb('Your say') +
+        '<div class="tabs3">' + chip('Correct', at(8, 'answer'), 'ok') + chip('Needs a change', at(8, 'answer') + .3, 'tab') +
+        chip('Not ours', at(8, 'answer') + .6, 'tab') + '</div>' + stars(at(8, 'star')) +
+        '<div class="note big2" style="--kd:%.2fs">A real person reads every answer.</div>' % at(8, 'real'),
+        '<div class="duo">%s%s</div>' % (
+            phone('e02b-item-answer.png', 'back', .2, n=8, w=200, marks=((at(8, 'answer'), 'choices'),)),
+            phone('e03-rate.png', 'front', at(8, 'give', lead=.4), n=8, taps=((at(8, 'star'), 'star5'),))),
+        'wide2'))
+    # 9 every month
+    sc.append(split(9,
+        eb('Every month') +
+        '<div class="days2"><div style="--kd:%.2fs"><b>25<sup>th</sup></b><span>your bills reach us, and we check every line against our records</span></div>'
+        '<div style="--kd:%.2fs"><b>26<sup>th</sup></b><span>you get one clear statement of what&rsquo;s due</span></div></div>' % (at(9, 'check'), at(9, 'statement')),
+        phone('e07b-statement.png', d=.3, n=9, moves=((at(9, 'statement'), 'tiles', 1.25),), marks=((at(9, 'statement') + .4, 'tiles'),)),
+        'ph'))
+    # 10 looking ahead for your people
+    sc.append(split(10,
+        eb('Looking ahead for your people') +
+        row('cake', 'Turning sixty-five', at(10, 'sixty'), 'the group cover ends: we help them convert') +
+        row('grad', 'A child coming of age', at(10, 'child'), 'and leaving the family plan') +
+        row('sun', 'Retiring on your company pension', at(10, 'retires'), 'a projection, five years ahead') +
+        '<div class="note big2" style="--kd:%.2fs">No surprises.</div>' % at(10, 'surprises'),
+        phone('e05b-coming-rows.png', d=.3, n=10, moves=((at(10, 'sixty'), 'c65', 1.15), (at(10, 'child'), 'dep', 1.15), (at(10, 'retires'), 'ret', 1.1)),
+              marks=((at(10, 'sixty') + .5, 'c65'), (at(10, 'child') + .5, 'dep'), (at(10, 'retires') + .5, 'ret'))),
+        'ph'))
+    # 11 someone leaves
+    sc.append(split(11,
+        eb('Someone leaves') +
+        row('users', 'Search their name', at(11, 'search'), 'everyone on your plan, from our records') +
+        row('doc', 'Guardian&rsquo;s change form fills itself in', at(11, 'fills'), '', 'ok') +
+        row('check', 'We follow it through until it&rsquo;s done', at(11, 'follow'), 'chased every three working days', 'ok'),
+        '<div class="duo">%s%s</div>' % (
+            phone('c10-form-search.png', 'back', .2, n=11, w=200, taps=((at(11, 'search') + .3, 'result1'),)),
+            phone('c10b-form-pdf.png', 'front', at(11, 'form', lead=.5), n=11, moves=((at(11, 'fills'), 'pdf-page1', 1.15),))),
+        'wide2'))
+    # 12 easiConnect, for their employees
+    sc.append(split(12,
+        eb('For your employees') +
+        '<h2>%s</h2>' % kin('Guardian&rsquo;s own health portal.', at(12, 'portal')) +
+        row('list', 'Their claims', at(12, 'claims'), 'what was paid, and what&rsquo;s still in progress') +
+        row('shield', 'Their cover', at(12, 'cover')) +
+        row('mail', 'A request to Guardian', at(12, 'request'), 'straight from the portal') +
+        '<div class="note" style="--kd:%.2fs">easiconnect.myguardiangroup.com</div>' % at(12, 'sign'),
+        '<div class="easi">%s<div class="cap" style="--kd:%.2fs">Guardian&rsquo;s easiConnect sign-in page</div></div>' % (plain('x01-easi-signin.png', .3), at(12, 'Easy')),
+        'wide'))
+    # 13 renewal
+    steps = (('We start early', 'well before the renewal date', at(13, 'early')),
+             ('Your updated staff list', 'so the terms are priced on today&rsquo;s people', at(13, 'staff')),
+             ('Guardian&rsquo;s renewal terms', 'in good time, in plain words', at(13, 'terms')),
+             ('Anyone leaving the plan', 'helped to a plan of their own', at(13, 'leaving')))
+    sc.append(S(13,
+        '<div class="mid">' + eb('At renewal', .15) + '<h2>%s</h2>' % kin('No surprises at renewal time.', .3, hi=('no', 'surprises')) +
+        '<div class="four">' + ''.join('<div class="pt" style="--kd:%.2fs"><i>%d</i><b>%s</b><span>%s</span></div>' % (d, k + 1, t, u)
+                                       for k, (t, u, d) in enumerate(steps)) + '</div></div>',
+        'ren'))
+    # 14 behind it all
+    sc.append(split(14,
+        eb('Behind it all') +
+        row('tick2', 'Every request is a task with a name on it', at(14, 'task'), '', 'ok') +
+        row('list', 'Our branch sees what&rsquo;s moving, and what isn&rsquo;t', at(14, 'moving')) +
+        '<div class="punch" style="--kd:%.2fs">You never have to chase us.</div>' % at(14, 'never'),
+        lap('l04-staff-home.png', d=.3, n=14),
+        'wide'))
+    # 15 HELP 868
+    sc.append(split(15,
+        eb('Rather send a message?') +
+        '<div class="h868" style="--kd:%.2fs"><b>%s</b><div>HELP 868<span>on WhatsApp &middot; +1 868 435 7868</span></div></div>' % (at(15, 'Help'), ICON['chat']) +
+        row('check', 'Connected to our system', at(15, 'connected'), 'your message reaches the right person', 'ok'),
+        phone('e09-help.png', d=.3, n=15, marks=((at(15, 'WhatsApp'), 'wa'),)),
+        'ph'))
+    # 16 the close
+    sc.append(S(16,
+        '<div class="mid"><img class="mk sm" src="%s" alt="">'
+        '<h1>%s</h1>'
+        '<div class="sub" style="--kd:%.2fs">Your group, looked after by people who know your name.</div>'
+        '<div class="call" style="--kd:%.2fs">%s<b>HELP 868 on WhatsApp</b></div>'
+        '<div class="url" style="--kd:%.2fs">rickyrampersadbranch.com</div></div>'
+        % (MARK, kin('We don&rsquo;t wait for what&rsquo;s coming. We make it happen.', at(16, 'Because', lead=.3), hi=('make', 'it', 'happen.')),
+           at(16, 'looked'), at(16, 'people'), ICON['chat'], at(16, 'name')),
+        'blue close'))
+    return sc
+
+EMP_CSS = """
+.olds{display:flex;gap:18px;justify-content:center;margin:26px 0 6px}
+.old{position:relative;width:300px;padding:20px 18px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;text-align:left;
+  box-shadow:0 14px 30px rgba(15,42,94,.1);animation:wup .5s both;animation-delay:var(--kd)}
+.old b{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:#FCEDEA;color:#B4372B;margin-bottom:10px}
+.old b svg{width:24px;height:24px}
+.old span{display:block;font-size:19px;line-height:1.3;color:#142033}
+.old s{position:absolute;left:14px;right:14px;top:50%;height:3px;background:#B4372B;border-radius:2px;transform:scaleX(0);transform-origin:left;
+  animation:sx .45s cubic-bezier(.6,0,.2,1) both;animation-delay:var(--kd)}
+@keyframes sx{to{transform:scaleX(1)}}
+.days2{display:grid;gap:16px;margin-top:6px}
+.days2 div{display:flex;gap:18px;align-items:center;padding:18px 20px;border-radius:16px;background:#fff;border:1px solid #DCE3EE;
+  box-shadow:0 14px 30px rgba(15,42,94,.1);animation:wup .5s both;animation-delay:var(--kd)}
+.days2 b{font-size:58px;font-weight:600;color:#13408F;line-height:1;min-width:120px;letter-spacing:-2px}
+.days2 sup{font-size:22px;letter-spacing:0}
+.days2 span{font-size:20px;line-height:1.35;color:#142033}
+.easi{display:flex;flex-direction:column;align-items:center;gap:12px}
+.easi .cap{font-size:15px;color:#4B586C;animation:wup .5s both;animation-delay:var(--kd)}
+.h868{display:flex;gap:16px;align-items:center;margin:8px 0 18px;animation:pop .6s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--kd)}
+.h868 b{display:grid;place-items:center;width:74px;height:74px;border-radius:20px;background:#1FA463;color:#fff}
+.h868 b svg{width:38px;height:38px}
+.h868 div{font-size:52px;font-weight:600;color:#13408F;line-height:1;letter-spacing:-1px}
+.h868 span{display:block;font-size:19px;font-weight:500;color:#4B586C;letter-spacing:0;margin-top:8px}
+.sc.ren .four{margin-top:26px}
+.waitw{color:#B4372B;font-weight:600;display:inline-block;animation:wup .5s both;animation-delay:var(--kd)}
+"""
+
+TEAL = (('#0F2A5E', '#0A3350'), ('#13408F', '#0A4A52'), ('#1D5BC4', '#00728D'), ('#2A6FD8', '#0E93B0'), ('#EBF2FD', '#E3F3F5'),
+        ('#DCE8FB', '#DDF0F2'), ('#BFD3F7', '#BFE6EC'), ('#FFD36B', '#9FE7F2'), ('rgba(15,42,94', 'rgba(10,51,80'),
+        ('rgba(19,64,143', 'rgba(10,74,82'), ('rgba(29,91,196', 'rgba(0,114,141'), ('rgba(42,111,216', 'rgba(14,147,176'))
+def teal(t):
+    """The employers film is in the branch teal (the group look since 26 Nov 2026); the other films keep their blue."""
+    if FILM != 'employers':
+        return t
+    for a, b in TEAL:
+        t = t.replace(a, b).replace(a.lower(), b)
+    return t
+
 def main():
-    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term}[FILM]()
+    sc = {'client': client, 'walk': walk, 'staff': staff, 'pension': pension, 'henr': henr, 'term': term, 'employers': employers}[FILM]()
     if len(sc) != N_LINES:
         sys.exit('SCENES: %d scenes for %d lines' % (len(sc), N_LINES))
     title = {'client': 'Our new way of looking after your group', 'staff': 'Group client management, the new way', 'walk': 'What you see when you sign in',
              'pension': 'Company pensions, without the paperwork', 'henr': 'Joining your group health plan',
-             'term': 'When someone leaves your plan'}[FILM]
+             'term': 'When someone leaves your plan', 'employers': 'A year with your group'}[FILM]
     page = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
-            '<title>%s</title><style>' % title + (CSS + PEN_CSS).replace('__PLEX__', PLEX) + '</style></head><body>'
+            '<title>%s</title><style>' % title + teal((CSS + PEN_CSS + EMP_CSS).replace('__PLEX__', PLEX)) + '</style></head><body>'
             '<div id="stage" style="--total:%dms"><div class="dots grain"></div><div class="glow g1"></div><div class="glow g2"></div><i id="prog" class="grain"></i>' % sum(DURS)
-            + '\n'.join(sc) + '</div><div id="strip"></div><style>' + ''.join(EXTRA) + '</style>'
+            + teal('\n'.join(sc)) + '</div><div id="strip"></div><style>' + ''.join(EXTRA) + '</style>'
             '<script>'
             # one design, two frames: a wide 1280x720 layout or an upright 720x1280 one, scaled to the window
             '(function(){var p=innerHeight>innerWidth;document.body.classList.toggle("port",p);'
@@ -1392,7 +1595,7 @@ def main():
     #  render.js puts .act / .out on the live and outgoing section and reads .cnt for counters: a rule whose subject is
     #  one of those lands on the scene itself (the meeting film once clipped 420px off every frame that way).
     RESERVED = {'act', 'out', 'cnt', 'sc', 'in', 'rolling', 'grain'}
-    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS):
+    for m in re.finditer(r'([^{}]+)\{', CSS + PEN_CSS + EMP_CSS):
         for sel in m.group(1).split(','):
             subject = re.split(r'[\s>+~]+', sel.strip())[-1]
             if subject.startswith('@') or subject in ('from', 'to') or re.fullmatch(r'[\d.]+%?', subject):

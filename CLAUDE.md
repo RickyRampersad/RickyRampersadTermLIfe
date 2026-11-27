@@ -4177,6 +4177,17 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   through the composite resource (`gcmQuery_`), so a long one never meets URL
   Fetch's limit on an address. Salesforce ids are unique in their first 15
   characters; everything is keyed on those.
+- **Since 27 November 2026 the letters go at 10:30, and Salesforce is read at 6:00, 10:00, 12:00 and 15:00 only**
+  (*"why hourly this should be once a day only on morings … does this use tokens"*, then *"add 10am as well and move
+  letters to send 10:30am"*). The 5-minute Salesforce read (`gcmRefreshDue_`, `GCM.REFRESH_AT`, or the
+  `GCM_REFRESH_AT` Script property) runs at those hours; a time missed is read by the next hourly run, and a press of
+  Refresh counts. The hourly run stays for what must go on time (the bills, the Monday 11:00 team letter, a welcome,
+  the renewal desk) and takes seconds when nothing is due. **None of the timed runs uses Claude**: the AI runs only on a
+  person's press (Draft with AI, the billings door's read, a test being marked). The Monday send is a one-off timer
+  for exactly 10:30 (`gcmMondayTrigger_`, `gcm_monday_ms`), made again by the run and by any hourly run that finds it
+  missing or past, because a weekly timer only aims within fifteen minutes. `gcm.ping` answers `refreshAt`. The films
+  still say 10:00 until they are re-cut. `tests/test-group-refresh.js` covers it (34 checks). Everything below that
+  says 10:00 for the Monday letters now means 10:30.
 - **The letters go by themselves at 10:00 on Monday; staff approve, they do
   not send** (8 October 2026: "as we have automated our queries will now
   change to a monday at 10am to go out to client"). Until then Tuesday was send
@@ -4407,6 +4418,39 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
       check: "Forms going back" was heard "from going back", "what share" "what sherry", "done from" "done for".
       Accepted as heard: "group life" as "group live", "dependants" as "dependence", "never guessed" as "never guest"
       (each is on screen). Music: his corporate tech track, `loopbars.py` to the film's length.
+  - **A year with your group, for employers: `/groupmgt/employers/`** (27 November 2026: "a video to send off to the
+    employers ... what we do to manage the groups ... the renewal process, what is done monthly, how we send their
+    billings ... the Easy Connect portal ... the enrollment ... what the employer sees on their tasks weekly ... how they
+    rate us ... traditionally in Trinidad it is a manual process ... we are fully digital ... our WhatsApp", then "dont
+    have time do what you can"). `groupclientmanagement/a-year-with-us.mp4` (wide), poster `a-year-with-us.jpg`, built by
+    `build-gcmfilm.py employers` (key `gcme1`, 16 lines in `gcme1-lines.json`, screens in `tools/film/gcmshots-emp/`), 3 min.
+    - **The first film in the branch teal.** `teal()` repaints the builder's corporate blue for this film only (and the
+      gold highlight goes to light teal); the mark is `gcm-mark-teal.png`. The other group films keep their blue until
+      re-cut.
+    - **Digital enrolment is the centrepiece, in two scenes** (asked the same afternoon: "whats most important is out digital
+      enrollment this will be the hit ... routed speeding up the process and integrates with their weekly reports"): HR sends
+      the employee their own link from the page; the employee fills their part on their phone (dependants, beneficiaries),
+      signs on the screen, and their health answers go to Guardian, never to the employer; HR checks and approves; GIO001 is
+      filled and sent to Guardian's group team with the branch copied; the account manager's task is followed up every three
+      working days; and it shows on the page and in the Monday report until done. Screens `n1`..`n5` are the new page's Join
+      & leave on the invented group (the shooter is the enrolment film's, pointed at the new layout).
+    - **What else it shows:** the old way (paper, calls, e-mail chains); one system built in the branch; the Monday 10:30 report; pending at the top; answers and stars;
+      the 25th (bills checked) and the 26th (the statement); looking ahead for their people (turning 65, a child coming of age,
+      retiring on the company pension); leavers (EB0010, chased
+      every three working days); Guardian's easiConnect for employees; renewal; the work behind it (the new staff Home);
+      HELP 868 on WhatsApp; the close. Screens: the redesigned group page and staff Home on the invented branch.
+    - **easiConnect** is Guardian Life's own health portal (`easiconnect.myguardiangroup.com`). The film shows only its
+      public sign-in page and says what employees use it for (their claims, their cover, a request); nobody here has a
+      member's view of it, so nothing inside is drawn. If the branch sends screenshots of a sample member, re-cut scene 11.
+    - **Renewal steps come from the branch's own tasks** (ask for updated staff data, Guardian's renewal terms and the
+      renewal letter in good time, conversion for anyone leaving the plan), with no day counts, because none is
+      recorded. Add the timings when the branch states them.
+    - **Two lines were kept careful on purpose:** "built in our branch", not "the only digital branch"; and "why come
+      through our branch?" answered by what the branch does, never by knocking Guardian. It is employer-facing marketing,
+      so Guardian's written approval is still owed before it is posted, as for Xpress Life.
+    - Voice: Andrew Expressive, checked. "five stars" came back "five stores", "and to send a request" came back "a center
+      request", "how long each one has waited" came back "is weighted": all re-worded. Line 3 came back cut off at 2.5 s
+      and was voiced again unchanged. "Easy Connect" is spoken as two words; the screen shows easiConnect.
 - **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
   forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
   training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
@@ -4553,6 +4597,24 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
     `tab=billing` on Billing, `form=` on Join & leave.
   - `tests/e2e-group-portal.js` covers it (108 checks: phone, both tablets, laptop, every e-mail link).
   - The walkthrough film (`/groupmgt/yourpage/`) shows the old tabs until it is re-cut, so nothing points at it: the page's "How this page works" button and help card are hidden while `PAGE_FILM.href` is empty, and the staff page's copy-a-link panel leaves it out. Set the href and put the link back when the film is re-cut. The welcome film (`welcome.html`), `/groupmgt/client/`, `/healthenrollment/`, `/terminations/` and the training manual's `group-view.mp4` were also filmed on the old page.
+- **The staff page has the group portal's look** (27 November 2026: *"i was of the opinion the layout was changed"*, then
+  *"yes the staff page a new look"*). `groupclientmanagement/index.html` keeps every list, form and button; only the shell and the
+  order changed:
+  - **The shell**: a teal top bar (name, role, Salesforce as at, Refresh, Sign out) and the portal's menu: a side menu on a
+    laptop, a strip of icons on a tablet, a tab bar on a phone (`navDraw`, `go`, the page kept on the device as `rrb-gcm-page`).
+    Today: Home. Groups: Groups, Every account. Team: Team dashboard. Tools (under More on a phone): Billing review,
+    Premium dues, Training.
+  - **Home** (`homeHtml`): the greeting, six figures that open the groups they count (to approve, need a reason, past target,
+    waiting on the group, bills to do, on hold), **Needs you** (`needs`: each group's next job, most pressing first, with Open
+    or Billing review), **This week** (the letters, the bills, Rehearse now), the holds and what was done today. A support-team
+    member's numbers are their own groups (`scope`).
+  - **"To approve" means approvable**: `statusOf('due')` is now a letter due on a group that is set up and not on hold, so the
+    greeting, the figure and the Groups filter all give the same count.
+  - **A group** opens with its name and Billing review in a header card, its figures, then a bar that jumps to each part
+    (`secnav`): Letter, Items, Pending & coming up, Links to send, Record. The letter now comes before the items.
+  - The old tabs (Groups, Team dashboard · every account) are pages of their own; the dashboard no longer sits under the
+    accounts table. The films of the staff page show the old layout until they are re-cut.
+  - `tests/e2e-staff-shell.js` covers it (44 checks: laptop, tablet, phone), and `tests/e2e-staff-links.js` still passes.
 - **Every account on the team dashboard, and send or resend from the page** (14 October 2026: "the team dashboard so
   staff can view all the accounts and owners and they can also have the ability to resend or send … this has to pop
   and be a wow experience for the staff, client", then "a much more professional look, filters and scaling and colors

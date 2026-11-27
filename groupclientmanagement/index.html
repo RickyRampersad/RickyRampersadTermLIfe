@@ -12,26 +12,173 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="gcm.css?v=2026-11-23a">
 <script src="/rroperations/sso.js"></script>
+<style>
+/* The staff page's shell (27 November 2026: "yes the staff page a new look"): the group's own page's menu, in the same
+   teal. A side menu on a laptop, a strip of icons on a tablet, a tab bar along the bottom of a phone. */
+:root{--deep:#0A4A52}
+.skip{position:absolute;left:-999px;top:0;background:#fff;color:var(--ink);padding:8px 12px;z-index:60;border-radius:6px}.skip:focus{left:8px;top:8px}
+header.mast.top{padding:0;position:sticky;top:0;z-index:20;background:linear-gradient(100deg,var(--deep),var(--primary))}
+.topin{display:flex;align-items:center;gap:16px;min-height:62px;padding:8px 22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.whobox{margin-left:auto;display:flex;align-items:center;gap:10px}
+.whobox.hide{display:none}
+.wn{text-align:right;line-height:1.25;margin-right:4px}.wn b{display:block;font-size:15px;font-weight:600}.wn span{font-size:12.5px;color:rgba(255,255,255,.88)}
+.so{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.55);color:#fff;border-radius:8px;padding:7px 14px;font-weight:600;font-size:14px;cursor:pointer;min-height:42px}
+.so:hover{background:rgba(255,255,255,.26)}.so[disabled]{opacity:.6;cursor:wait}
+.so{white-space:nowrap}.brand{min-width:0}.bname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shell{display:flex;align-items:stretch;min-height:calc(100vh - 62px)}
+.colm{flex:1;min-width:0;display:flex;flex-direction:column}
+#app{width:100%;max-width:1240px;margin:0 auto;padding:24px 26px 40px;flex:1;outline:none;container:app/inline-size}
+.colm > .mhello{display:none}
+.side{width:236px;flex:none;background:#fff;border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:2px;position:sticky;top:62px;align-self:flex-start;height:calc(100vh - 62px);overflow:auto}
+.side.hide{display:none}
+.nlab{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 12px 6px}
+.side > .nlab:first-child{padding-top:4px}
+.nv{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:10px 12px;font-size:15.5px;font-weight:500;color:var(--ink2);cursor:pointer;min-height:46px;position:relative;text-decoration:none}
+.nv .i{width:21px;height:21px;flex:none}
+.nv:hover{background:var(--sunken)}
+.nv.on{background:var(--primarySoft);color:var(--deep);font-weight:600}
+.nv.on::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--primary)}
+.nv .bd{margin-left:auto;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;background:var(--primarySoft);color:var(--deep);line-height:1.5}
+.nv .bd.warn{background:var(--badBg);color:var(--badText)}
+.nv.more{display:none}
+.xs{display:contents}
+/* the sign-in: what the page is for on the left, the boxes on the right */
+.gatewrap{display:flex;flex-wrap:wrap;border-radius:16px;overflow:hidden;box-shadow:var(--shadowLg);background:#fff;margin:24px auto 8px;max-width:940px;border:1px solid var(--line)}
+.gl{flex:1 1 20rem;background:linear-gradient(150deg,var(--deep),var(--primary));color:#fff;padding:36px 34px}
+.gl h2{margin:0 0 10px;font-size:clamp(1.5rem,1.1rem + 1.3vw,2.1rem);font-weight:600;line-height:1.15;letter-spacing:-.015em}
+.gl > p{margin:0 0 18px;font-size:16px;color:rgba(255,255,255,.92)}
+.gl ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.gl li{display:flex;gap:10px;align-items:flex-start;font-size:15.5px;line-height:1.4}
+.gck{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none;margin-top:1px}
+.gatewrap .gate{flex:1 1 19rem;max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;background:#fff;padding:36px 34px}
+/* each page opens on its title and one line on what to do there */
+.phd{margin:0 0 18px}
+.phd h1{margin:0;font-size:28px;font-weight:600;letter-spacing:-.015em;color:var(--ink);line-height:1.2}
+.phd p{margin:5px 0 0;color:var(--muted);font-size:15.5px;max-width:70ch}
+#app .mhello.hero{display:block;background:linear-gradient(120deg,var(--deep),var(--primary));border-radius:14px;padding:22px 24px 20px;margin:0 0 16px;box-shadow:var(--shadow)}
+/* the figures: each one opens the groups it counts */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.kpi{text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 15px 13px;cursor:pointer;display:flex;flex-direction:column;gap:1px;box-shadow:var(--shadow);border-top:4px solid var(--primary);transition:transform .15s,border-color .15s;font:inherit;color:inherit}
+.kpi:hover{transform:translateY(-2px);border-color:var(--primaryLine);border-top-color:var(--primary)}
+.kpi .kv{font-size:28px;font-weight:600;color:var(--ink);letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .kl{font-size:14.5px;font-weight:600;color:var(--ink2)}
+.kpi .ks{font-size:13px;color:var(--muted)}
+.kpi.alert{border-top-color:var(--bad)}.kpi.alert:hover{border-top-color:var(--bad)}.kpi.alert .kv{color:var(--badText)}
+@container app (max-width:62rem){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container app (max-width:34rem){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* panels: a title bar and a body */
+.pnl{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);margin:0 0 16px;min-width:0}
+.pnl > .h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.pnl > .h h2{margin:0;font-size:17px;font-weight:600;color:var(--ink)}
+.pnl > .h > span{font-size:13px;color:var(--muted)}
+.pnl > .pb{padding:12px 18px 16px}
+.hgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start;margin:0 0 16px}
+.hgrid > .pnl,.hcol > .pnl,.hcol > .hold{margin:0}.hcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+@container app (max-width:52rem){.hgrid{grid-template-columns:1fr}}
+.so .sh{display:none}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:16px;margin:0 0 16px}
+.grid2 > .pnl{margin:0}
+.arow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.arow:first-child{border-top:0;padding-top:2px}
+.arow .t{flex:1 1 14rem;min-width:0}.arow .t b{display:block;font-weight:600;color:var(--ink)}.arow .t span{font-size:14px;color:var(--muted)}
+.tg{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;border-radius:6px;padding:2px 9px;white-space:nowrap}
+.tg.red{background:var(--badBg);color:var(--badText)}.tg.amb{background:var(--warnBg);color:var(--warn)}.tg.grn{background:var(--goodBg);color:var(--good)}
+.btn.s2{padding:7px 15px;font-size:14px;min-height:40px}
+.btn.sec{background:#fff;color:var(--primary);border-color:var(--primary)}.btn.sec:hover{background:var(--primarySoft);color:var(--deep)}
+.linkb{background:none;border:0;padding:0;color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline}
+.allok{display:flex;align-items:center;gap:10px;color:var(--good);font-weight:600;padding:6px 0}
+.ok1{width:28px;height:28px;border-radius:50%;background:#1F8F55;color:#fff;display:grid;place-items:center;flex:none;font-size:15px}
+.mini{flex:0 0 120px;height:10px;border-radius:99px;background:var(--track);overflow:hidden}.mini i{display:block;height:100%;background:var(--primary);border-radius:99px}
+#app .pnl .feed{margin:0}
+/* one group: its name and Billing review in a header, the parts of it one tap away */
+.gtop{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 20px 12px;margin:0 0 14px}
+.gtitle{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.gtl{min-width:0}.gtl .back{margin:0 0 4px}
+.gtitle h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.015em;line-height:1.2;overflow-wrap:anywhere}
+.gtop .chips{margin-top:8px}.gtop p.small{margin:8px 0 0}
+.secnav{position:sticky;top:62px;z-index:8;display:flex;gap:6px;overflow-x:auto;background:var(--canvas);padding:8px 0 10px;margin:0 0 6px;scrollbar-width:none}
+.secnav::-webkit-scrollbar{display:none}
+.secnav a{flex:none;display:inline-flex;align-items:center;gap:7px;text-decoration:none;font-weight:600;font-size:14.5px;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:99px;padding:7px 14px;min-height:40px}
+.secnav a:hover{border-color:var(--primary);color:var(--deep)}
+.secnav .sn{font-size:12px;background:var(--sunken);border-radius:99px;padding:0 7px}.secnav .sn.hot{background:var(--badBg);color:var(--badText)}
+.gsec{scroll-margin-top:124px;margin:0 0 8px}
+.sech{font-size:20px;font-weight:600;margin:26px 0 6px}
+/* a tablet: the menu is a strip of icons with their names under them */
+@media (min-width:640.02px) and (max-width:1023.98px){
+  .side{width:96px;padding:12px 6px}
+  .nlab{display:none}
+  .nv{flex-direction:column;gap:4px;font-size:12.5px;text-align:center;justify-content:center;padding:10px 4px;min-height:66px}
+  .nv .i{width:24px;height:24px}
+  .nv .bd{position:absolute;top:6px;right:12px;margin:0;padding:0 6px}
+  .nv.on::before{left:-6px}
+  #app{padding:20px 20px 30px}
+  .wn span{display:none}
+}
+/* a phone: a tab bar along the bottom, the tools under More */
+@media (max-width:640px){
+  .topin{padding:8px 14px;min-height:56px;gap:10px}
+  .wn{display:none}
+  .so{padding:6px 10px;min-height:40px;font-size:13px}
+  .so .lg{display:none}.so .sh{display:inline}
+  .bsub{display:none}
+  .bname{font-size:14.5px}.brand .mark{width:34px;height:34px}
+  .topin{flex-wrap:nowrap}
+  .kpi .ks{display:none}
+  .gtop + .tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .gtop + .tiles .tile{padding:10px 10px}.gtop + .tiles .tile b{font-size:21px}.gtop + .tiles .tile span{font-size:12px;line-height:1.3;display:block}
+  .shell{display:block}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:30;width:auto;flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:4px 4px 6px;box-shadow:0 -8px 22px -12px rgba(17,57,63,.4);overflow:visible}
+  .nlab{display:none}
+  .nv{flex:1 1 0;flex-direction:column;gap:3px;font-size:11.5px;padding:7px 2px 5px;min-height:58px;justify-content:center;text-align:center}
+  .nv .i{width:24px;height:24px}
+  .nv .bd{position:absolute;top:3px;left:calc(50% + 6px);margin:0;padding:0 6px;font-size:11px}
+  .nv.on::before{left:16px;right:16px;top:-4px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px}
+  .nv.more{display:flex}
+  .xs{display:none}
+  .side.open .xs{display:flex;flex-direction:column;position:fixed;left:10px;right:10px;bottom:78px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadowLg)}
+  .side.open .xs .nlab{display:block;padding:8px 10px 4px}
+  .side.open .xs .nv{flex-direction:row;font-size:15px;min-height:48px;justify-content:flex-start;text-align:left}
+  #app{padding:16px 14px 96px}
+  .phd h1{font-size:24px}
+  .gtitle h1{font-size:22px}
+  .secnav{top:56px}
+  .gsec{scroll-margin-top:112px}
+  .kpi .kv{font-size:23px}.kpi{padding:12px 13px}
+  .gatewrap{margin:4px auto}.gl,.gatewrap .gate{padding:26px 22px}
+  .toast{bottom:84px}
+}
+@media (prefers-reduced-motion:reduce){.kpi{transition:none}.kpi:hover{transform:none}}
+</style>
 </head>
 <body>
-<header class="mast"><div class="wrap mrow">
-  <div class="mark"><img src="gcm-mark-teal.png" alt=""></div>
-  <div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group Client Management</div></div>
-  <div class="mright" id="who"></div>
-</div><div class="wrap mhello" id="mhello"></div></header>
-
-<main class="wrap" id="app">
-  <form class="gate" id="gate" autocomplete="off">
-    <h1>Staff sign in</h1>
-    <p>Your agent number and password from the Agent Skill Bank. Everyone sees every account; you send for the groups you look after.</p>
-    <label for="gWho">Agent number</label>
-    <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427">
-    <label for="gCode">Password, or the branch code</label>
-    <input class="field" id="gCode" type="password" required>
-    <div class="err" id="gErr" role="alert"></div>
-    <button class="btn" type="submit" id="gGo" style="width:100%;margin-top:6px">Sign in</button>
-  </form>
-</main>
+<a class="skip" href="#app">Skip to the page</a>
+<header class="mast top"><div class="topin">
+  <div class="brand"><div class="mark"><img src="gcm-mark-teal.png" alt=""></div><div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group Client Management</div></div></div>
+  <div class="whobox hide" id="who"></div>
+</div></header>
+<div class="shell" id="shell">
+  <nav class="side hide" id="side" aria-label="Group client management"></nav>
+  <div class="colm">
+    <div class="mhello" id="mhello"></div>
+    <main id="app" tabindex="-1">
+      <div class="gatewrap">
+        <div class="gl"><h2>Group client management</h2><p>Everything the branch does for its group clients, in one place.</p>
+          <ul><li><span class="gck">✓</span>What needs you today, first</li><li><span class="gck">✓</span>Each group’s items, letter and people</li><li><span class="gck">✓</span>Every account, the team’s numbers and the bills</li></ul></div>
+        <form class="gate" id="gate" autocomplete="off">
+          <h1>Staff sign in</h1>
+          <p>Your agent number and password from the Agent Skill Bank. Everyone sees every account; you send for the groups you look after.</p>
+          <label for="gWho">Agent number</label>
+          <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427">
+          <label for="gCode">Password, or the branch code</label>
+          <input class="field" id="gCode" type="password" required>
+          <div class="err" id="gErr" role="alert"></div>
+          <button class="btn" type="submit" id="gGo" style="width:100%;margin-top:6px">Sign in</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 <dialog class="dlg" id="dlg" aria-labelledby="dlgT"><div class="dh"><h3 id="dlgT">Send</h3><button type="button" id="dlgX">Close</button></div><div class="db" id="dlgB"></div></dialog>
 
@@ -56,7 +203,8 @@ const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','
 const DAYS = ['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
 const pct = n => n == null ? '–' : n + '%';
-let AUTH = { code: '', who: '' }, BOARD = null, VIEW = 'board', GROUP = null, TAB = '';
+let AUTH = { code: '', who: '' }, BOARD = null, VIEW = 'board', GROUP = null, TAB = '', PAGE = '';
+try { PAGE = localStorage.getItem('rrb-gcm-page') || ''; } catch (e) {}
 let FILT = { owner: '', status: 'all' };
 try { const f = JSON.parse(localStorage.getItem('rrb-gcm-filter') || 'null'); if (f) FILT = Object.assign(FILT, f); } catch (e) {}
 function saveFilt() { try { localStorage.setItem('rrb-gcm-filter', JSON.stringify(FILT)); } catch (e) {} }
@@ -104,15 +252,16 @@ async function open_() {
 function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.reload(); }
 
 function head() {
-  $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.title || ROLE[BOARD.role] || 'Staff') +
-    (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
-    ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="training.html">Training</a> <a class="btn ghost" href="/premium-due/" title="The 45, 60, 75 and 90-day letters and the lapse notices, checked before 10:00">Premium dues</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
+  const first = String(BOARD.me || '').trim().split(/\s+/)[0] || '';
+  $('who').innerHTML = '<div class="wn"><b>' + esc(BOARD.me) + '</b><span>' + esc(BOARD.title || ROLE[BOARD.role] || 'Staff') + (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') + '</span></div>' +
+    '<button class="so" id="rf" type="button" title="Read Salesforce again now"><span class="lg">Refresh from Salesforce</span><span class="sh">Refresh</span></button><button class="so" type="button" onclick="signOut()">Sign out</button>';
+  $('who').classList.remove('hide');
   $('rf').onclick = refresh;
 }
 async function refresh() {
-  const b = $('rf'); b.disabled = true; b.textContent = 'Refreshing… about a minute';
+  const b = $('rf'), was = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="lg">Refreshing… about a minute</span><span class="sh">Refreshing…</span>';
   const r = await api({ action: 'gcm.refresh' });
-  if (!r.ok) { toast(r.error || 'Not refreshed', true); b.disabled = false; b.textContent = 'Refresh from Salesforce'; return; }
+  if (!r.ok) { toast(r.error || 'Not refreshed', true); b.disabled = false; b.innerHTML = was; return; }
   toast(r.said || 'Refreshed');
   const d = await api({ action: 'gcm.board' }); if (d.ok) BOARD = d;
   if (VIEW === 'group' && GROUP) openGroup(GROUP.group.key); else render();
@@ -137,30 +286,111 @@ function groupCard(g) {
       (g.account.welcome ? 'welcomed ' + esc(shortAt(g.account.welcome.at).replace(/,.*$/, '')) : 'not welcomed yet') + '</div>' : '') +
     '<div class="kv"><div><b>' + s.open + '</b>open</div><div><b>' + (s.oldest || 0) + 'd</b>oldest</div><div><b>' + pct(s.onTimePct) + '</b>on time</div><div><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b>rating</div></div></button>';
 }
+/* ---- the shell (27 November 2026: "yes the staff page a new look"): the group's own page's menu, a Home that says what
+   needs you, and the old tabs as pages of their own. Every list, form and button inside them is the same as before. ---- */
+const ICON = {
+  home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
+  groups: '<rect x="3.5" y="4" width="7" height="7" rx="1.5"/><rect x="13.5" y="4" width="7" height="7" rx="1.5"/><rect x="3.5" y="14" width="7" height="7" rx="1.5"/><rect x="13.5" y="14" width="7" height="7" rx="1.5"/>',
+  accounts: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r=".6"/>',
+  dash: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  billing: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  dues: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  train: '<path d="M3 7.5 12 4l9 3.5-9 3.5z"/><path d="M7 9.5v5c0 1.5 2.2 3 5 3s5-1.5 5-3v-5"/>',
+  more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
+};
+const ico = k => '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + '</svg>';
+const pageHead = (t, sub) => '<div class="phd"><h1>' + t + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>';
+/* the groups a person's own numbers count: their own for the support team, every group for the managers */
+function scope(d) { return d.groups.filter(g => d.role === 'staff' && d.groups.some(x => x.own) ? g.own : true); }
+function needs(d) {
+  const out = [];
+  scope(d).forEach(g => {
+    const s = g.stats;
+    if (s.hold) return;
+    if (!s.ready) { out.push({ g, w: 3, t: 'Not ready: ' + s.why, tg: ['Set up', 'amb'] }); return; }
+    if (s.needReason) out.push({ g, w: 0, t: s.needReason + (s.needReason === 1 ? ' item needs' : ' items need') + ' a reason for the group before the letter can go', tg: ['Reason', 'red'] });
+    else if (s.week === 'due') out.push({ g, w: 1, t: 'Check the items, preview the letter and approve it for ' + (d.nextSend || 'Monday'), tg: ['Approve', 'red'] });
+    if (s.late) out.push({ g, w: 2, t: s.late + (s.late === 1 ? ' item is' : ' items are') + ' past target', tg: ['Past target', 'amb'] });
+    if (typeof blTodo === 'function' && blTodo(g)) out.push({ g, w: 2, bill: true, t: 'This month’s bills still to check and approve', tg: ['Bills', 'amb'] });
+  });
+  return out.sort((a, b) => a.w - b.w || a.g.name.localeCompare(b.g.name));
+}
+function navDraw(on) {
+  const d = BOARD, side = $('side');
+  if (!d) return;
+  const n = needs(d).length, due = scope(d).filter(g => g.stats.week === 'due' && g.stats.ready && !g.stats.hold).length;
+  const b = (k, label, badge, href) => (href ? '<a class="nv" href="' + href + '">' : '<button type="button" class="nv' + (on === k ? ' on' : '') + '" data-page="' + k + '"' + (on === k ? ' aria-current="page"' : '') + '>') +
+    ico(k) + '<span class="nt">' + label + '</span>' + (badge ? '<span class="bd' + (badge.warn ? ' warn' : '') + '" title="' + esc(badge.title) + '">' + badge.t + '</span>' : '') + (href ? '</a>' : '</button>');
+  side.innerHTML = '<div class="nlab">Today</div>' + b('home', 'Home', n ? { t: n, warn: true, title: n + ' things need you' } : null) +
+    '<div class="nlab">Groups</div>' + b('groups', 'Groups', due ? { t: due, warn: true, title: due + ' to approve' } : null) + b('accounts', 'Every account') +
+    '<div class="nlab xh">Team</div>' + b('dash', 'Team dashboard') +
+    '<button type="button" class="nv more" data-more aria-expanded="false">' + ico('more') + '<span class="nt">More</span></button>' +
+    '<div class="xs"><div class="nlab">Tools</div>' + b('billing', 'Billing review', null, 'billing.html') + b('dues', 'Premium dues', null, '/premium-due/') + b('train', 'Training', null, 'training.html') + '</div>';
+  side.classList.remove('hide', 'open');
+  side.querySelectorAll('[data-page]').forEach(x => x.onclick = () => go(x.dataset.page));
+  const m = side.querySelector('[data-more]'); if (m) m.onclick = () => { const o = side.classList.toggle('open'); m.setAttribute('aria-expanded', String(o)); };
+}
+function go(page) {
+  PAGE = page; try { localStorage.setItem('rrb-gcm-page', page); } catch (e) {}
+  render();
+}
+function homeHtml(d) {
+  const mine = scope(d), list = needs(d), cnt = k => mine.filter(g => statusOf(g, k)).length;
+  const bills = typeof blTodo === 'function' ? mine.filter(blTodo).length : 0;
+  const ownerKey = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
+  const kpi = (n, label, sub, fs, alert) => '<button type="button" class="kpi' + (alert ? ' alert' : '') + '" data-fs="' + fs + '" data-fo2="' + ownerKey + '"><span class="kv">' + n + '</span><span class="kl">' + label + '</span><span class="ks">' + sub + '</span></button>';
+  let h = '<div class="mhello hero">' + hello(d) + '</div>';
+  h += '<div class="kpis">' + kpi(cnt('due'), 'to approve', 'for ' + esc(d.nextSend || 'Monday'), 'due', cnt('due') > 0) +
+    kpi(cnt('reason'), 'need a reason', 'before the letter can go', 'reason', cnt('reason') > 0) + kpi(cnt('late'), 'past target', 'groups with an item late', 'late', cnt('late') > 0) +
+    kpi(cnt('waiting'), 'waiting on the group', 'for their answer', 'waiting') +
+    '<button type="button" class="kpi' + (bills ? ' alert' : '') + '" data-bills="1"><span class="kv">' + bills + '</span><span class="kl">bills to do</span><span class="ks">' + (d.billingDay ? 'go ' + esc(d.billingDay.label) : 'this month') + '</span></button>' +
+    '<button type="button" class="kpi" data-fs="hold" data-fo2="' + ownerKey + '"><span class="kv">' + cnt('hold') + '</span><span class="kl">on hold</span><span class="ks">nothing goes to them</span></button></div>';
+  h += '<div class="hgrid"><section class="pnl"><div class="h"><h2>Needs you</h2><span>' + (list.length ? list.length + ' thing' + (list.length === 1 ? '' : 's') : 'all clear') + '</span></div><div class="pb">' +
+    (list.length ? list.slice(0, 10).map(x => '<div class="arow"><div class="t"><b>' + esc(x.g.name) + '</b><span>' + esc(x.t) + '</span></div><span class="tg ' + x.tg[1] + '">' + esc(x.tg[0]) + '</span>' +
+      (x.bill ? '<button class="btn s2 sec" type="button" data-bill="' + esc(x.g.key) + '">Billing review</button>' : '<button class="btn s2" type="button" data-g="' + esc(x.g.key) + '">Open</button>') + '</div>').join('') +
+      (list.length > 10 ? '<p class="small muted" style="margin:10px 0 0">And ' + (list.length - 10) + ' more. <button class="linkb" type="button" data-page="groups">See every group</button></p>' : '')
+      : '<div class="allok"><span class="ok1" aria-hidden="true">✓</span>Nothing waits on you right now.</div>') + '</div></section>';
+  const appr = mine.filter(g => g.stats.week !== 'due').length;
+  h += '<div class="hcol"><section class="pnl"><div class="h"><h2>This week</h2><span>' + esc(DAYS[d.dow] || '') + '</span></div><div class="pb">' +
+    (d.nextSend ? '<div class="arow"><div class="t"><b>The letters go by themselves</b><span>' + esc(d.nextSend) + ' · ' + appr + ' of ' + mine.length + ' approved or sent</span></div>' +
+      '<div class="mini" role="img" aria-label="' + appr + ' of ' + mine.length + '"><i style="width:' + (mine.length ? Math.round(100 * appr / mine.length) : 0) + '%"></i></div></div>' : '') +
+    (d.billingDay ? '<div class="arow"><div class="t"><b>The group bills go by themselves</b><span>' + esc(d.billingDay.label) + (d.billingDay.isDay ? ' (today)' : d.billingDay.daysTo ? ' · in ' + d.billingDay.daysTo + ' day' + (d.billingDay.daysTo === 1 ? '' : 's') : '') + (d.billingDay.live === false ? ' · still in test mode' : '') + '</span></div></div>' : '') +
+    (d.canRehearse ? '<div class="arow"><div class="t"><b>Test the run first</b><span>Every approved letter, as the run would write it, to its approver and the branch only, marked TEST.</span></div><button class="btn s2 sec" type="button" id="rh">Rehearse now</button></div>' : '') +
+    '</div></section>';
+  const today = mine.flatMap(g => (g.doneToday || []).map(x => Object.assign({ group: g.name }, x)));
+  h += holdHtml(d, false) + '<section class="pnl"><div class="h"><h2>Done today</h2><span>' + today.length + ' completed in Salesforce</span></div><div class="pb">' + (today.length
+    ? '<ul class="feed">' + today.slice(0, 12).map(x => '<li><b>' + esc(x.group) + '</b>: ' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + (x.by ? ' · ' + esc(x.by) : '') + '</span></li>').join('') + '</ul>'
+    : '<p class="muted" style="margin:0">Nothing completed on these groups in Salesforce yet today.</p>') + '</div></section></div></div>';
+  return h;
+}
 function render() {
   VIEW = 'board'; GROUP = null; head();
   const d = BOARD, app = $('app');
+  if (['home', 'groups', 'accounts', 'dash'].indexOf(PAGE) < 0) PAGE = 'home';
+  if (!d.analytics && PAGE === 'dash') PAGE = 'home';
+  if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
   let h = '';
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
   const allHeld = !!(d.hold && d.hold.all);
-  if (allHeld) h += holdHtml(d, true);   // every group on hold: said first, and the note that the letters go is left out
-  if (d.nextSend && !allHeld) h += '<div class="note info"><div><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div></div>';
-  if (d.billingDay) h += '<div class="note info"><div><b>The group bills go out by themselves on ' + esc(d.billingDay.label) + (d.billingDay.isDay ? ' (today)' : d.billingDay.daysTo ? ' (in ' + d.billingDay.daysTo + ' day' + (d.billingDay.daysTo === 1 ? '' : 's') + ')' : '') + '.</b> That is the 26th, or the next working day when the 26th is a weekend or a public holiday. Before then, open each account’s Billing review: upload the month’s bill on each line, check it against Salesforce, mark it reconciled and approve it with the PDF attached. At ' + (d.billingDay.reportHour || 13) + ':00 on ' + esc(d.billingDay.reportLabel ? d.billingDay.reportLabel.replace(/, \d+:\d+$/, '') : 'the 25th') + ' the branch manager has the report of who has worked each group. A bill approved after the ' + d.billingDay.hour + ':00 run goes at ' + d.billingDay.hour + ':00 the next working day, or with Send now, and the branch manager is told at 10:30.' + (d.billingLive ? '' : ' The bills are in test mode (gblGoLive switches them on).') + (d.billingDay.drive ? '' : ' <b>The Drive folder is not linked</b> (GCM_FORMS_FOLDER), so a bill cannot be approved with its PDF yet.') + '</div></div>';
-  if (d.canRehearse) h += '<div class="note"><b>Test the run first.</b> “Rehearse now” writes every approved letter exactly as the ' + esc(d.nextSend || 'Monday') + ' run would, and sends it only to the person who approved it and the branch, marked TEST, with one summary of what would go and what would wait. Nothing reaches a group, and nothing is marked as sent. <button class="btn ghost sm" type="button" id="rh">Rehearse now</button></div>';
-  if (!TAB) TAB = d.role === 'staff' ? 'groups' : 'dash';
-  if (!allHeld) h += holdHtml(d, TAB === 'dash');
-  if (!FILT.owner) FILT.owner = d.role === 'staff' && d.groups.some(g => g.own) ? 'mine' : 'all';
-  h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Team dashboard · every account</button></div>';
-  h += TAB === 'dash' && d.analytics ? accountsHtml(d) + dash(d.analytics) : groupsHtml(d);
+  if (allHeld) h += holdHtml(d, true);
+  if (PAGE === 'home') h += homeHtml(d);
+  else if (PAGE === 'groups') h += pageHead('Groups', 'Every group and where its letter stands. Open one to check its items, preview the letter and approve it for ' + esc(d.nextSend || 'Monday') + '.') + groupsHtml(d);
+  else if (PAGE === 'accounts') h += pageHead('Every account', 'Who looks after each group, who the letters go to and what has gone. Send, resend or put a group on hold from its row.') + (allHeld ? '' : holdHtml(d, true)) + accountsHtml(d);
+  else h += pageHead('Team dashboard', 'How the team’s groups are going, person by person and group by group.') + dash(d.analytics);
+  app.className = 'pg-' + PAGE;
   app.innerHTML = h;
-  $('mhello').innerHTML = hello(d);
+  $('mhello').innerHTML = '';
+  navDraw(PAGE);
   bindAccounts(app);
   app.querySelectorAll('[data-g]').forEach(b => b.onclick = () => openGroup(b.dataset.g));
-  app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; render(); });
-  app.querySelectorAll('[data-fo]').forEach(b => b.onclick = () => { FILT.owner = b.dataset.fo; saveFilt(); TAB = 'groups'; render(); });
+  app.querySelectorAll('[data-bill]').forEach(b => b.onclick = () => openBilling(b.dataset.bill));
+  app.querySelectorAll('[data-page]').forEach(b => b.onclick = () => go(b.dataset.page));
+  app.querySelectorAll('[data-bills]').forEach(b => b.onclick = () => { ACC.show = 'billing'; if (typeof saveAcc === 'function') saveAcc(); go('accounts'); });
+  app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => go(b.dataset.t === 'dash' ? 'accounts' : 'groups'));
+  app.querySelectorAll('[data-fo]').forEach(b => b.onclick = () => { FILT.owner = b.dataset.fo; saveFilt(); go('groups'); });
   if ($('grOwner')) $('grOwner').onchange = () => { FILT.owner = $('grOwner').value; saveFilt(); render(); };
-  app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { FILT.status = b.dataset.fs; if (b.dataset.fo2) FILT.owner = b.dataset.fo2; saveFilt(); TAB = 'groups'; render(); });
+  app.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { FILT.status = b.dataset.fs; if (b.dataset.fo2) FILT.owner = b.dataset.fo2; saveFilt(); go('groups'); });
   app.querySelectorAll('[data-gn]').forEach(b => b.onclick = () => { const g = BOARD.groups.find(x => x.name === b.dataset.gn); if (g) openGroup(g.key); });
   if ($('rh')) $('rh').onclick = rehearse;
   app.querySelectorAll('[data-hold]').forEach(b => b.onclick = () => openHold(b.dataset.hold, b.dataset.on === '1'));
@@ -175,7 +405,7 @@ function holdHtml(d, full) {
   if (!h) return '';
   const groups = h.groups || [], can = !!d.canHold;
   if (h.all) return '<div class="hold on" role="status"><div><b>Every group letter is on hold</b> since ' + esc(h.all.at || '') + (h.all.by ? ', by ' + esc(h.all.by) : '') +
-    (h.all.why ? ': “' + esc(h.all.why) + '”' : '') + '.<div class="small">No letter, welcome or reminder goes to any group, and nobody is chased. An approved letter waits: it goes on Monday only if the hold is lifted before 10:00. Bills are not affected.</div></div>' +
+    (h.all.why ? ': “' + esc(h.all.why) + '”' : '') + '.<div class="small">No letter, welcome or reminder goes to any group, and nobody is chased. An approved letter waits: it goes on Monday only if the hold is lifted before 10:30. Bills are not affected.</div></div>' +
     (can ? '<button class="btn" type="button" data-hold="all" data-on="0">Lift the hold</button>' : '') + '</div>';
   let x = '';
   if (groups.length) x += '<div class="hold some" role="status"><div><b>' + groups.length + ' group' + (groups.length === 1 ? ' is' : 's are') + ' on hold</b>: nothing goes to ' + (groups.length === 1 ? 'it' : 'them') + ' and nobody is chased.' +
@@ -191,7 +421,7 @@ function openHold(what, on) {
   $('dlgT').textContent = (on ? 'Put on hold · ' : 'Lift the hold · ') + (all ? 'every group' : nm);
   let h = on
     ? '<p>' + (all ? 'Nothing goes to <b>any group</b>' : 'Nothing goes to <b>' + esc(nm) + '</b>') + ' until you lift it: no weekly letter, no welcome, no reminder to rate us, and no letter sent again. The 10:30 run asks nobody why, and opens no task. ' +
-      'A letter already approved for Monday waits: it goes only if the hold is lifted before 10:00, otherwise it is approved again after. Bills are not part of the hold.</p>' +
+      'A letter already approved for Monday waits: it goes only if the hold is lifted before 10:30, otherwise it is approved again after. Bills are not part of the hold.</p>' +
       '<label for="hdWhy" style="display:block;font-weight:600;margin:12px 0 4px">Why? The team sees this</label><textarea class="field" id="hdWhy" rows="2" maxlength="300" style="width:100%;min-height:64px"></textarea>' +
       '<div class="chips" style="margin:6px 0 12px">' + HOLD_WHY.map(w => '<button class="chip" type="button" data-hw="' + esc(w) + '">' + esc(w) + '</button>').join('') + '</div>' +
       '<div class="row"><button class="btn" type="button" id="hdGo" disabled>' + (all ? 'Hold every group' : 'Put ' + esc(nm) + ' on hold') + '</button><button class="btn ghost" type="button" onclick="dlg.close()">Cancel</button></div>'
@@ -225,7 +455,8 @@ async function rehearse() {
 const STATUS = [['all', 'All'], ['due', 'To approve'], ['queued', 'Approved'], ['sent', 'Sent this week'], ['late', 'Past target'], ['reason', 'Needs a reason'], ['waiting', 'Waiting on the group'], ['notready', 'Not ready'], ['hold', 'On hold']];
 function statusOf(g, k) {
   const s = g.stats;
-  return k === 'all' || (k === 'due' && s.week === 'due') || (k === 'queued' && s.week === 'queued') || (k === 'sent' && s.week === 'sent') ||
+  /* "To approve" is the groups that can be approved now: not on hold and set up (the same count as Home's figure) */
+  return k === 'all' || (k === 'due' && s.week === 'due' && s.ready) || (k === 'queued' && s.week === 'queued') || (k === 'sent' && s.week === 'sent') ||
     (k === 'late' && s.late > 0) || (k === 'reason' && s.needReason > 0) || (k === 'waiting' && s.waiting > 0) || (k === 'notready' && !s.ready && !s.hold) || (k === 'hold' && !!s.hold);
 }
 function ownerOf(g, k) { return k === 'all' || (k === 'mine' && g.own) || g.assigned === k; }
@@ -313,8 +544,7 @@ function accountsHtml(d) {
   const all = d.groups, n = all.length, cnt = f => all.filter(f).length;
   const meter = (v, label) => '<div class="meter' + (n && v === n ? ' done' : '') + '"><div class="top"><b>' + v + ' <small>of ' + n + '</small></b><span class="pct">' + (n ? Math.round(100 * v / n) : 0) + '%</span></div><div class="small" style="margin-top:2px">' + esc(label) +
     '</div><div class="track" role="img" aria-label="' + esc(label + ': ' + v + ' of ' + n) + '"><div class="fill" style="width:' + (n ? Math.round(100 * v / n) : 0) + '%"></div></div></div>';
-  let h = '<h2 style="margin-top:22px">Every account <span class="muted small">who looks after it, who the letters go to, and what has gone</span></h2>' +
-    '<div class="meters">' + meter(cnt(g => g.account.welcome), 'welcomed with the film') + meter(cnt(g => g.stats.week !== 'due'), 'approved or sent for ' + (d.nextSend || 'Monday')) +
+  let h = '<div class="meters">' + meter(cnt(g => g.account.welcome), 'welcomed with the film') + meter(cnt(g => g.stats.week !== 'due'), 'approved or sent for ' + (d.nextSend || 'Monday')) +
     (d.billingDay && typeof blDone === 'function' ? meter(cnt(g => blDone(g)), 'bills approved or sent for ' + d.billingDay.date) : '') +
     meter(cnt(g => g.account.rate && g.account.rate.kind === 'rated'), 'rated us for their last letter') + meter(cnt(g => g.assigned && g.ownerActive && !g.account.mailWhy && g.stats.ready), 'ready: owner, contact, list bill and code') + '</div>';
   const owners = [...new Set(all.map(g => g.assigned).filter(Boolean))].sort();
@@ -625,33 +855,50 @@ async function openGroup(key) {
 function drawGroup() {
   const d = GROUP, g = d.group, s = d.stats;
   $('mhello').innerHTML = '';
-  let h = '<button class="back" type="button" id="bk">← All groups</button><button class="btn" type="button" id="bkBill" style="float:right;margin-top:10px">Billing review</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
+  const head = '<div class="gtitle"><div class="gtl"><button class="back" type="button" id="bk">← Groups</button><h1>' + esc(g.name) + '</h1></div><button class="btn" type="button" id="bkBill">Billing review</button></div>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
     (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
     (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
-    accountBar(d) + linksHtml(d) +
-    pendHtml(d) + comingHtml(d) +
-    (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
+    '';
+  const acct = accountBar(d), links = linksHtml(d), people = pendHtml(d) + comingHtml(d), year = yearHtml(d);
+  const notes = (d.canAct === false ? '<div class="note">Looked after by <b>' + esc(g.assigned || 'nobody') + '</b>. You can read everything here and leave a comment for the team on any item; approving the letter and anything the group sees is for ' + esc(g.assigned ? g.assigned.split(' ')[0] + ', ' : '') + 'the assistant branch manager or the branch manager.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
-    '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
+    '';
+  const tiles = '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
     '<div class="tile"><b>' + s.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(s.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b><span>rating</span></div></div>' +
-    '<div class="drawer" id="sendBox"><h3 style="margin-top:0">Monday’s letter <span class="muted small">goes out by itself ' + esc(s.nextSendLabel || '') + '</span></h3>' +
+    '';
+  const letter = '<div class="drawer" id="sendBox"><h3 style="margin-top:0">Monday’s letter <span class="muted small">goes out by itself ' + esc(s.nextSendLabel || '') + '</span></h3>' +
     (s.approved ? '<div class="note" style="background:var(--goodBg);border-color:#BFE3CB"><b>Approved by ' + esc(s.approved.by) + '</b> on ' + esc(s.approved.at) + '. It goes ' + esc(s.approved.for) + ', written again from Salesforce at that moment. A new item before then holds it for you to look at.' + (d.canAct === false ? '' : ' <button class="btn ghost sm" type="button" id="unap">Cancel the approval</button>') + '</div>' : '') +
     (s.needReason ? '<div class="note bad">The letter can go once every item open more than ' + d.reasonDays + ' days has a note for the group, written in the last ' + d.reasonDays + ' days: ' + s.needReason + ' still need' + (s.needReason === 1 ? 's' : '') + ' one. Each is marked below' + (d.ai ? ', with “Draft with AI” to start you off' : '') + '.</div>' : '') + (s.week === 'sent' ? '<p class="small">Sent this week (' + esc(s.sentThisWeek) + '). Approving now sets up next Monday’s letter.</p>' : '') +
     (d.canAct === false ? '<input type="hidden" id="intro" value="' + esc(d.approvedIntro || '') + '">' : '<label for="intro">Your own opening line (optional)</label><textarea class="field" id="intro" maxlength="1200" placeholder="Anything you want to say first, in your own words.">' + esc(d.approvedIntro || '') + '</textarea>') +
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="pv">Preview the letter</button></div><div id="pvBox"></div></div>' +
-    '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
-    '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
-    yearHtml(d) +
-    '<h3>What went to the group</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li><span class="chip' + (/^failed/i.test(x.status) ? ' bad' : x.kind === 'welcome' ? ' good' : '') + '">' + ({ welcome: 'Welcome', again: 'Sent again', letter: 'Weekly letter', reminder: 'Star reminder' }[x.kind] || 'Letter') + '</span> ' +
+    '';
+  const items = '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
+    '';
+  const done = '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
+    '';
+  const hist = '<h3>What went to the group</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li><span class="chip' + (/^failed/i.test(x.status) ? ' bad' : x.kind === 'welcome' ? ' good' : '') + '">' + ({ welcome: 'Welcome', again: 'Sent again', letter: 'Weekly letter', reminder: 'Star reminder' }[x.kind] || 'Letter') + '</span> ' +
       esc(x.at) + ' · ' + esc(x.staff) + (x.kind === 'letter' ? ' · ' + x.items + ' items' : '') + (x.to ? ' · to ' + esc(x.to) : '') + (/^failed/i.test(x.status) ? ' · <b style="color:var(--badText)">' + esc(x.status) + '</b>' : '') + '</li>').join('') + '</ul>' : '<p class="muted">Nothing yet.</p>') +
     (Array.isArray(d.views) ? '<h3>Who opened their page</h3>' + (d.views.length ? '<ul class="feed">' + d.views.map(v => '<li>' + esc(v.at) + (v.name ? ' · <b>' + esc(v.name) + '</b>' : ' · <span class="muted">name not known until they answer from that device</span>') +
       (DEV[v.device] ? ' · ' + DEV[v.device] : '') + (v.from ? ' · from the ' + esc(v.from) : '') + '</li>').join('') + '</ul>' : '<p class="muted">No sign-in on record yet.</p>') : '') +
     '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.about ? ' <span class="muted">for ' + esc(r.about) + '</span>' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
+  /* the group in sections, one bar to jump between them (27 November 2026: "the staff page a new look") */
+  const secs = [['sLetter', 'Letter', s.week === 'due' && s.ready ? '!' : ''], ['sItems', 'Items', String(d.items.length)], people ? ['sPeople', 'Pending & coming up', ''] : null,
+    ['sLinks', 'Links to send', ''], ['sRecord', 'Record', '']].filter(Boolean);
+  let h = '<div class="gtop">' + head + '</div>' + tiles +
+    '<nav class="secnav" aria-label="Parts of this group">' + secs.map(([id, label, n]) => '<a href="#' + id + '" data-sec="' + id + '">' + esc(label) + (n ? '<span class="sn' + (n === '!' ? ' hot' : '') + '">' + esc(n) + '</span>' : '') + '</a>').join('') + '</nav>' +
+    notes + acct +
+    '<section class="gsec" id="sLetter">' + letter + '</section>' +
+    '<section class="gsec" id="sItems">' + items + done + '</section>' +
+    (people ? '<section class="gsec" id="sPeople">' + people + '</section>' : '') +
+    '<section class="gsec" id="sLinks">' + links + '</section>' +
+    '<section class="gsec" id="sRecord"><h2 class="sech">Record</h2>' + year + hist + '</section>';
   $('app').innerHTML = h;
   $('bk').onclick = render;
+  $('app').querySelectorAll('[data-sec]').forEach(a => a.onclick = e => { e.preventDefault(); const t = $(a.dataset.sec); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); });
+  navDraw('groups');
   if ($('bkBill')) $('bkBill').onclick = () => openBilling(g.key);
   bindPend();
   bindLinks(d);
@@ -681,6 +928,7 @@ const SITE = 'https://rickyrampersadbranch.com';
 const LINKS = [
   { t: 'Their service page', u: SITE + '/groupclientmanagement/client.html', n: 'They sign in with their list bill and access code.' },
   /* 'What they see when they sign in' comes back here once it is re-cut on the 26 November layout */
+  { t: 'A year with your group · film for employers', u: SITE + '/groupmgt/employers/', n: '3 min' },
   { t: 'Joining the group health plan · film', u: SITE + '/healthenrollment/', n: '1 min 42 s' },
   { t: 'When someone leaves the plan · film', u: SITE + '/terminations/', n: '1 min 30 s' },
   { t: 'Company pensions · film', u: SITE + '/pensionpresentationourprocess/', n: '2 min 25 s' },
