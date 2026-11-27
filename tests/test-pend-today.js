@@ -169,6 +169,13 @@ ok('the system\'s ACTION REQUIRED is not an answer', CV.waitList.some(r => r.pol
 ok('an agent\'s My day note answered by Azariah is answered, by her', CV.doneList.some(r => r.pol === '0003' && r.by === 'Azariah'), JSON.stringify(CV.doneList));
 ok('how long the branch took to answer, the median', CV.medianHours === 4, String(CV.medianHours));
 ok('each agent\'s last word and how many of theirs wait', CV.agents.some(a => a.agent === 'Varun Seegolam' && a.waiting === 1), JSON.stringify(CV.agents));
+console.log('\nWaiting on the agent:\n');
+const HO2 = M.hold, VH = HO2 && HO2.agents.find(a => a.agent === 'Varun Seegolam');
+ok('every agent with a case whose next move is theirs', HO2 && !HO2.error && VH, JSON.stringify(HO2 && (HO2.error || HO2.agents.map(a => a.agent))));
+ok('the cases that could settle but wait on them, with what is missing and the premium', VH.settleN >= 1 && VH.settle[0].missing.length >= 1 && typeof VH.settle[0].prem === 'number', JSON.stringify(VH.settle));
+ok('all their outstanding items by code, with the oldest', VH.codes.some(c => c.code === 'FUTPY' || c.code === 'PRADD') && VH.items >= 2, JSON.stringify(VH.codes));
+ok('their last word in Chatter and whether we answered', 'lastSaid' in VH && VH.waitingOnUs === 1, JSON.stringify([VH.lastSaid, VH.waitingOnUs]));
+ok('no client and no full policy number', !/50000000\d\d|Kavita|Sharma/.test(JSON.stringify(HO2)));
 console.log('\nThe morning brief:\n');
 const B = L.brief, step = k => B.steps.find(x => x.k === k);
 ok('seven steps, in the order support works them', B && !B.error && B.steps.map(x => x.k).join(',') === 'save,settle,allin,ho,expiry,never,agents', JSON.stringify(B && (B.error || B.steps.map(x => [x.k, x.n]))));

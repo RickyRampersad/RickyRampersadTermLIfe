@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-11-27z8';
+var SCRIPT_VERSION = '2026-11-27z9';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -18217,8 +18217,9 @@ function wallPendMorning_(day, P, numOf, chase, settleIntel) {
   var acc = null; try { acc = wallAccount_(day, P, chase, today, ids, sinceHO); } catch (e) { acc = { error: String(e && e.message || e) }; }
   var focus = null; try { focus = wallFocus_(day, P, chase, today, ids, sinceHO, settleIntel, todoOf); } catch (e) { focus = { error: String(e && e.message || e) }; }
   var conv = null; try { conv = wallConversations_(day, P, chase, ids, CODESET); } catch (e) { conv = { error: String(e && e.message || e) }; }
+  var hold = null; try { hold = wallAgentHold_(day, P, queue, chase); } catch (e) { hold = { error: String(e && e.message || e) }; }
   var byAgent = null; try { byAgent = wallAgentPend_(day, P, today, queue, chase); } catch (e) { byAgent = { error: String(e && e.message || e) }; }
-  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, acc: acc, focus: focus, conv: conv, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
+  return { at: twelve_(hhmm_(new Date())), desks: desks, started: started, of: desks.length, inNow: inNow, blocks: blocks, byAgent: byAgent, acc: acc, focus: focus, conv: conv, hold: hold, settle: settle, action: action, uw: { n: uwSays.length, list: uwSays.slice(0, WALL_MORN.UW) },
            firstAt: ev.length ? at(ev[0].at) : '', touches: ev.length, cases: Object.keys(today).length,
            opened: ev.filter(function (e) { return e.kind === 'opened'; }).length, notes: ev.filter(function (e) { return e.kind === 'note'; }).length, emails: ev.filter(function (e) { return e.kind === 'email'; }).length,
            stream: ev.slice(-WALL_MORN.STREAM).reverse().map(row),
@@ -18432,6 +18433,40 @@ function wallBrief_(day, P, MV, S, chase, numOf) {
   return { steps: steps, move: { receivedWeek: recWeek, receivedToday: recToday, allInWeek: allInWeek, settledWeek: setWeek,
     onTheWall: Object.keys(agMove).map(function (a) { return agMove[a]; }).sort(function (a, b) { return (b.settled * 3 + b.items) - (a.settled * 3 + a.items); }).slice(0, 10),
     speed: speed.slice(0, 12) } };
+}
+
+/* ── Waiting on the agent: what could have settled, and what is missing (27 November 2026, night) ──
+ *  Ricky: "have whole persons accountable, see what could have been settled but it's waiting on the agent ... and from the agent
+ *  who should have been on the wall and what's more or less missing." Every agent with a case whose next move is theirs: the
+ *  cases one step from a policy (the premium only, approved with items left, or one item left) that wait on them, each with the
+ *  items missing (code, name, working days since asked) and its annual premium; all their outstanding items by code with the
+ *  oldest; their last word in Chatter and whether the branch answered. Full names here (the pending feed marks anyone who has
+ *  left as inactive; the page leaves them out of the agents' roll). Sorted by premium blocked, then items owed. */
+var WALL_HOLD = { CASES: 6, CODES: 6 };
+function wallAgentHold_(day, P, queue, chase) {
+  var near = {}; (queue || []).forEach(function (q) { if (q._pol) near[q._pol] = q.why; });
+  var wd = function (iso) { return iso ? pendFuWorkdaysSince_(iso, day) : 0; };
+  var ag = {}, tot = { agents: 0, cases: 0, prem: 0, items: 0 };
+  Object.keys(P).forEach(function (k) {
+    var p = P[k], seen = {}, mine = p.items.filter(function (it) { if (!/\bagent\b/i.test(it.who)) return false; var ik = it.code || it.name; if (seen[ik]) return false; seen[ik] = 1; return true; });
+    if (!mine.length) return;
+    var a = ag[p.ag] = ag[p.ag] || { agent: String(p.ag || '').trim(), cases: 0, items: 0, oldest: 0, prem: 0, settle: [], codes: {}, said: '', waiting: 0 };
+    a.cases++; a.items += mine.length;
+    mine.forEach(function (it) { var d = wd(it.asked); a.oldest = Math.max(a.oldest, d); var c = a.codes[it.code || it.name] = a.codes[it.code || it.name] || { code: it.code, name: it.name, n: 0, oldest: 0 }; c.n++; c.oldest = Math.max(c.oldest, d); });
+    var c = (chase || {})[k] || {}; if (c.said && c.said.at > a.said) a.said = c.said.at; if (c.said && (!c.post || c.post.at < c.said.at)) a.waiting++;
+    if (near[k]) { var prem = Math.round(p.ann || (p.mprem || 0) * 12);
+      a.prem += prem; a.settle.push({ pol: String(k).slice(-4), why: near[k], prem: prem, days: p.days,
+        missing: mine.map(function (it) { return { code: it.code, name: it.name, days: wd(it.asked) }; }) }); }
+  });
+  var nowMs = Date.now(), ago = function (iso) { if (!iso) return ''; var m = Math.max(0, Math.round((nowMs - new Date(iso + 'Z').getTime()) / 60000)); return m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
+  var list = Object.keys(ag).map(function (k) { var a = ag[k];
+    tot.agents++; tot.cases += a.settle.length; tot.prem += a.prem; tot.items += a.items;
+    return { agent: a.agent, cases: a.cases, items: a.items, oldest: a.oldest, prem: a.prem, settleN: a.settle.length,
+      settle: a.settle.sort(function (x, y) { return y.prem - x.prem; }).slice(0, WALL_HOLD.CASES),
+      codes: Object.keys(a.codes).map(function (c) { return a.codes[c]; }).sort(function (x, y) { return y.n - x.n || y.oldest - x.oldest; }).slice(0, WALL_HOLD.CODES),
+      lastSaid: a.said ? ago(a.said) : '', waitingOnUs: a.waiting }; })
+    .sort(function (x, y) { return y.prem - x.prem || y.settleN - x.settleN || y.items - x.items; });
+  return { totals: tot, agents: list };
 }
 
 /* ── The conversations: the agent spoke, has the branch answered? (27 November 2026, night) ──

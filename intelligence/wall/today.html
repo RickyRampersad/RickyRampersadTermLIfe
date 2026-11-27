@@ -90,8 +90,9 @@
   .qrt div{font:600 .8rem/1.3 var(--fb);color:var(--dim);width:11.5rem}
   .qrt b{display:block;font:800 1rem var(--fd);color:var(--ink)}
   .qrt a{color:var(--teal);font-weight:700;text-decoration:none;word-break:break-all}
-  .tabs{display:flex;flex:none;gap:.3rem;margin-left:.8rem}
-  .tabs span{white-space:nowrap;font:800 .74rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:.3rem .5rem;border-radius:.6rem;border:1px solid var(--line)}
+  header{flex-wrap:wrap;row-gap:.5rem}
+  .tabs{display:flex;flex:none;gap:.35rem;margin-left:0;order:3;width:100%}
+  .tabs span{white-space:nowrap;font:800 .82rem var(--fd);letter-spacing:.07em;text-transform:uppercase;color:var(--faint);padding:.32rem .7rem;border-radius:.6rem;border:1px solid var(--line)}
   .tabs span.on{color:#fff;background:var(--gold);border-color:var(--gold)}
   .tabs span{cursor:pointer} .tabs span:hover{border-color:var(--gold);color:var(--gold)} .tabs span.on:hover{color:#fff}
   .tabs span.held{box-shadow:0 0 0 .18rem rgba(135,89,12,.35)} .tabs span.held::after{content:" \2016";font-weight:800}
@@ -186,6 +187,18 @@
   .wk b{font:800 1.3rem var(--fd);margin-bottom:.3rem} .wk span{font:700 .85rem var(--fb);color:var(--faint);margin-top:.35rem}
   .mo{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid rgba(31,36,48,.06);font:800 1.2rem var(--fd)} .mo b{font-size:1.7rem;color:var(--green)}
   .sc{display:flex;gap:.6rem;align-items:center;padding:.35rem 0;font:600 1rem var(--fb);color:var(--dim)} .sc b{margin-left:auto;font:800 1.15rem var(--fd);color:var(--ink)}
+  /* waiting on agents, conversations (27 Nov 2026, night) */
+  .hstat{display:flex;gap:1.6rem;font:700 1rem var(--fb);color:var(--dim)} .hstat b{font:800 1.5rem var(--fd);color:var(--ink);margin-right:.3rem} .hstat .r b{color:var(--red)} .hstat .g b{color:var(--gold)}
+  .hh,.hr{display:grid;grid-template-columns:12rem 9rem minmax(0,1.6fr) minmax(0,1.6fr) 9rem;gap:.9rem;align-items:center}
+  .hh{margin-top:.7rem;font:800 .8rem var(--fd);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding-bottom:.4rem;border-bottom:1px solid var(--line)}
+  .hr{padding:.5rem 0;border-bottom:1px solid rgba(31,36,48,.07);opacity:0;transform:translateX(-1rem);animation:slide .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  .hr .a{font:800 1.2rem var(--fd)} .hr .a small{display:block;font:600 .82rem var(--fb);color:var(--faint)}
+  .hr .s b{display:block;font:800 1.35rem var(--fd);color:var(--red)} .hr .s span{font:700 .85rem var(--fb);color:var(--gold)}
+  .hr .m{display:flex;flex-wrap:wrap;gap:.3rem} .hr .m span{font:700 .82rem var(--fb);padding:.12rem .45rem;border-radius:.4rem;background:#FBE7E5;color:var(--red);white-space:nowrap}
+  .hr .c{font:600 .9rem/1.3 var(--fb);color:var(--ink)} .hr .c small{display:block;color:var(--faint);font-weight:600}
+  .hr .l{font:700 .9rem/1.3 var(--fb);color:var(--dim)} .hr .l.no{color:var(--red)}
+  .cw{padding:.45rem 0;border-bottom:1px solid rgba(31,36,48,.07)} .cw .h{display:flex;gap:.5rem;align-items:baseline;font:800 1rem var(--fd)} .cw .h span{margin-left:auto;font:700 .85rem var(--fb);color:var(--red)} .cw .h span.g{color:var(--green)}
+  .cw .t{font:500 .95rem/1.35 var(--fb);color:var(--ink);font-style:italic;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* for agents (27 Nov 2026, night) */
   .agc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem;margin-top:.7rem;flex:1;min-height:0;overflow:hidden;align-content:start}
   .ac{border:1px solid var(--line);border-radius:1rem;padding:.6rem .75rem;background:rgba(31,36,48,.025);min-width:0}
@@ -272,7 +285,7 @@
     .stream{overflow:visible}
     .pr{grid-template-columns:auto minmax(0,1fr) auto} .pr .a,.pr .d{display:none}
     .fh{display:none} .fr{grid-template-columns:2rem minmax(0,1fr) auto} .fr .w,.fr .l,.fr .n{grid-column:2/-1} .fr .o,.fr .d{display:none}
-    .agc{grid-template-columns:1fr}
+    .agc{grid-template-columns:1fr} .hh{display:none} .hr{grid-template-columns:1fr 1fr} .hr .m,.hr .c,.hr .l{grid-column:1/-1}
     .steps{grid-template-columns:1fr} .sig{grid-template-columns:1fr}
     .wr{grid-template-columns:1fr} .wr .do{text-align:left} .wk{height:8rem;gap:.4rem}
     .ch,.xh{display:none} .cr{grid-template-columns:auto minmax(0,1fr) auto} .cr .barw,.cr .wm{display:none} .xr{grid-template-columns:auto minmax(0,1fr) auto} .xr .nm,.xr .wm{display:none}
@@ -286,7 +299,7 @@
 <header>
   <div class="plate"><b>PENDING</b><span>wall</span></div>
   <div><h1 id="title">Today on the Pendings</h1><div class="sub" id="sub">From Salesforce, today only &middot; agents' first names and codes, no client</div></div>
-  <div class="tabs"><span id="t0" class="on">Focus today</span><span id="t1">Morning brief</span><span id="t2">Settle today</span><span id="t3">Accountability</span><span id="t4">Staff</span><span id="t5">For agents</span><span id="t6">Work it first</span><span id="t7">Settled</span></div>
+  <div class="tabs"><span id="t0" class="on">Focus today</span><span id="t1">Waiting on agents</span><span id="t2">Conversations</span><span id="t3">Morning brief</span><span id="t4">Settle today</span><span id="t5">Accountability</span><span id="t6">Staff</span><span id="t7">For agents</span><span id="t8">Settled</span></div>
   <div class="right"><div class="qrt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" role="img" aria-label="QR code for this page" class="segno"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#1f2430" d="M2 2.5h7m2 0h7m1 0h3m3 0h1m2 0h7m-33 1h1m5 0h1m2 0h3m2 0h3m1 0h1m1 0h2m1 0h2m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m5 0h1m1 0h1m5 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h2m4 0h2m6 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m4 0h6m1 0h1m4 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m1 0h3m1 0h3m1 0h3m3 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h3m1 0h2m1 0h1m2 0h3m-23 1h1m2 0h1m1 0h2m1 0h2m3 0h4m4 0h1m1 0h1m1 0h1m1 0h1m-28 1h1m1 0h2m1 0h1m3 0h2m2 0h1m3 0h1m2 0h1m3 0h4m3 0h2m-32 1h2m2 0h2m2 0h1m2 0h3m4 0h1m1 0h2m4 0h2m1 0h1m1 0h1m-33 1h2m5 0h4m1 0h4m4 0h4m1 0h2m1 0h2m-29 1h1m2 0h4m1 0h2m3 0h4m3 0h1m1 0h4m2 0h1m1 0h1m-32 1h2m3 0h1m1 0h4m1 0h1m4 0h1m1 0h3m2 0h1m1 0h1m1 0h5m-32 1h1m3 0h2m3 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h2m-32 1h2m3 0h1m2 0h2m1 0h1m1 0h1m1 0h3m2 0h3m1 0h1m1 0h1m1 0h1m2 0h1m-31 1h3m2 0h2m1 0h1m1 0h1m1 0h1m3 0h1m3 0h4m1 0h1m1 0h1m2 0h1m-31 1h2m2 0h1m4 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m1 0h1m-30 1h3m1 0h1m1 0h1m9 0h1m1 0h2m8 0h1m1 0h1m-33 1h1m2 0h2m2 0h2m2 0h2m1 0h1m1 0h4m1 0h1m3 0h1m1 0h1m3 0h1m-32 1h4m2 0h1m1 0h1m1 0h3m8 0h1m1 0h3m5 0h2m-32 1h2m2 0h1m5 0h1m1 0h1m2 0h3m5 0h3m3 0h3m-33 1h2m2 0h1m1 0h1m1 0h1m8 0h4m1 0h1m2 0h3m4 0h1m-32 1h1m1 0h1m1 0h1m1 0h2m1 0h2m3 0h1m3 0h1m1 0h2m1 0h2m3 0h1m2 0h1m-33 1h1m1 0h1m1 0h1m1 0h1m1 0h1m4 0h5m1 0h1m1 0h1m2 0h6m1 0h1m-24 1h1m4 0h1m5 0h3m1 0h2m3 0h2m2 0h1m-33 1h7m5 0h2m2 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h4m-32 1h1m5 0h1m1 0h2m1 0h4m1 0h7m1 0h1m3 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m2 0h3m1 0h3m1 0h6m1 0h6m-30 1h1m1 0h3m1 0h1m1 0h2m3 0h2m1 0h1m4 0h1m1 0h1m2 0h1m1 0h2m-30 1h1m1 0h3m1 0h1m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h1m5 0h1m1 0h1m1 0h1m-33 1h1m5 0h1m3 0h4m3 0h2m1 0h6m-26 1h7m1 0h3m2 0h1m1 0h2m2 0h1m1 0h1m2 0h3m1 0h2m1 0h1"/></svg><div><b>On your phone</b>Scan, or open <a href="https://rickyrampersadbranch.com/intelligence/wall/today.html">rickyrampersadbranch.com/<wbr>intelligence/wall/today.html</a></div></div><div class="live" id="live"><i></i><span id="liveTxt">connecting</span></div><div class="clock" id="clock">--:--</div></div>
 </header>
 <main>
@@ -304,7 +317,7 @@
       <div class="fh"><div>#</div><div>Case</div><div>Why it is a focus today</div><div>Outstanding</div><div>Last Chatter</div><div>Owner</div><div>Next action</div><div>Today</div></div>
       <div id="foList" style="flex:1;min-height:0;overflow:hidden"></div></div>
   </section>
-  <section class="view out" id="v1">
+  <section class="view out" id="v3">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Moving this week</div>
         <div class="big" id="bvN">0</div><div class="of" id="bvOf">items received from agents and clients in the last seven days</div>
@@ -320,7 +333,7 @@
       <div class="cap">Work it top to bottom. Each step says what to do, how many cases, and the first of them. The written guide: <a href="guide.html" style="color:var(--teal);font-weight:700">rickyrampersadbranch.com/intelligence/wall/guide.html</a></div>
       <div class="steps" id="bSteps"></div></div>
   </section>
-  <section class="view out" id="v2">
+  <section class="view out" id="v4">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Can settle today</div>
         <div class="big" id="siN">0</div><div class="of" id="siOf">&hellip;</div>
@@ -333,7 +346,7 @@
     <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">How each one settles &middot; do these first</div>
       <div class="sig" id="siGroups"></div></div>
   </section>
-  <section class="view out" id="v3">
+  <section class="view out" id="v5">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Past their deadline</div>
         <div class="big bad" id="kN">0</div><div class="of" id="kOf">&hellip;</div>
@@ -352,7 +365,7 @@
         <div id="kPast" style="flex:1;min-height:0;overflow:hidden"></div></div>
     </div>
   </section>
-  <section class="view out" id="v4">
+  <section class="view out" id="v6">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">The pendings this morning</div>
         <div class="big" id="mN">0</div><div class="of" id="mOf">Reading Salesforce&hellip;</div>
@@ -369,29 +382,20 @@
         <div class="stream" id="stream"></div></div>
     </div>
   </section>
-  <section class="view out" id="v5" style="grid-template-columns:1fr">
+  <section class="view out" id="v7" style="grid-template-columns:1fr">
     <div class="card" style="--d:0s;display:flex;flex-direction:column;min-height:0"><div class="kick">For agents &middot; your cases, in the order the branch is working them</div>
       <div class="cap">Find your name. Number 1 is worked first. &#10003; moved today &middot; the last Chatter on it &middot; <b style="color:var(--red)">YOU</b> marks the ones waiting on something from you.</div>
       <div class="agc" id="agCards"></div></div>
   </section>
-  <section class="view out" id="v6">
-    <div class="col">
-      <div class="card hero" style="--d:0s"><div class="kick">Nearest to settling</div>
-        <div class="big" id="qN">0</div><div class="of" id="qOf">&hellip;</div>
-        <div class="stat"><div class="green" id="qToday"><b>0</b><span>of them touched today</span></div><div class="red" id="qNot"><b>0</b><span>not touched today</span></div></div></div>
-      <div class="card" style="--d:.1s"><div class="kick">Group &amp; increases &middot; from Salesforce</div>
-        <div class="cap" id="gCap">Pending applications on the group life, group health and individual health records, and the increases.</div>
-        <div class="gt" id="gTypes"></div></div>
-      <div class="card fu" style="--d:.12s"><div class="kick">Follow-ups from the trail</div>
-        <div class="cap" id="fuCap">Where an e-mail went out on a pending case and nothing has moved in three working days, the follow-up is drafted on the same thread for the Branch Manager to approve.</div>
-        <div class="stat"><div class="gold" id="fuWait"><b>0</b><span>waiting approval</span></div><div class="green" id="fuSent"><b>0</b><span>sent today</span></div></div></div>
-    </div>
-    <div class="card" style="--d:.08s;display:flex;flex-direction:column;min-height:0"><div class="kick">Work it first &middot; approve the documents, settle the case</div>
-      <div class="cap">Only the premium left, then approved by underwriting with items left, then one item from settlement. The codes are Ingenium's.</div>
-      <div class="qh"><div>Policy</div><div>Agent</div><div>Why first &middot; codes left</div><div>Whose move</div><div>Days</div><div>Today</div></div>
-      <div id="queue" style="flex:1;min-height:0;overflow:hidden"></div></div>
+  <section class="view out" id="v1" style="grid-template-columns:1fr">
+    <div class="card" style="--d:0s;display:flex;flex-direction:column;min-height:0">
+      <div style="display:flex;align-items:baseline;gap:2rem;flex-wrap:wrap"><div class="kick">Waiting on the agent &middot; what could have settled, and what is missing</div>
+        <div class="hstat" id="hStats"></div></div>
+      <div class="hh"><div>Agent</div><div>Could settle</div><div>Missing from the agent</div><div>The case nearest a policy</div><div>Last spoke</div></div>
+      <div id="hList" style="flex:1;min-height:0;overflow:hidden"></div></div>
+    <div hidden><i id="qN"></i><i id="qOf"></i><div id="qToday"><b></b><span></span></div><div id="qNot"><b></b><span></span></div><i id="gCap"></i><i id="gTypes"></i><i id="fuCap"></i><div id="fuWait"><b></b><span></span></div><div id="fuSent"><b></b><span></span></div><div id="queue"></div></div>
   </section>
-  <section class="view out" id="v7">
+  <section class="view out" id="v8">
     <div class="col">
       <div class="card hero" style="--d:0s"><div class="kick">Settled since 1 October</div>
         <div class="big" id="seN">0</div><div class="of" id="seOf">&hellip;</div>
@@ -404,6 +408,21 @@
       <div class="card" style="--d:.12s;flex:1;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;min-height:0">
         <div><div class="kick">Whose cases settled</div><div class="ag" id="seAg" style="margin-top:.7rem;display:flex;flex-wrap:wrap;gap:.45rem"></div></div>
         <div><div class="kick">The codes they cleared</div><div id="seCodes" style="margin-top:.5rem"></div></div></div>
+    </div>
+  </section>
+  <section class="view out" id="v2">
+    <div class="col">
+      <div class="card hero" style="--d:0s"><div class="kick">Agents waiting on us</div>
+        <div class="big bad" id="cvN">0</div><div class="of" id="cvOf">&hellip;</div>
+        <div class="stat"><div class="green" id="cvA"><b>0</b><span>answered</span></div><div class="gold" id="cvM"><b>&ndash;</b><span>median hours to answer</span></div></div></div>
+      <div class="card" style="--d:.1s;flex:1;min-height:0;overflow:hidden"><div class="kick">Each agent's last word</div>
+        <div id="cvAg" style="margin-top:.5rem"></div></div>
+    </div>
+    <div class="col">
+      <div class="card" style="--d:.06s;flex:1.4;display:flex;flex-direction:column;min-height:0"><div class="kick">The agent wrote, nobody answered &middot; oldest first</div>
+        <div id="cvWait" style="flex:1;min-height:0;overflow:hidden;margin-top:.4rem"></div></div>
+      <div class="card" style="--d:.12s;flex:1;display:flex;flex-direction:column;min-height:0"><div class="kick">Answered &middot; newest first</div>
+        <div id="cvDone" style="flex:1;min-height:0;overflow:hidden;margin-top:.4rem"></div></div>
     </div>
   </section>
 </main>
@@ -441,6 +460,29 @@ function paint(){
     $("#live").classList.remove("on"); $("#liveTxt").textContent = "no data"; return;
   }
   $("#sub").innerHTML = "Salesforce as at <b>"+esc(M.at)+"</b> &middot; Guardian's report of <b>"+esc(String(L.asOf||"").replace(/,\s*\d{1,2}:\d{2}\s*[ap]m$/i,""))+"</b> &middot; first names and codes, no client";
+  // Waiting on the agent (no one who has left: their cases are the branch's to reassign, not theirs to answer for)
+  var HO = M.hold || {}, HA = (HO.agents || []).filter(function(a){ return !/· inactive$/.test(a.agent); });
+  if (HO.error) $("#hList").innerHTML = '<div class="empty bad">'+esc(HO.error)+'</div>';
+  else {
+    var hc = HA.reduce(function(s,a){ return s + a.settleN; }, 0), hp = HA.reduce(function(s,a){ return s + a.prem; }, 0), hi = HA.reduce(function(s,a){ return s + a.items; }, 0);
+    $("#hStats").innerHTML = '<span><b>'+fmt(HA.length)+'</b>agents holding cases</span><span class="r"><b>'+fmt(hc)+'</b>could settle, waiting on them</span><span class="g"><b>TT$'+fmt(hp)+'</b>premium held up</span><span class="r"><b>'+fmt(hi)+'</b>items owed</span>';
+    $("#hList").innerHTML = HA.map(function(a,i){ var top = a.settle[0];
+      return '<div class="hr" style="--d:'+(i*.04).toFixed(2)+'s"><div class="a">'+esc(who(a.agent))+'<small>'+fmt(a.cases)+' cases &middot; '+fmt(a.items)+' items &middot; oldest '+fmt(a.oldest)+'wd</small></div>'
+        + '<div class="s">'+(a.settleN ? '<b>'+a.settleN+'</b><span>TT$'+fmt(a.prem)+'</span>' : '<span style="color:var(--faint)">none near</span>')+'</div>'
+        + '<div class="m">'+a.codes.map(function(c){ return '<span>'+esc(c.code)+(c.n>1?' &times;'+c.n:'')+' &middot; '+c.oldest+'wd</span>'; }).join('')+'</div>'
+        + '<div class="c">'+(top ? '&hellip;'+esc(top.pol)+' &middot; '+esc(top.why)+'<small>missing: '+top.missing.map(function(m){ return esc(m.name)+' ('+esc(m.code)+', '+m.days+'wd)'; }).join(', ')+'</small>' : '<span style="color:var(--faint)">&ndash;</span>')+'</div>'
+        + '<div class="l'+(a.lastSaid?'':' no')+'">'+(a.lastSaid ? 'spoke '+esc(a.lastSaid)+' ago' : 'no word in Chatter')+(a.waitingOnUs?'<br><span style="color:var(--red)">'+a.waitingOnUs+' waiting on us</span>':'')+'</div></div>'; }).join("")
+      || '<div class="empty">No case is waiting on an agent.</div>';
+  }
+  // Conversations
+  var CV = M.conv || {};
+  if (!CV.error && CV.waitList) {
+    count($("#cvN"), CV.waiting); $("#cvOf").innerHTML = "cases where the agent wrote in Chatter and nobody at the branch has answered since";
+    stat("#cvA", fmt(CV.answered)); stat("#cvM", CV.medianHours == null ? "–" : String(CV.medianHours));
+    $("#cvAg").innerHTML = (CV.agents||[]).filter(function(a){ return !/· inactive$/.test(a.agent); }).map(function(a){ return '<div class="ow2"><b>'+esc(who(a.agent))+'</b><span>spoke '+esc(a.last)+' ago</span>'+(a.waiting?'<span class="r">'+a.waiting+' waiting</span>':'<span class="g">answered</span>')+'</div>'; }).join("");
+    $("#cvWait").innerHTML = CV.waitList.length ? CV.waitList.map(function(r){ return '<div class="cw"><div class="h">&hellip;'+esc(r.pol)+' '+esc(who(r.agent))+'<span>wrote '+esc(r.said)+' ago &middot; owner '+esc(r.owner)+'</span></div><div class="t">&ldquo;'+esc(r.text)+'&rdquo;</div></div>'; }).join("") : '<div class="empty">Every agent who wrote has had an answer.</div>';
+    $("#cvDone").innerHTML = (CV.doneList||[]).map(function(r){ return '<div class="cw"><div class="h">&hellip;'+esc(r.pol)+' '+esc(who(r.agent))+'<span class="g">answered by '+esc(r.by)+' '+esc(r.answered)+' ago</span></div><div class="t">&ldquo;'+esc(r.text)+'&rdquo;</div></div>'; }).join("");
+  }
   // Focus today
   var FO = M.focus || {};
   if (FO.error) { $("#foList").innerHTML = '<div class="empty bad">'+esc(FO.error)+'</div>'; }
@@ -557,7 +599,7 @@ function paint(){
       + (b.agents||[]).map(function(a){ return '<span class="chip bad">'+esc(who(a.agent))+(a.n>1?' &times;'+a.n:'')+'</span>'; }).join("")+'</div></div>'; }).join("")
     : '<div class="empty">Every case one step from settling has been touched today.</div>';
   // For agents: their cases in the branch's order
-  var FA = (M.focus && M.focus.agents) || [];
+  var FA = ((M.focus && M.focus.agents) || []).filter(function(a){ return !/\u00b7 inactive$/.test(a.agent); });
   $("#agCards").innerHTML = FA.length ? FA.map(function(a){
     return '<div class="ac"><div class="h"><b>'+esc(who(a.agent))+'</b><span>'+fmt(a.n)+' cases</span><span class="'+(a.today?'g':'r')+'">'+fmt(a.today)+' moved today</span>'+(a.needYou?'<span class="r">'+fmt(a.needYou)+' need you</span>':'')+'</div>'
       + a.cases.map(function(c){
@@ -599,7 +641,7 @@ function paint(){
     : '<div class="empty">Nothing is one step from settling on the report.</div>')
     + (GL.length ? '<div class="qsub">Group life &middot; group health &middot; individual health &middot; increases &mdash; '+fmt(G.pending)+' pending, '+fmt(G.today)+' touched today</div>' + GL.map(grow).join("") : "");
   markInactive();
-  fitRows($("#queue")); fitRows($("#stream"));  fitRows($("#blocks"));  fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#foList")); fitRows($("#agCards")); 
+  fitRows($("#queue")); fitRows($("#stream"));  fitRows($("#blocks"));  fitRows($("#kPast")); fitRows($("#kStick")); fitRows($("#foList")); fitRows($("#agCards")); fitRows($("#hList")); fitRows($("#cvWait")); fitRows($("#cvDone")); 
   // the ticker
   var bits = [(L.settleIntel && L.settleIntel.n ? "<b>"+fmt(L.settleIntel.n)+"</b> can settle, <b>"+fmt(L.settleIntel.nowN)+"</b> with no call to the client" : ""), (L.brief && L.brief.steps ? L.brief.steps.filter(function(x){ return x.n; }).slice(0,3).map(function(x){ return "<b>"+fmt(x.n)+"</b> "+esc(x.title.split(":")[0].toLowerCase()); }).join(" &middot; ") : ""), (M.acc && M.acc.pastOf ? "<b>"+fmt(M.acc.pastOf)+"</b> cases past their deadline" : ""), (M.settle ? "<b>"+fmt(M.settle.n)+"</b> policies can settle today, <b>"+fmt(M.settle.today)+"</b> touched" : ""), (M.action && M.action.headOffice ? "<b>"+fmt(M.action.headOffice)+"</b> head-office updates not yet actioned" : ""), (M.action && M.action.n ? "<b>"+fmt(M.action.n)+"</b> cases the desks can work now" : ""), (L.settled && L.settled.n ? "<b>"+fmt(L.settled.n)+"</b> policies settled since 1 October" : ""), M.cases ? "<b>"+fmt(M.cases)+"</b> pending cases touched today" : "<b>No</b> pending case touched in Salesforce yet today",
     "<b>"+inN+" of "+M.of+"</b> staff signed in", (C.of ? "<b>"+fmt(C.movedToday)+" of "+fmt(C.of)+"</b> agents' cases moved today" : ""), (C.quietWeek ? "<b>"+fmt(C.quietWeek)+"</b> agents with nothing moved in a week" : ""), M.firstAt ? "first touch at <b>"+esc(M.firstAt)+"</b>" : "",
@@ -620,17 +662,17 @@ function fitRows(box){
 /* HOLD A VIEW (27 Nov 2026, night). Ricky: "it moves and not able to freeze the Focus today within the tabs". Tap a tab to show
    that view and hold it; tap the held tab again to let the views turn. ?view=focus (or brief, settle, accountability, staff,
    agents, first, settled, or 0-7) opens the page held on that view, for a screen that should show only that. */
-var view = 0, held = false, VIEWS = ["focus","brief","settle","accountability","staff","agents","first","settled"];
-function showView(n){ view = n; [0,1,2,3,4,5,6,7].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); $("#t"+i).classList.toggle("held", held && i===view); });
-  setTimeout(function(){ ["#queue","#stream","#blocks","#kPast","#kStick","#foList","#agCards"].forEach(function(id){ fitRows($(id)); }); }, 950);
-  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr,.fr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
-[0,1,2,3,4,5,6,7].forEach(function(i){ var t = $("#t"+i); if (!t) return; t.setAttribute("role","button"); t.title = "Show this view and hold it here; tap again to let the views turn";
+var view = 0, held = false, VIEWS = ["focus", "waiting", "conversations", "brief", "settle", "accountability", "staff", "agents", "settled"];
+function showView(n){ view = n; [0,1,2,3,4,5,6,7,8].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); $("#t"+i).classList.toggle("held", held && i===view); });
+  setTimeout(function(){ ["#queue","#stream","#blocks","#kPast","#kStick","#foList","#agCards","#hList","#cvWait","#cvDone"].forEach(function(id){ fitRows($(id)); }); }, 950);
+  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr,.fr,.hr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
+[0,1,2,3,4,5,6,7,8].forEach(function(i){ var t = $("#t"+i); if (!t) return; t.setAttribute("role","button"); t.title = "Show this view and hold it here; tap again to let the views turn";
   t.addEventListener("click", function(){ if (held && view === i) { held = false; showView(i); } else { held = true; showView(i); } }); });
 (function(){ var m = /[?&]view=([^&]+)/.exec(location.search); if (!m) return; var v = decodeURIComponent(m[1]).toLowerCase(), n = VIEWS.indexOf(v);
-  if (n < 0 && /^[0-7]$/.test(v)) n = Number(v); if (n > -1) { held = true; showView(n); } })();
-function turn(){ if (held) return; view = (view + 1) % 8; [0,1,2,3,4,5,6,7].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
-  setTimeout(function(){ ["#queue","#stream","#blocks","#kPast","#kStick","#foList","#agCards"].forEach(function(id){ fitRows($(id)); }); }, 950);
-  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr,.fr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
+  if (n < 0 && /^[0-8]$/.test(v)) n = Number(v); if (n > -1) { held = true; showView(n); } })();
+function turn(){ if (held) return; view = (view + 1) % 9; [0,1,2,3,4,5,6,7,8].forEach(function(i){ $("#v"+i).classList.toggle("out", i!==view); $("#t"+i).classList.toggle("on", i===view); });
+  setTimeout(function(){ ["#queue","#stream","#blocks","#kPast","#kStick","#foList","#agCards","#hList","#cvWait","#cvDone"].forEach(function(id){ fitRows($(id)); }); }, 950);
+  Array.prototype.forEach.call($("#v"+view).querySelectorAll(".ev,.qr,.ar,.cr,.xr,.uw,.wr,.pr,.fr,.hr"), function(r){ r.style.animation="none"; void r.offsetWidth; r.style.animation=""; }); }
 if(!window.matchMedia("(max-width:900px)").matches) setInterval(turn, 15000);
 function feed(url, body, tries){
   tries = tries === undefined ? 3 : tries;
