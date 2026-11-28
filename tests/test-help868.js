@@ -224,7 +224,8 @@ let limited = false; for (let i = 0; i < 45; i++) if (route({ key: KEY, action: 
 ok('one number is rate limited', limited);
 
 const out = route({ action: 'help868.ping' });
-ok('ping says what is ready, as true or false, and nothing else about it', out.ok === true && out.on === true && out.agents === 5 && out.pendingReport === true && out.pendingsChase === true && out.salesforceReady === true && out.claudeReady === false && out.mailReady === true && Object.keys(out).sort().join() === 'agents,claudeReady,mailReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady', JSON.stringify(out));
+ok('ping says what is ready, as true or false, and nothing else about it', out.ok === true && out.on === true && out.agents === 5 && out.pendingReport === true && out.pendingsChase === true && out.salesforceReady === true && out.claudeReady === false && out.mailReady === true && Object.keys(out).sort().join() === 'agents,claudeReady,mailReady,ok,on,pendingReport,pendingsChase,salesforce,salesforceReady,submissions' &&
+  Object.values(out.submissions).every(v => typeof v === 'boolean'), JSON.stringify(out));
 aiKey = 'sk-test-0123456789'; ok('claudeReady follows the Anthropic key', route({ action: 'help868.ping' }).claudeReady === true); aiKey = '';
 const fs = require('fs'), svc = fs.readFileSync(__dirname + '/../apps-script/Service.gs', 'utf8');
 ok('Service.gs routes help868 actions on both GET and POST', (svc.match(/help868Route_\(p\)/g) || []).length === 1 && (svc.match(/help868Route_\(body\)/g) || []).length === 1);
@@ -247,4 +248,38 @@ ok('a unit manager opens his agent\'s case', route({ key: KEY, phone: '868555020
 ok('a unit manager cannot open another unit\'s case', route({ key: KEY, phone: '8685550201', action: 'help868.case', policy: '0002' }).found === false);
 ok('naming an agent outside the unit is refused, never widened', /not one you can see/.test(route({ key: KEY, phone: '8685550201', action: 'help868.pendings', agent: 'Neil Ramnanan' }).message || ''));
 ok('agent numbers: A10024 and 10024 are one; SL002 and A00002 are not', env.help868AgentNo_('A10024') === env.help868AgentNo_('10024') && env.help868AgentNo_('SL002') !== env.help868AgentNo_('A00002') && env.help868AgentNo_('A06869 - Akaash Kalladeen') === '6869');
+
+// an agent says it is submitted (28 Nov 2026): logged with a reference, the trail read, a draft to underwriting support that only
+// Azariah's Send button can send; a policy that is not the agent's is logged for checking and nothing is drafted
+env.tSfSend_ = () => ({ id: '0D5X' }); env.tSfQuery_ = () => []; mails.length = 0; cache.remove('h868_' + env.help868Digits_(NEIL));
+props.setProperty('HELP868_APPROVER', 'azariah@example.com');
+const lbTab = sheet('Log Book', [['Policy #', 'Document', 'Logged At', 'Received At', 'Received By', 'Sent At', 'Transmittal', 'Department', 'Agent'],
+  ['5000000002', 'PROOF OF IDENTITY', new Date(), new Date(), 'Azariah Griffith', '', '', 'NEW BUSINESS', 'Neil Ramnanan']]);
+tabs.push(lbTab); props.setProperty('LOGBOOK_SHEET_ID', 'LB');
+let sub = route({ ...base, action: 'help868.submitted', policy: '0002', items: 'Proof of identity', how: 'Log Book', to: 'Azariah', on: '27 Nov' });
+ok('submitted: logged with a reference, on the report, trail read', sub.ok && sub.filed && /^H8S-\d{6}-001$/.test(sub.ref) && sub.onReport === true && sub.trail.logBook === 1, JSON.stringify(sub));
+const subTab = tabs.find(t => t.getName() === 'HELP868 Submissions');
+const subRow = subTab.rows[subTab.rows.length - 1];
+ok('submitted: the row keeps who, what, how and a token, and waits for Azariah', subRow[2] === 'Neil Ramnanan' && subRow[6] === 'Proof of identity' && /Waiting for Azariah/.test(subRow[14]) && String(subRow[21]).length >= 10, JSON.stringify(subRow).slice(0, 300));
+ok('submitted: Azariah gets the draft and a review link, head office gets nothing yet', mails.length === 1 && mails[0].to === 'azariah@example.com' && /action=h868s\.view/.test(mails[0].htmlBody) && /Proof of identity/.test(mails[0].htmlBody) && /Log Book|PROOF OF IDENTITY/.test(mails[0].htmlBody));
+ok('submitted: a repeat within minutes is the same submission', route({ ...base, action: 'help868.submitted', policy: '0002', items: 'Proof of identity', how: 'Log Book', to: 'Azariah', on: '27 Nov' }).repeat === true && mails.length === 1);
+let other = route({ ...base, action: 'help868.submitted', policy: '5000000003', items: 'Financial questionnaire' });
+ok('submitted: someone else\'s policy is logged for checking and nothing is drafted', other.onReport === false && /not on the pending report/.test(other.message) && /^Check/.test(mails[mails.length - 1].subject) && !/action=h868s/.test(mails[mails.length - 1].htmlBody));
+ok('submitted: a number not on the list files nothing', /not on the HELP 868 list/.test(route({ key: KEY, phone: '8687770000', action: 'help868.submitted', policy: '0002', items: 'x' }).error || ''));
+ok('submitted: items are required', /which items/.test(route({ ...base, action: 'help868.submitted', policy: '0002' }).error || ''));
+// the review page: a GET never sends; the button needs the token and the address; sent once
+env.ScriptApp.getService = () => ({ getUrl: () => 'https://x/exec' });
+const tok = String(subRow[21]);
+env.HtmlService = { createHtmlOutput: h => ({ html: h, setTitle() { return this; } }) };
+const before = mails.length;
+let page = env.help868SubmitPage_({ ref: sub.ref, t: tok });
+ok('review page: shows the draft and no send happens on opening it', /Underwriting Support/.test(page.html) && mails.length === before);
+ok('review page: a wrong token shows nothing', /not valid/.test(env.help868SubmitPage_({ ref: sub.ref, t: 'nope' }).html));
+ok('send: refused without the underwriting address', env.help868SubmitSend(sub.ref, tok, '').ok === false && mails.length === before);
+props.setProperty('HELP868_UW_TO', 'uwsupport@example.com');
+subRow[16] = 'uwsupport@example.com';
+ok('send: a wrong token sends nothing', env.help868SubmitSend(sub.ref, 'nope', '').ok === false && mails.length === before);
+let sent = env.help868SubmitSend(sub.ref, tok, 'Client also asked for a call.');
+ok('send: goes to underwriting support with Azariah\'s line in it', sent.ok && mails.length === before + 1 && mails[mails.length - 1].to === 'uwsupport@example.com' && /Client also asked for a call/.test(mails[mails.length - 1].htmlBody) && /Sent to underwriting/.test(subRow[14]));
+ok('send: twice is once', /Already sent/.test(env.help868SubmitSend(sub.ref, tok, '').message) && mails.length === before + 1);
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed'); process.exit(fails ? 1 : 0);

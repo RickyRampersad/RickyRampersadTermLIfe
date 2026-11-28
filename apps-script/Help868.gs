@@ -45,7 +45,8 @@ var H868 = {
 function help868Route_(p) {
   var action = String(p.action || '');
   if (action === 'help868.ping') return { ok: true, on: help868On_(), agents: help868Allow_().length, salesforce: help868SfOn_(), salesforceReady: help868SfReady_(),
-    claudeReady: help868AiReady_(), mailReady: help868MailReady_(), pendingReport: help868ReportFound_(), pendingsChase: !!help868Chase_() };
+    claudeReady: help868AiReady_(), mailReady: help868MailReady_(), pendingReport: help868ReportFound_(), pendingsChase: !!help868Chase_(),
+    submissions: { underwritingTo: !!help868Prop_('HELP868_UW_TO'), approver: !!help868ApproverMail_(), logBook: !!help868Prop_('LOGBOOK_SHEET_ID') } };
   if (action === 'help868.xllead') return help868XlLead_(p);   // its own key (XL_LEAD_KEY): the Xpress Life lead needs none of the agent side
   if (!help868On_()) return { ok: false, error: 'HELP 868 is not switched on.' };
   if (!help868KeyOk_(p.key)) return { ok: false, error: 'Not allowed.' };
@@ -60,6 +61,7 @@ function help868Route_(p) {
   if (action === 'help868.groups') return help868Groups_(p, digits);
   if (action === 'help868.enquiry') return help868Enquiry_(p, digits);
   if (action === 'help868.ack') return help868Ack_(p, digits);
+  if (action === 'help868.submitted') return help868Submitted_(p, digits);
   return { ok: false, error: 'Unknown HELP 868 action.' };
 }
 
@@ -690,4 +692,155 @@ function help868Ack_(p, digits) {
 /** A staff member's e-mail off the Agent Skill Bank, by name. */
 function help868StaffMail_(name) {
   try { var t = tTeam_(); var hit = (t.people || t || []).filter(function (x) { return tSameClient_(x.name, name); })[0]; return hit && hit.email || ''; } catch (e) { return ''; }
+}
+
+
+/* ───────── an agent says it is submitted: the trail, a draft to underwriting support, Azariah approves (28 Nov 2026) ─────────
+ *  Ricky: "if the agent said how they have submitted it and sent it, can an email trigger to the department, letting them know in
+ *  detail that all of these things have been submitted and you'd like a response, searching from a trail". Decided the same morning:
+ *  Azariah approves first, and it goes to underwriting support.
+ *
+ *  help868.submitted (Penny calls it once the agent has said which items, how, to whom and when):
+ *    1. the agent is the one on the HELP 868 list for this WhatsApp number; the policy must be theirs on the newest pending report
+ *       (a shared case counts: the agent's name is on its rows);
+ *    2. the trail is read: the Log Book lines naming the policy (LOGBOOK_SHEET_ID, the RR Operations sheet), the support@ e-mails
+ *       naming it, and the last Chatter on its open Pendings task;
+ *    3. a row goes on "HELP868 Submissions" with a reference and a one-time token, and a draft to underwriting support is built from
+ *       the report and the trail: what the agent says went, how and when, what the branch's own records show, what the report still
+ *       shows open, and the ask (confirm receipt and update the requirement, or say what is still outstanding);
+ *    4. Azariah (HELP868_APPROVER, else the Skill Bank's Azariah) gets it with one link. The link opens a page that shows the draft and
+ *       a Send button; nothing goes to head office until the button is pressed. A mail scanner that follows the link sends nothing.
+ *  Nothing is sent to head office from here without that button. Script properties: HELP868_UW_TO (underwriting support's address,
+ *  required to send), HELP868_APPROVER (optional), LOGBOOK_SHEET_ID (optional; without it the trail is mailbox and Chatter only). */
+var H868S = { TAB: 'HELP868 Submissions',
+  HEAD: ['Reference', 'When', 'Agent', 'Agent no.', 'Number ending', 'Policy', 'Items', 'How', 'To whom', 'Submitted on', 'Report shows', 'Log Book', 'Mailbox', 'Chatter',
+    'Status', 'Approver', 'Underwriting to', 'Subject', 'Draft', 'Sent at', 'Sent by', 'Token'],
+  LB_DAYS: 45, TEXT: 300 };
+function help868ApproverMail_() {
+  var set = help868Prop_('HELP868_APPROVER'); if (set) return set;
+  try { var hit = (tTeam_().people || []).filter(function (b) { return b.active && b.email && help868NameKey_(b.name)[0] === 'azariah'; })[0]; return hit ? hit.email : ''; } catch (e) { return ''; }
+}
+/** Log Book lines naming the policy in the last LB_DAYS days: [{ doc, logged, received, sent, transmittal, dept, by }]. */
+function help868LogBook_(policy) {
+  var id = help868Prop_('LOGBOOK_SHEET_ID'), num = String(policy || '').replace(/\D/g, ''); if (!id || num.length < 7) return [];
+  try {
+    var sh = SpreadsheetApp.openById(id).getSheetByName('Log Book'); if (!sh || sh.getLastRow() < 2) return [];
+    var v = sh.getDataRange().getValues(), h = v[0].map(function (x) { return String(x).trim(); }), ix = function (n) { return h.indexOf(n); };
+    var c = { pol: ix('Policy #'), doc: ix('Document'), lo: ix('Logged At'), rc: ix('Received At'), rb: ix('Received By'), se: ix('Sent At'), tr: ix('Transmittal'), de: ix('Department'), ag: ix('Agent') };
+    if (c.pol < 0) return [];
+    var since = new Date(Date.now() - H868S.LB_DAYS * 864e5), d = function (x) { return x instanceof Date ? Utilities.formatDate(x, help868Tz_(), 'd MMM yyyy, h:mm a') : String(x || ''); };
+    return v.slice(1).filter(function (r) { return String(r[c.pol]).replace(/\D/g, '').slice(-num.length) === num && (!(r[c.lo] instanceof Date) || r[c.lo] >= since); })
+      .map(function (r) { return { doc: String(r[c.doc] || ''), logged: d(r[c.lo]), received: d(r[c.rc]), receivedBy: help868First_(r[c.rb]), sent: d(r[c.se]), transmittal: String(r[c.tr] || ''), dept: String(r[c.de] || '') }; })
+      .slice(-12);
+  } catch (e) { help868Log_('Log Book read failed: ' + (e && e.message)); return []; }
+}
+function help868SubTab_() { var ss = help868Own_(); return ss ? help868Tab_(ss, H868S.TAB, H868S.HEAD) : null; }
+function help868SubRow_(ref) {
+  var sh = help868SubTab_(); if (!sh || sh.getLastRow() < 2) return null;
+  var v = sh.getRange(2, 1, sh.getLastRow() - 1, H868S.HEAD.length).getValues();
+  for (var i = v.length - 1; i >= 0; i--) if (String(v[i][0]) === ref) { var o = { row: i + 2 }; H868S.HEAD.forEach(function (k, j) { o[k] = v[i][j]; }); return o; }
+  return null;
+}
+function help868SubSet_(row, key, val) { var sh = help868SubTab_(); sh.getRange(row, H868S.HEAD.indexOf(key) + 1).setValue(val); }
+/** The draft to underwriting support: plain, factual, the agent's report kept apart from what the branch's records show. */
+function help868SubDraft_(x) {
+  var e = help868Esc_, li = function (a) { return a.length ? '<ul style="margin:4px 0 10px 18px;padding:0">' + a.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>' : '<p style="margin:4px 0 10px">None found.</p>'; };
+  var subject = 'Policy ' + x.policy + (x.client ? ' · ' + x.client : '') + ' · requirements submitted · please confirm receipt';
+  var html = '<div style="font:14px/1.55 Arial,sans-serif;color:#1F2430">' +
+    '<p>Good day Underwriting Support,</p>' +
+    '<p>Policy <b>' + e(x.policy) + '</b>' + (x.app ? ' (application ' + e(x.app) + ')' : '') + (x.client ? ', client ' + e(x.client) : '') + ', agent ' + e(x.agent) + '.</p>' +
+    '<p><b>What the agent reports was submitted</b>' + (x.on ? ' on ' + e(x.on) : '') + (x.how ? ', ' + e(x.how) : '') + (x.to ? ', to ' + e(x.to) : '') + ':</p>' + li([e(x.items)]) +
+    '<p><b>The branch\'s own trail</b></p>' +
+    li(x.lb.map(function (l) { return e(l.doc) + ': logged ' + e(l.logged) + (l.received ? ', received ' + e(l.received) + (l.receivedBy ? ' by ' + e(l.receivedBy) : '') : '') + (l.sent ? ', sent ' + e(l.sent) : ', not yet sent') + (l.transmittal ? ' on transmittal ' + e(l.transmittal) : '') + (l.dept ? ' to ' + e(l.dept) : ''); })
+      .concat(x.mail.map(function (m) { return 'E-mail of ' + e(m.day) + ': ' + e(help868Scrub_(m.gist).slice(0, 160)); }))) +
+    '<p><b>The pending report' + (x.asof ? ' (' + e(x.asof) + ')' : '') + ' still shows open</b></p>' +
+    li(x.open.map(function (r) { return e(r.code) + ' · ' + e(r.name) + (r.since ? ', since ' + e(r.since) : '') + (r.whoActsNext ? ', ' + e(r.whoActsNext) : ''); })) +
+    '<p>Please confirm these were received and update the requirements, or let us know what is still outstanding, so we can tell the agent and the client today.</p>' +
+    '<p>Thank you,<br>' + e(x.approverName || 'Azariah') + '<br>Ricky Rampersad Branch</p></div>';
+  return { subject: subject, html: html };
+}
+function help868Submitted_(p, digits) {
+  var s = help868Session_(digits), listed = help868Listed_(digits), who = s ? s.name : (listed ? listed.name : '');
+  if (!who) return { ok: false, error: 'This WhatsApp number is not on the HELP 868 list, so nothing was filed. A person will follow up.' };
+  var typed = String(p.policy || '').replace(/\D/g, ''), items = help868Clean_(p.items).slice(0, H868S.TEXT);
+  if (typed.length < 4) return { ok: false, error: 'Ask for the policy number, or at least its last four digits.' };
+  if (!items) return { ok: false, error: 'Ask which items were submitted.' };
+  var how = help868Clean_(p.how).slice(0, 120), to = help868Clean_(p.to).slice(0, 120), on = help868Clean_(p.on).slice(0, 40);
+  var rep = help868Report_(function (agent) { return help868SameName_(agent, who); }, typed);
+  if (rep.ambiguous) return { ok: true, filed: false, message: rep.count + ' of your cases end that way. Ask for more of the number.' };
+  var mine = !rep.none, task = mine ? help868PendTask_(rep) : null;
+  var notes = task ? help868Notes_(task.Id).slice(0, 3) : [], mail = mine ? help868Mailbox_(rep.policy).slice(0, 4) : [], lb = mine ? help868LogBook_(rep.policy) : [];
+  var sh = help868SubTab_(); if (!sh) return { ok: false, error: 'The submissions log is not reachable. A person will follow up.' };
+  var now = new Date(), stamp = Utilities.formatDate(now, help868Tz_(), 'yyyy-MM-dd HH:mm'), end = '·' + digits.slice(-4), pol = mine ? rep.policy : typed;
+  /* the same report from the same number within DUPE_MIN minutes is the same submission */
+  if (sh.getLastRow() >= 2) {
+    var last = sh.getRange(Math.max(2, sh.getLastRow() - 30), 1, Math.min(31, sh.getLastRow() - 1), 7).getValues();
+    for (var i = last.length - 1; i >= 0; i--) { var at = new Date(String(last[i][1]).replace(' ', 'T')); if (String(last[i][4]) === end && String(last[i][5]).slice(-typed.length) === typed && String(last[i][6]) === items && now - at < H868.DUPE_MIN * 60000) return { ok: true, filed: true, repeat: true, ref: String(last[i][0]), message: 'Already logged as ' + last[i][0] + '.' }; }
+  }
+  var n = sh.getLastRow() < 2 ? 0 : sh.getRange(2, 2, sh.getLastRow() - 1, 1).getValues().filter(function (r) { return String(r[0]).slice(0, 10) === stamp.slice(0, 10); }).length;
+  var ref = 'H8S-' + Utilities.formatDate(now, help868Tz_(), 'yyMMdd') + '-' + ('00' + (n + 1)).slice(-3), token = Utilities.getUuid().replace(/-/g, '');
+  var approver = help868ApproverMail_(), uwTo = help868Prop_('HELP868_UW_TO');
+  var openReqs = mine ? rep.requirements : [];
+  var draft = mine ? help868SubDraft_({ policy: rep.policy, app: rep.app, client: rep.client, agent: who, items: items, how: how, to: to, on: on, lb: lb, mail: mail, open: openReqs, asof: '', approverName: 'Azariah' }) : null;
+  sh.appendRow([ref, stamp, who, s ? s.no : (listed.no || ''), end, "'" + pol, items, how, to, on,
+    mine ? rep.openCount + ' open: ' + openReqs.map(function (r) { return r.code; }).join(', ') : 'not on the report under this agent',
+    lb.length + ' line(s)' + (lb.length ? ': ' + lb.map(function (l) { return l.doc + (l.sent ? ' sent ' + l.sent : ' not sent'); }).join('; ').slice(0, 300) : ''),
+    mail.length + ' e-mail(s)', notes.length ? (notes[0].day + ' ' + help868First_(notes[0].by)) : 'none',
+    mine ? (uwTo ? 'Waiting for Azariah' : 'Waiting for Azariah (set HELP868_UW_TO to send)') : 'Check: not this agent\'s on the report', approver, uwTo, draft ? draft.subject : '', draft ? draft.html : '', '', '', token]);
+  var row = sh.getLastRow();
+  var link = ScriptApp.getService().getUrl() + '?action=h868s.view&ref=' + encodeURIComponent(ref) + '&t=' + token;
+  var mailed = false;
+  if (approver) {
+    try {
+      var e = help868Esc_;
+      tMsSend_(approver, (mine ? 'Approve: ' : 'Check: ') + help868First_(who) + ' reports ' + pol.slice(-4) + ' submitted · ' + ref,
+        '<div style="font:14px/1.55 Arial,sans-serif"><p><b>' + e(ref) + '</b> · ' + e(who) + ' told Penny on WhatsApp (number ending ' + e(digits.slice(-4)) + '):</p>' +
+        '<p style="border-left:3px solid #D99B2E;padding-left:10px">Policy ' + e(pol) + ': <b>' + e(items) + '</b>' + (on ? ', on ' + e(on) : '') + (how ? ', ' + e(how) : '') + (to ? ', to ' + e(to) : '') + '.</p>' +
+        (mine ? '<p>Trail found: ' + lb.length + ' Log Book line(s), ' + mail.length + ' support@ e-mail(s), ' + (notes.length ? 'last Chatter ' + e(notes[0].day) + ' by ' + e(help868First_(notes[0].by)) : 'no Chatter on an open task') + '. The report still shows ' + rep.openCount + ' open.</p>' +
+          '<p><a href="' + e(link) + '" style="display:inline-block;background:#1F2430;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700">Review the e-mail to underwriting support</a></p>' +
+          '<p style="color:#777;font-size:12px">Nothing goes to head office until you press Send on that page.' + (uwTo ? '' : ' HELP868_UW_TO is not set yet, so the page cannot send.') + '</p><hr>' + draft.html
+          : '<p>This policy is not on the newest pending report under ' + e(who) + '. Please check with the agent; no e-mail was drafted.</p>') + '</div>');
+      mailed = true;
+    } catch (err) { help868Log_('approver e-mail failed for ' + ref + ': ' + (err && err.message)); }
+  }
+  var sf = 'off';
+  if (help868SfOn_() && task) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: task.Id, Body: 'SUBMITTED (' + ref + ') · ' + who + ' reported on WhatsApp: ' + items + (on ? ', on ' + on : '') + (how ? ', ' + how : '') + (to ? ', to ' + to : '') + '. A draft to underwriting support is with Azariah to approve.' }); sf = 'noted on the task'; } catch (err) { sf = 'failed'; } }
+  return { ok: true, filed: true, ref: ref, onReport: mine, stillOpen: mine ? rep.openCount : null, trail: { logBook: lb.length, emails: mail.length, chatter: notes.length }, approverNotified: mailed, salesforce: sf,
+    message: mine ? 'Logged as ' + ref + '. Azariah has an e-mail to underwriting support ready to approve, with the branch\'s trail. You will hear back here once head office answers. Never say head office has received it.'
+      : 'Logged as ' + ref + ' for Azariah to check: the policy is not on the pending report under this agent, so nothing was drafted to head office.' };
+}
+/** The review page behind Azariah's link: the draft and a Send button. A GET never sends. */
+function help868SubmitPage_(p) {
+  var x = help868SubRow_(String(p.ref || '')), e = help868Esc_;
+  var page = function (body) { return HtmlService.createHtmlOutput('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><div style="font:15px/1.55 Arial,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#1F2430">' + body + '</div>').setTitle('Submission to underwriting'); };
+  if (!x || !p.t || String(x.Token) !== String(p.t)) return page('<p>This link is not valid.</p>');
+  if (x['Sent at']) return page('<p><b>' + e(x.Reference) + '</b> was already sent on ' + e(String(x['Sent at'])) + '.</p>');
+  if (!x.Draft) return page('<p><b>' + e(x.Reference) + '</b>: nothing was drafted. ' + e(x.Status) + '.</p>');
+  var to = x['Underwriting to'] || help868Prop_('HELP868_UW_TO');
+  return page('<p><b>' + e(x.Reference) + '</b> · ' + e(x.Agent) + ' · policy ' + e(String(x.Policy)) + '</p>' +
+    '<p>To: <b>' + e(to || 'not set (Script property HELP868_UW_TO)') + '</b><br>Cc: ' + e(x.Approver) + '<br>Subject: ' + e(x.Subject) + '</p>' +
+    '<div style="border:1px solid #ddd;border-radius:10px;padding:14px">' + x.Draft + '</div>' +
+    '<p><label>Add a line of your own (optional)<br><textarea id="n" rows="3" style="width:100%"></textarea></label></p>' +
+    (to ? '<p><button id="b" style="background:#1F2430;color:#fff;border:0;border-radius:8px;padding:12px 18px;font-weight:700;font-size:15px">Send to underwriting support</button> <span id="m"></span></p>' : '') +
+    '<script>var b=document.getElementById("b");if(b)b.onclick=function(){b.disabled=true;document.getElementById("m").textContent="Sending…";' +
+    'google.script.run.withSuccessHandler(function(r){document.getElementById("m").textContent=r.message;}).withFailureHandler(function(err){b.disabled=false;document.getElementById("m").textContent="Not sent: "+err.message;})' +
+    '.help868SubmitSend(' + JSON.stringify(String(x.Reference)) + ',' + JSON.stringify(String(p.t)) + ',document.getElementById("n").value);};</script>');
+}
+/** The Send button. Checks the token again, sends from support@ with Azariah copied and as the reply-to, and notes it everywhere. */
+function help868SubmitSend(ref, token, note) {
+  var x = help868SubRow_(String(ref || ''));
+  if (!x || !token || String(x.Token) !== String(token)) return { ok: false, message: 'This link is not valid.' };
+  if (x['Sent at']) return { ok: true, message: 'Already sent on ' + x['Sent at'] + '.' };
+  var to = x['Underwriting to'] || help868Prop_('HELP868_UW_TO'); if (!to || !x.Draft) return { ok: false, message: 'Not sent: no address or no draft.' };
+  var extra = help868Clean_(note).slice(0, 600), html = String(x.Draft);
+  if (extra) html = html.replace('<p>Thank you,', '<p>' + help868Esc_(extra) + '</p><p>Thank you,');
+  var cc = x.Approver ? [String(x.Approver)] : [];
+  tMsSend_(to, String(x.Subject), html, { cc: cc, replyTo: cc[0] || '' });
+  var at = Utilities.formatDate(new Date(), help868Tz_(), 'yyyy-MM-dd HH:mm');
+  help868SubSet_(x.row, 'Sent at', at); help868SubSet_(x.row, 'Sent by', 'approval link'); help868SubSet_(x.row, 'Status', 'Sent to underwriting support');
+  try {
+    var task = help868PendTask_({ policy: String(x.Policy).replace(/\D/g, ''), app: '' });
+    if (help868SfOn_() && task) tSfSend_('post', '/sobjects/FeedItem', { ParentId: task.Id, Body: 'SUBMITTED (' + x.Reference + ') · e-mailed underwriting support at ' + at + ' asking them to confirm receipt of: ' + x.Items + '.' });
+  } catch (e) {}
+  return { ok: true, message: 'Sent at ' + at + '. Copied to you; replies come to you.' };
 }

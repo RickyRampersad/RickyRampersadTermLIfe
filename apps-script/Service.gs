@@ -225,6 +225,8 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   /* group client management (GroupClients.gs): staff, the manager, a group's own page and the group wall */
   if (/^gcm\./.test(String(p.action || '')) && typeof gcmDoGet_ === 'function') return json_(gcmDoGet_(p));
+  /* HELP 868: Azariah's review page for a submission an agent reported (28 Nov 2026); the page itself never sends */
+  if (String(p.action || '') === 'h868s.view' && typeof help868SubmitPage_ === 'function') return help868SubmitPage_(p);
   /* HELP 868: the WhatsApp assistant's calls (3 Nov 2026), Help868.gs decides what comes back */
   if (/^help868\./.test(String(p.action || '')) && typeof help868Route_ === 'function') { try { return json_(help868Route_(p)); } catch (err) { return json_({ ok: false, error: 'HELP 868 could not answer.' }); } }
   /* the strategic meeting page (StrategicMeeting.gs, 20 October 2026): sign-in, the contributions, the live counts */
